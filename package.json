@@ -1,0 +1,13 @@
+{
+  "name": "oauth2-jwt-bearer",
+  "private": true,
+  "version": "0.0.1",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "add": "npm install --package-lock-only --no-package-lock --prefix",
+    "postadd": "npm install",
+    "test": "npm test --workspaces"
+  }
+}
