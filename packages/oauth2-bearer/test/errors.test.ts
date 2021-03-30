@@ -8,7 +8,6 @@ import {
 describe('errors', () => {
   it('should raise an Unauthorized error', () => {
     expect(new UnauthorizedError()).toMatchObject({
-      code: 'unauthorized',
       headers: {
         'www-authentication': 'Bearer realm="api"',
       },

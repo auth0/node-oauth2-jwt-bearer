@@ -8,13 +8,12 @@
  * other error information.
  */
 export class UnauthorizedError extends Error {
-  message = 'Unauthorized';
   status = 401;
   statusCode = 401;
   headers = { 'www-authentication': 'Bearer realm="api"' };
 
-  constructor() {
-    super();
+  constructor(message = 'Unauthorized') {
+    super(message);
     this.name = this.constructor.name;
   }
 }
@@ -27,12 +26,11 @@ export class UnauthorizedError extends Error {
  */
 export class InvalidRequestError extends UnauthorizedError {
   code = 'invalid_request';
-  message = 'Invalid Request';
   status = 400;
   statusCode = 400;
 
-  constructor() {
-    super();
+  constructor(message = 'Invalid Request') {
+    super(message);
     this.headers = getHeaders(this.code, this.message);
   }
 }
@@ -43,12 +41,11 @@ export class InvalidRequestError extends UnauthorizedError {
  */
 export class InvalidTokenError extends UnauthorizedError {
   code = 'invalid_token';
-  message = 'Invalid Token';
   status = 401;
   statusCode = 401;
 
-  constructor() {
-    super();
+  constructor(message = 'Invalid Token') {
+    super(message);
     this.headers = getHeaders(this.code, this.message);
   }
 }
@@ -59,12 +56,11 @@ export class InvalidTokenError extends UnauthorizedError {
  */
 export class InsufficientScopeError extends UnauthorizedError {
   code = 'insufficient_scope';
-  message = 'Insufficient Scope';
   status = 403;
   statusCode = 403;
 
-  constructor(scopes?: string[]) {
-    super();
+  constructor(scopes?: string[], message = 'Insufficient Scope') {
+    super(message);
     this.headers = getHeaders(this.code, this.message, scopes);
   }
 }
