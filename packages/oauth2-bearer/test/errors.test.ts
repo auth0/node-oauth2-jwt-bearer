@@ -32,6 +32,20 @@ describe('errors', () => {
     });
   });
 
+  it('should raise an Invalid Request error with a custom message', () => {
+    expect(new InvalidRequestError('Custom Message')).toMatchObject({
+      code: 'invalid_request',
+      headers: {
+        'www-authentication':
+          'Bearer realm="api", error="invalid_request", error_description="Custom Message"',
+      },
+      message: 'Custom Message',
+      name: 'InvalidRequestError',
+      status: 400,
+      statusCode: 400,
+    });
+  });
+
   it('should raise an Invalid Token error', () => {
     expect(new InvalidTokenError()).toMatchObject({
       code: 'invalid_token',

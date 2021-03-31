@@ -6,8 +6,6 @@
     "packages/*"
   ],
   "scripts": {
-    "add": "npm install --package-lock-only --no-package-lock --prefix",
-    "postadd": "npm install",
     "test": "npm test --workspaces"
   }
 }

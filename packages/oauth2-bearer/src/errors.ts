@@ -65,9 +65,7 @@ export class InsufficientScopeError extends UnauthorizedError {
   }
 }
 
-/**
- * Generate a response header per https://tools.ietf.org/html/rfc6750#section-3
- */
+// Generate a response header per https://tools.ietf.org/html/rfc6750#section-3
 const getHeaders = (error: string, description: string, scopes?: string[]) => ({
   'www-authentication': `Bearer realm="api", error="${error}", error_description="${description}"${
     (scopes && `, scope="${scopes.join(' ')}"`) || ''
