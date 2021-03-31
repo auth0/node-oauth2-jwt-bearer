@@ -59,7 +59,7 @@ export default function getToken(
   headers: HeadersLike,
   query?: QueryLike,
   body?: BodyLike
-): string | undefined {
+): string {
   const fromHeader = getTokenFromHeader(headers);
   const fromQuery = getTokenFromQuery(method, query);
   const fromBody = getFromBody(method, headers, body);
@@ -74,5 +74,5 @@ export default function getToken(
     );
   }
 
-  return fromQuery || fromBody || fromHeader;
+  return (fromQuery || fromBody || fromHeader) as string;
 }
