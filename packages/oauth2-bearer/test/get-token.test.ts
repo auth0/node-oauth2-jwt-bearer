@@ -3,7 +3,7 @@ import { URL } from 'url';
 import { AddressInfo } from 'net';
 import anyBody = require('body/any');
 import got from 'got';
-import getToken from '../src/get-token';
+import { getToken } from '../src';
 
 const start = (server: Server): Promise<string> =>
   new Promise((resolve) =>

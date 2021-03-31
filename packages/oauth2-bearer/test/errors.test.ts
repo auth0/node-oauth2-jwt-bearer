@@ -3,7 +3,7 @@ import {
   InvalidRequestError,
   InvalidTokenError,
   InsufficientScopeError,
-} from '../src/errors';
+} from '../src';
 
 describe('errors', () => {
   it('should raise an Unauthorized error', () => {
