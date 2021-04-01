@@ -2,6 +2,8 @@
   "name": "oauth2-bearer",
   "private": true,
   "version": "0.0.1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest test --coverage",
     "lint": "eslint --fix --ext .ts ./src",
@@ -11,10 +13,14 @@
   },
   "devDependencies": {
     "@tsconfig/node12": "^1.0.7",
+    "@types/body": "^5.1.0",
     "@types/jest": "^26.0.22",
+    "@types/node": "^14.14.37",
     "@typescript-eslint/eslint-plugin": "^4.19.0",
     "@typescript-eslint/parser": "^4.19.0",
+    "body": "^5.1.0",
     "eslint": "^7.23.0",
+    "got": "^11.8.2",
     "jest": "^26.6.3",
     "prettier": "^2.2.1",
     "ts-jest": "^26.5.4",
