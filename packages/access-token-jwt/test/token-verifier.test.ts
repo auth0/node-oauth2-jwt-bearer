@@ -25,7 +25,7 @@ const createJwt = async ({
   iat = now,
   exp = now + day,
   kid = 'kid',
-}: CreateJWTOptions): Promise<string> => {
+}: CreateJWTOptions = {}): Promise<string> => {
   const { publicKey, privateKey } = await generateKeyPair('RS256');
   const publicJwk = await fromKeyLike(publicKey);
   nock(issuer)
@@ -63,5 +63,50 @@ describe('token-verifier', () => {
       iat: expect.any(Number),
       exp: expect.any(Number),
     });
+  });
+
+  it('should throw for unexpected issuer', async () => {
+    const jwt = await createJwt({
+      issuer: 'https://issuer1.example.com/',
+    });
+
+    const verify = tokenVerifier({
+      jwksUri: 'https://issuer1.example.com/.well-known/jwks.json',
+      issuer: 'https://issuer2.example.com/',
+      audience: 'https://api/',
+    });
+    await expect(verify(jwt)).rejects.toThrowError(
+      'unexpected "iss" claim value'
+    );
+  });
+
+  it('should throw for unexpected audience', async () => {
+    const jwt = await createJwt({
+      audience: 'https://api1/',
+    });
+
+    const verify = tokenVerifier({
+      jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
+      issuer: 'https://issuer.example.com/',
+      audience: 'https://api2/',
+    });
+    await expect(verify(jwt)).rejects.toThrowError(
+      'unexpected "aud" claim value'
+    );
+  });
+
+  it('should throw for an expired token', async () => {
+    const jwt = await createJwt({
+      exp: now - 10,
+    });
+
+    const verify = tokenVerifier({
+      jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
+      issuer: 'https://issuer.example.com/',
+      audience: 'https://api/',
+    });
+    await expect(verify(jwt)).rejects.toThrowError(
+      '"exp" claim timestamp check failed'
+    );
   });
 });
