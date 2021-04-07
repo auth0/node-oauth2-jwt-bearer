@@ -49,7 +49,7 @@ const createJwt = async ({
 
 describe('token-verifier', () => {
   it('should verify the token', async () => {
-    const jwt = await createJwt({});
+    const jwt = await createJwt();
 
     const verify = tokenVerifier({
       jwksUri: 'https://issuer.example.com/.well-known/jwks.json',

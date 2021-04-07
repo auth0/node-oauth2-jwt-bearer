@@ -1,3 +1,4 @@
+import { URL } from 'url';
 import createRemoteJWKSet from 'jose/jwks/remote';
 import jwtVerify, { JWTPayload } from 'jose/jwt/verify';
 
