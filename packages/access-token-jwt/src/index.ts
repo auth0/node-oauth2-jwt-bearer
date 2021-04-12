@@ -1,1 +1,7 @@
-export { default as tokenVerifier } from './token-verifier';
+export {
+  default as tokenVerifier,
+  TokenVerifierOptions,
+  VerifyJwt,
+} from './token-verifier';
+export * from './errors';
+export { default as discover, IssuerMetadata } from './discovery';
