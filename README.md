@@ -20,6 +20,5 @@ You can't yet run `npm install` with the `workspace` flag, so to install somethi
 
 ```sh
 # to install 'jest' to 'packages/oauth2-bearer'
-npm install --package-lock-only --no-package-lock --save-dev --prefix=packages/oauth2-bearer jest
-npm install
+npm install:workspace -- packages/oauth2-bearer jest
 ```

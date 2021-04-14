@@ -1,14 +1,14 @@
 import nock = require('nock');
 import { createJwt, now } from './helpers';
-import { tokenVerifier } from '../src';
+import { jwtVerifier } from '../src';
 
-describe('token-verifier', () => {
+describe('jwt-verifier', () => {
   afterEach(nock.cleanAll);
 
   it('should verify the token', async () => {
     const jwt = await createJwt();
 
-    const verify = tokenVerifier({
+    const verify = jwtVerifier({
       jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
       issuer: 'https://issuer.example.com/',
       audience: 'https://api/',
@@ -27,7 +27,7 @@ describe('token-verifier', () => {
       issuer: 'https://issuer1.example.com/',
     });
 
-    const verify = tokenVerifier({
+    const verify = jwtVerifier({
       jwksUri: 'https://issuer1.example.com/.well-known/jwks.json',
       issuer: 'https://issuer2.example.com/',
       audience: 'https://api/',
@@ -42,7 +42,7 @@ describe('token-verifier', () => {
       audience: 'https://api1/',
     });
 
-    const verify = tokenVerifier({
+    const verify = jwtVerifier({
       jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
       issuer: 'https://issuer.example.com/',
       audience: 'https://api2/',
@@ -57,7 +57,7 @@ describe('token-verifier', () => {
       exp: now - 10,
     });
 
-    const verify = tokenVerifier({
+    const verify = jwtVerifier({
       jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
       issuer: 'https://issuer.example.com/',
       audience: 'https://api/',
@@ -65,5 +65,17 @@ describe('token-verifier', () => {
     await expect(verify(jwt)).rejects.toThrowError(
       '"exp" claim timestamp check failed'
     );
+  });
+
+  it('should use discovered issuer over issuer base url', async () => {
+    const jwt = await createJwt({
+      issuer: 'https://issuer.example.com',
+    });
+
+    const verify = jwtVerifier({
+      issuerBaseURL: 'https://issuer.example.com/',
+      audience: 'https://api/',
+    });
+    await expect(verify(jwt)).resolves.toBeTruthy();
   });
 });
