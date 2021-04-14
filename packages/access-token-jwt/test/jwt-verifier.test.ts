@@ -73,7 +73,8 @@ describe('jwt-verifier', () => {
     });
 
     const verify = jwtVerifier({
-      issuerBaseURL: 'https://issuer.example.com/',
+      issuerBaseURL:
+        'https://issuer.example.com/.well-known/openid-configuration',
       audience: 'https://api/',
     });
     await expect(verify(jwt)).resolves.toBeTruthy();
