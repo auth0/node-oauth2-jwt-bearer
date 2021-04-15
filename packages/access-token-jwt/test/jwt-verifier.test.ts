@@ -79,4 +79,20 @@ describe('jwt-verifier', () => {
     });
     await expect(verify(jwt)).resolves.toBeTruthy();
   });
+
+  it('should use configured issuer over discovered issuer', async () => {
+    const jwt = await createJwt({
+      issuer: 'https://issuer.example.com',
+    });
+
+    const verify = jwtVerifier({
+      issuerBaseURL:
+        'https://issuer.example.com/.well-known/openid-configuration',
+      issuer: 'https://wrong.example.com',
+      audience: 'https://api/',
+    });
+    await expect(verify(jwt)).rejects.toThrowError(
+      'unexpected "iss" claim value'
+    );
+  });
 });

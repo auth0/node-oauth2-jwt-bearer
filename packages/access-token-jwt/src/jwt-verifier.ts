@@ -65,12 +65,13 @@ const jwtVerifier: JwtVerifier = ({
   };
 
   return async (jwt: string) => {
+    let discoveredIssuer;
     try {
       if (discovery) {
-        ({ jwks_uri: jwksUri, issuer } = await discovery);
+        ({ jwks_uri: jwksUri, issuer: discoveredIssuer } = await discovery);
       }
       const { payload } = await jwtVerify(jwt, JWKS, {
-        issuer,
+        issuer: issuer || discoveredIssuer,
         audience,
       });
       return payload;
