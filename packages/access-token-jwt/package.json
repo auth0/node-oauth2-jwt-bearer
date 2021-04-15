@@ -34,7 +34,10 @@
   "jest": {
     "preset": "ts-jest",
     "resolver": "./resolver.js",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "src/*"
+    ]
   },
   "engines": {
     "node": ">=12.0.0"
