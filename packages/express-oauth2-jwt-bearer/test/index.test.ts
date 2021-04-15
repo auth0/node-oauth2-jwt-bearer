@@ -45,6 +45,7 @@ describe('index', () => {
     app.all('/', (req, res, next) => {
       try {
         res.json(req.auth);
+        next();
       } catch (e) {
         next(e);
       }
@@ -68,9 +69,10 @@ describe('index', () => {
   });
 
   it('should succeed for authenticated requests', async () => {
+    const jwt = await createJwt();
     const baseUrl = await setup();
     const response = await got(baseUrl, {
-      headers: { authorization: `Bearer ${await createJwt()}` },
+      headers: { authorization: `Bearer ${jwt}` },
       responseType: 'json',
     });
     expect(response.statusCode).toBe(200);
@@ -80,13 +82,14 @@ describe('index', () => {
   });
 
   it('should fail for audience mismatch', async () => {
+    const jwt = await createJwt({ audience: 'bar' });
     const baseUrl = await setup({
       audience: 'foo',
     });
     await expectFailsWith(
       got(baseUrl, {
         headers: {
-          authorization: `Bearer ${await createJwt({ audience: 'bar' })}`,
+          authorization: `Bearer ${jwt}`,
         },
         responseType: 'json',
       }),

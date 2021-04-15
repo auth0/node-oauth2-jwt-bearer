@@ -1,6 +1,5 @@
 import { URL } from 'url';
 import fetch from './fetch';
-import { AggregateError } from './errors';
 
 const OIDC_DISCOVERY = '/.well-known/openid-configuration';
 const OAUTH2_DISCOVERY = '/.well-known/oauth-authorization-server';
@@ -40,10 +39,7 @@ const discover = async (uri: string): Promise<IssuerMetadata> => {
     }
   }
 
-  throw new AggregateError(
-    errors,
-    errors.map(({ message }) => message).join('\n')
-  );
+  throw new Error(errors.map(({ message }) => message).join('\n'));
 };
 
 export default discover;

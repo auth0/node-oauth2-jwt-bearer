@@ -4,5 +4,5 @@ export {
   WithDiscovery,
   WithoutDiscovery,
 } from './jwt-verifier';
-export * from './errors';
+export { InvalidTokenError } from 'oauth2-bearer';
 export { default as discover, IssuerMetadata } from './discovery';

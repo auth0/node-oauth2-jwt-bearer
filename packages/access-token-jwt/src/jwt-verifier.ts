@@ -1,8 +1,9 @@
+import { strict as assert } from 'assert';
 import { URL } from 'url';
 import createRemoteJWKSet from 'jose/jwks/remote';
 import jwtVerify, { JWTPayload } from 'jose/jwt/verify';
 import { InvalidTokenError } from 'oauth2-bearer';
-import discover, { IssuerMetadata } from './discovery';
+import discover from './discovery';
 
 interface JwtVerifierOptions {
   /**
@@ -50,26 +51,28 @@ const jwtVerifier: JwtVerifier = ({
   issuer,
   audience,
 }: any): VerifyJwt => {
-  let _JWKS: GetKeyFn;
-  let discovery: Promise<IssuerMetadata>;
-
-  if (!jwksUri) {
-    discovery = discover(issuerBaseURL);
-  }
+  let origJWKS: GetKeyFn;
+  let discoveredIssuer: string;
 
   const JWKS = async (...args: Parameters<GetKeyFn>) => {
-    if (!_JWKS) {
-      _JWKS = createRemoteJWKSet(new URL(jwksUri));
+    if (!origJWKS) {
+      origJWKS = createRemoteJWKSet(new URL(jwksUri));
     }
-    return _JWKS(...args);
+    return origJWKS(...args);
   };
 
   return async (jwt: string) => {
-    let discoveredIssuer;
     try {
-      if (discovery) {
-        ({ jwks_uri: jwksUri, issuer: discoveredIssuer } = await discovery);
+      if (!jwksUri) {
+        ({ jwks_uri: jwksUri, issuer: discoveredIssuer } = await discover(
+          issuerBaseURL
+        ));
       }
+      assert(
+        issuer || discoveredIssuer,
+        'An issuer is required to validate the "iss" claim'
+      );
+      assert(audience, 'An audience is required to validate the "aud" claim');
       const { payload } = await jwtVerify(jwt, JWKS, {
         issuer: issuer || discoveredIssuer,
         audience,

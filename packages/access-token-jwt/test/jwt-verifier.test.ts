@@ -1,6 +1,6 @@
 import nock = require('nock');
 import { createJwt, now } from './helpers';
-import { jwtVerifier } from '../src';
+import { jwtVerifier, InvalidTokenError } from '../src';
 
 describe('jwt-verifier', () => {
   afterEach(nock.cleanAll);
@@ -78,6 +78,19 @@ describe('jwt-verifier', () => {
       audience: 'https://api/',
     });
     await expect(verify(jwt)).resolves.toBeTruthy();
+  });
+
+  it('should fail with invalid_token error', async () => {
+    const jwt = await createJwt({
+      issuer: 'https://issuer.example.com',
+    });
+    const verify = jwtVerifier({
+      issuerBaseURL:
+        'https://issuer.example.com/.well-known/openid-configuration',
+      issuer: 'https://wrong.example.com',
+      audience: 'https://api/',
+    });
+    await expect(verify(`CORRUPT-${jwt}`)).rejects.toThrow(InvalidTokenError);
   });
 
   it('should use configured issuer over discovered issuer', async () => {

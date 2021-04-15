@@ -1,5 +1,5 @@
 import nock = require('nock');
-import { discover, AggregateError, FetchError, JsonParseError } from '../src';
+import { discover } from '../src';
 
 const success = { issuer: 'https://op.example.com' };
 
@@ -141,29 +141,10 @@ describe('discover', () => {
       .get('/.well-known/oauth-authorization-server')
       .reply(200, '');
 
-    try {
-      await discover('https://op.example.com');
-      fail('discover should fail');
-    } catch (e) {
-      expect(e).toBeInstanceOf(AggregateError);
-      expect(e).toHaveProperty(
-        'message',
-        'Failed to fetch https://op.example.com/.well-known/openid-configuration, responded with 500\n' +
-          'Failed to parse the response from https://op.example.com/.well-known/oauth-authorization-server'
-      );
-      expect(e.errors).toContainEqual(
-        expect.objectContaining({
-          name: 'FetchError',
-          url: 'https://op.example.com/.well-known/openid-configuration',
-          statusCode: 500,
-        })
-      );
-      expect(e.errors).toContainEqual(
-        expect.objectContaining({
-          name: 'JsonParseError',
-        })
-      );
-    }
+    await expect(discover('https://op.example.com')).rejects.toThrowError(
+      'Failed to fetch https://op.example.com/.well-known/openid-configuration, responded with 500\n' +
+        'Failed to parse the response from https://op.example.com/.well-known/oauth-authorization-server'
+    );
   });
 
   it('is rejected .well-known Metadata endpoint fails', async () => {
@@ -173,7 +154,9 @@ describe('discover', () => {
 
     await expect(
       discover('https://op.example.com/.well-known/example-configuration')
-    ).rejects.toThrowError(FetchError);
+    ).rejects.toThrowError(
+      'Failed to fetch https://op.example.com/.well-known/example-configuration, responded with 500'
+    );
   });
 
   it('is rejected .well-known Metadata endpoint responds with non JSON response', async () => {
@@ -183,7 +166,9 @@ describe('discover', () => {
 
     await expect(
       discover('https://op.example.com/.well-known/example-configuration')
-    ).rejects.toThrowError(JsonParseError);
+    ).rejects.toThrowError(
+      'Failed to parse the response from https://op.example.com/.well-known/example-configuration'
+    );
   });
 
   it('is rejected with Error when no absolute URL is provided', async () => {
