@@ -40,9 +40,6 @@
     "testEnvironment": "node",
     "collectCoverageFrom": [
       "src/*"
-    ],
-    "transformIgnorePatterns": [
-      "/node_modules/(?!access-token-jwt)"
     ]
   },
   "engines": {
