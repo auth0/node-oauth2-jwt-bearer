@@ -147,7 +147,7 @@ describe('discover', () => {
     );
   });
 
-  it('is rejected .well-known Metadata endpoint fails', async () => {
+  it('is rejected when .well-known Metadata endpoint fails', async () => {
     nock('https://op.example.com')
       .get('/.well-known/example-configuration')
       .reply(500);
@@ -159,7 +159,7 @@ describe('discover', () => {
     );
   });
 
-  it('is rejected .well-known Metadata endpoint responds with non JSON response', async () => {
+  it('is rejected when .well-known Metadata endpoint responds with non JSON response', async () => {
     nock('https://op.example.com')
       .get('/.well-known/example-configuration')
       .reply(200, '');
@@ -175,5 +175,17 @@ describe('discover', () => {
     await expect(
       discover('op.example.com/.well-known/foobar')
     ).rejects.toThrowError('Invalid URL: op.example.com/.well-known/foobar');
+  });
+
+  it('is rejected when .well-known Metadata does not provide the required "issuer" property', async () => {
+    nock('https://op.example.com')
+      .get('/.well-known/openid-configuration')
+      .reply(200, {});
+
+    await expect(
+      discover('https://op.example.com/.well-known/openid-configuration')
+    ).rejects.toThrowError(
+      '"issuer" not found in authorization server metadata'
+    );
   });
 });

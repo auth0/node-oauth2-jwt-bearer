@@ -1,5 +1,6 @@
 import { URL } from 'url';
 import fetch from './fetch';
+import { strict as assert } from 'assert';
 
 const OIDC_DISCOVERY = '/.well-known/openid-configuration';
 const OAUTH2_DISCOVERY = '/.well-known/oauth-authorization-server';
@@ -10,11 +11,16 @@ export interface IssuerMetadata {
   [key: string]: unknown;
 }
 
+const assertIssuer = (data: IssuerMetadata) =>
+  assert(data.issuer, `"issuer" not found in authorization server metadata`);
+
 const discover = async (uri: string): Promise<IssuerMetadata> => {
   const url = new URL(uri);
 
   if (url.pathname.includes('/.well-known/')) {
-    return fetch<IssuerMetadata>(url);
+    const data = await fetch<IssuerMetadata>(url);
+    assertIssuer(data);
+    return data;
   }
 
   const pathnames = [];
@@ -33,7 +39,9 @@ const discover = async (uri: string): Promise<IssuerMetadata> => {
   for (const pathname of pathnames) {
     try {
       const wellKnownUri = new URL(pathname, url);
-      return await fetch<IssuerMetadata>(wellKnownUri);
+      const data = await fetch<IssuerMetadata>(wellKnownUri);
+      assertIssuer(data);
+      return data;
     } catch (err) {
       errors.push(err);
     }
