@@ -1,0 +1,19 @@
+version: 2.1
+orbs:
+  node: circleci/node@3.0.0
+jobs:
+  test:
+    executor:
+      name: node/default
+      tag: '15.14'
+    steps:
+      - checkout
+      - node/install-packages
+      - run:
+          command: npm run test
+      - store_test_results:
+          path: test-results
+workflows:
+  tests:
+    jobs:
+      - test
