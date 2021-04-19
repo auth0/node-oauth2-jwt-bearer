@@ -10,6 +10,8 @@ jobs:
       - checkout
       - node/install-packages
       - run:
+          command: npm run build
+      - run:
           command: npm run test
       - store_test_results:
           path: test-results
