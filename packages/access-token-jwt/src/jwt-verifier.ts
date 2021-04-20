@@ -54,6 +54,12 @@ const jwtVerifier: JwtVerifier = ({
   let origJWKS: GetKeyFn;
   let discoveredIssuer: string;
 
+  assert(
+    (issuer && jwksUri) || issuerBaseURL,
+    'You must provide an "issuerBaseURL" or an "issuer" and "jwksUri"'
+  );
+  assert(audience, 'An "audience" is required to validate the "aud" claim');
+
   const JWKS = async (...args: Parameters<GetKeyFn>) => {
     if (!origJWKS) {
       origJWKS = createRemoteJWKSet(new URL(jwksUri));
@@ -68,11 +74,6 @@ const jwtVerifier: JwtVerifier = ({
           issuerBaseURL
         ));
       }
-      assert(
-        issuer || discoveredIssuer,
-        'An issuer is required to validate the "iss" claim'
-      );
-      assert(audience, 'An audience is required to validate the "aud" claim');
       const { payload } = await jwtVerify(jwt, JWKS, {
         issuer: issuer || discoveredIssuer,
         audience,

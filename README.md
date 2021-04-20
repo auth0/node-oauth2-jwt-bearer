@@ -1,6 +1,40 @@
 # oauth2-jwt-bearer
 
-Monorepo for oauth2-jwt-bearer 
+Monorepo for `oauth2-jwt-bearer`. Contains the following packages:
+
+- `oauth2-bearer` (not published) Gets Bearer tokens from a request and issues errors per https://tools.ietf.org/html/rfc6750
+- `access-token-jwt` (not published) Verfies and decodes Access Token JWTs loosley following https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-12
+- [express-oauth2-jwt-bearer](#express-oauth2-jwt-bearer) Authentication middleware for Express.js that validates JWT bearer access tokens
+
+## express-oauth2-jwt-bearer
+
+### Install
+
+`npm install express-oauth2-jwt-bearer`
+
+### Usage
+
+```js
+import express from 'express';
+import { auth } from 'express-oauth2-jwt-bearer';
+
+const app = express();
+
+app.use(
+    auth({
+      // Provide an issuerBaseURL and the SDK will do Discovery for you
+      issuerBaseURL: 'https://issuer.example.com/',
+      // Or, provide a jwksUri and issuer to do the Discovery yourself
+      jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
+      issuer: 'https://issuer.example.com',
+      audience: 'https://api/',
+    })
+);
+
+app.get('/api/me', (req, res) => {
+  res.json(req.auth);
+});
+```
 
 ## Development
 

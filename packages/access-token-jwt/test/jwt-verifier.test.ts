@@ -5,6 +5,28 @@ import { jwtVerifier, InvalidTokenError } from '../src';
 describe('jwt-verifier', () => {
   afterEach(nock.cleanAll);
 
+  it('should throw when configured with no issuer', async () => {
+    expect(() =>
+      jwtVerifier({
+        jwksUri: '',
+        issuer: 'https://issuer.example.com/',
+        audience: 'https://api/',
+      })
+    ).toThrowError(
+      'You must provide an "issuerBaseURL" or an "issuer" and "jwksUri"'
+    );
+  });
+
+  it('should throw when configured with no audience', async () => {
+    expect(() =>
+      jwtVerifier({
+        jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
+        issuer: 'https://issuer.example.com/',
+        audience: '',
+      })
+    ).toThrowError('An "audience" is required to validate the "aud" claim');
+  });
+
   it('should verify the token', async () => {
     const jwt = await createJwt();
 
