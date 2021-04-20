@@ -15,7 +15,7 @@ type HeadersLike = Record<string, unknown> & {
 const TOKEN_RE = /^Bearer (.+)$/i;
 
 const getTokenFromHeader = (headers: HeadersLike) => {
-  if (!headers.authorization) {
+  if (typeof headers.authorization !== 'string') {
     return;
   }
   const match = headers.authorization.match(TOKEN_RE);
