@@ -5,7 +5,7 @@ import { getToken } from 'oauth2-bearer';
 declare global {
   namespace Express {
     interface Request {
-      auth: JWTPayload;
+      auth: { payload: JWTPayload };
     }
   }
 }

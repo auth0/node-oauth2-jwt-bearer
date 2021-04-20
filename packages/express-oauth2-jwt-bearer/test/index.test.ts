@@ -76,9 +76,12 @@ describe('index', () => {
       responseType: 'json',
     });
     expect(response.statusCode).toBe(200);
-    expect(response.body).toMatchObject({
-      iss: 'https://issuer.example.com/',
-    });
+    expect(response.body).toHaveProperty(
+      'payload',
+      expect.objectContaining({
+        iss: 'https://issuer.example.com/',
+      })
+    );
   });
 
   it('should fail for audience mismatch', async () => {

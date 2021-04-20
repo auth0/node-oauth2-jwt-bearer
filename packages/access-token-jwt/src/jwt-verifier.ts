@@ -31,7 +31,7 @@ export interface WithoutDiscovery extends JwtVerifierOptions {
   jwksUri: string;
 }
 
-export type VerifyJwt = (jwt: string) => Promise<JWTPayload>;
+export type VerifyJwt = (jwt: string) => Promise<{ payload: JWTPayload }>;
 
 type GetKeyFn = ReturnType<typeof createRemoteJWKSet>;
 
@@ -71,7 +71,7 @@ const jwtVerifier: JwtVerifier = ({
         issuer,
         audience,
       });
-      return payload;
+      return { payload };
     } catch (e) {
       throw new InvalidTokenError(e.message);
     }

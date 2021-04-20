@@ -45,7 +45,7 @@ describe('jwt-verifier', () => {
       issuer: 'https://issuer.example.com/',
       audience: 'https://api/',
     });
-    await expect(verify(jwt)).resolves.toMatchObject({
+    await expect(verify(jwt)).resolves.toHaveProperty('payload', {
       iss: 'https://issuer.example.com/',
       sub: 'me',
       aud: 'https://api/',

@@ -13,7 +13,7 @@ describe('index', () => {
       issuerBaseURL: 'https://op.example.com',
       audience: 'https://api/',
     });
-    await expect(verify(jwt)).resolves.toMatchObject({
+    await expect(verify(jwt)).resolves.toHaveProperty('payload', {
       iss: 'https://op.example.com',
       sub: 'me',
       aud: 'https://api/',
@@ -30,7 +30,7 @@ describe('index', () => {
       jwksUri: 'https://op.example.com/.well-known/jwks.json',
       audience: 'https://api/',
     });
-    await expect(verify(jwt)).resolves.toMatchObject({
+    await expect(verify(jwt)).resolves.toHaveProperty('payload', {
       iss: 'https://op.example.com',
       sub: 'me',
       aud: 'https://api/',
