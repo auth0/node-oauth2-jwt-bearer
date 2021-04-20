@@ -22,11 +22,7 @@ const app = express();
 
 app.use(
     auth({
-      // Provide an issuerBaseURL and the SDK will do Discovery for you
       issuerBaseURL: 'https://issuer.example.com/',
-      // Or, provide a jwksUri and issuer to do the Discovery yourself
-      jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
-      issuer: 'https://issuer.example.com',
       audience: 'https://api/',
     })
 );
