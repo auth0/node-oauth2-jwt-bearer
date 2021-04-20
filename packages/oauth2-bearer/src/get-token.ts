@@ -23,19 +23,16 @@ const getTokenFromHeader = (headers: HeadersLike) => {
   return match[1];
 };
 
-const getTokenFromQuery = (method: string, query?: QueryLike) => {
+const getTokenFromQuery = (query?: QueryLike) => {
   const accessToken = query?.access_token;
   if (typeof accessToken === 'string') {
     return accessToken;
   }
 };
 
-const getFromBody = (method: string, headers: HeadersLike, body?: BodyLike) => {
+const getFromBody = (body?: BodyLike, urlEncoded?: boolean) => {
   const accessToken = body?.access_token;
-  if (
-    typeof accessToken === 'string' &&
-    headers['content-type'] === 'application/x-www-form-urlencoded'
-  ) {
+  if (typeof accessToken === 'string' && urlEncoded) {
     return accessToken;
   }
 };
@@ -43,20 +40,20 @@ const getFromBody = (method: string, headers: HeadersLike, body?: BodyLike) => {
 /**
  * Get a Bearer Token from a request.
  *
- * @param method The request method.
  * @param headers An object containing the request headers, usually `req.headers`.
  * @param query An object containing the request query parameters, usually `req.query`.
  * @param body An object containing the request payload, usually `req.body` or `req.payload`.
+ * @param urlEncoded true if the request's Content-Type is `application/x-www-form-urlencoded`.
  */
 export default function getToken(
-  method: string,
   headers: HeadersLike,
   query?: QueryLike,
-  body?: BodyLike
+  body?: BodyLike,
+  urlEncoded?: boolean
 ): string {
   const fromHeader = getTokenFromHeader(headers);
-  const fromQuery = getTokenFromQuery(method, query);
-  const fromBody = getFromBody(method, headers, body);
+  const fromQuery = getTokenFromQuery(query);
+  const fromBody = getFromBody(body, urlEncoded);
 
   if (!fromQuery && !fromHeader && !fromBody) {
     throw new InvalidRequestError('Bearer token is missing');

@@ -34,6 +34,8 @@ describe('index', () => {
   const setup = (opts?: any) => {
     const app = express();
 
+    app.use(express.urlencoded({ extended: false }));
+
     app.use(
       auth({
         issuerBaseURL: 'https://issuer.example.com/',
@@ -100,5 +102,19 @@ describe('index', () => {
       'invalid_token',
       'unexpected "aud" claim value'
     );
+  });
+
+  it('should succeed for POST requests with custom character encoding', async () => {
+    const jwt = await createJwt();
+    const baseUrl = await setup();
+    const response = await got(baseUrl, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      },
+      form: { access_token: jwt },
+      responseType: 'json',
+    });
+    expect(response.statusCode).toBe(200);
   });
 });

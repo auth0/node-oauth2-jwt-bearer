@@ -3,6 +3,7 @@ import { URL } from 'url';
 import { AddressInfo } from 'net';
 import anyBody = require('body/any');
 import got from 'got';
+import typeis = require('type-is');
 import { getToken } from '../src';
 
 const start = (server: Server): Promise<string> =>
@@ -24,10 +25,10 @@ const handler = (req: IncomingMessage, res: ServerResponse) => {
     try {
       res.end(
         getToken(
-          req.method as string,
           req.headers,
           query,
-          body as Record<string, string>
+          body as Record<string, string>,
+          !!typeis.is(req.headers['content-type'] as string, ['urlencoded'])
         )
       );
     } catch (e) {

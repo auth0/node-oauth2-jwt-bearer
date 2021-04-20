@@ -31,7 +31,12 @@ export const auth: Auth = (opts: any): Handler => {
 
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const jwt = getToken(req.method, req.headers, req.query, req.body);
+      const jwt = getToken(
+        req.headers,
+        req.query,
+        req.body,
+        !!req.is('urlencoded')
+      );
       req.auth = await verifyJwt(jwt);
       next();
     } catch (e) {
