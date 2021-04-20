@@ -3,8 +3,6 @@
  */
 import { InvalidRequestError } from './errors';
 
-const METHODS_WITHOUT_BODY = ['GET', 'HEAD', 'DELETE'];
-
 type QueryLike = Record<string, unknown> & { access_token?: string };
 type BodyLike = QueryLike;
 type HeadersLike = Record<string, unknown> & {
@@ -27,10 +25,7 @@ const getTokenFromHeader = (headers: HeadersLike) => {
 
 const getTokenFromQuery = (method: string, query?: QueryLike) => {
   const accessToken = query?.access_token;
-  if (
-    typeof accessToken === 'string' &&
-    METHODS_WITHOUT_BODY.includes(method)
-  ) {
+  if (typeof accessToken === 'string') {
     return accessToken;
   }
 };
@@ -39,7 +34,6 @@ const getFromBody = (method: string, headers: HeadersLike, body?: BodyLike) => {
   const accessToken = body?.access_token;
   if (
     typeof accessToken === 'string' &&
-    !METHODS_WITHOUT_BODY.includes(method) &&
     headers['content-type'] === 'application/x-www-form-urlencoded'
   ) {
     return accessToken;

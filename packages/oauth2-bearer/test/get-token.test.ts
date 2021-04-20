@@ -108,13 +108,14 @@ describe('get-token', () => {
     ).resolves.toEqual('token');
   });
 
-  it('should fail to get the token from the query string for POST requests', async () => {
+  it('should succeed to get the token from the query string for POST requests', async () => {
     await expect(
       got(url, {
+        resolveBodyOnly: true,
         method: 'POST',
         searchParams: { access_token: 'token' },
       })
-    ).rejects.toThrowError('Response code 400 (Bearer token is missing)');
+    ).resolves.toEqual('token');
   });
 
   it('should get the token from the request payload', async () => {
@@ -136,14 +137,15 @@ describe('get-token', () => {
     ).rejects.toThrowError('Response code 400 (Bearer token is missing)');
   });
 
-  it('should fail to get the token from request payload for GETs', async () => {
+  it('should succeed to get the token from request payload for GETs', async () => {
     await expect(
       got(url, {
+        resolveBodyOnly: true,
         allowGetBody: true,
         method: 'GET',
         form: { access_token: 'token' },
       })
-    ).rejects.toThrowError('Response code 400 (Bearer token is missing)');
+    ).resolves.toEqual('token');
   });
 
   it('should fail if more than one method is used', async () => {
