@@ -36,6 +36,7 @@ export const createJwt = async ({
   const { publicKey, privateKey } = await generateKeyPair('RS256');
   const publicJwk = await fromKeyLike(publicKey);
   nock(issuer)
+    .persist()
     .get(jwksUri)
     .reply(200, (...args) => {
       jwksSpy(...args);

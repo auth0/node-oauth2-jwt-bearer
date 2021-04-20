@@ -60,6 +60,24 @@ describe('index', () => {
     expect(jwksSpy).toHaveBeenCalledTimes(1);
   });
 
+  it('caches discovery in memory once', async () => {
+    const discoverSpy = jest.fn();
+
+    const jwt = await createJwt({
+      issuer: 'https://op.example.com',
+      discoverSpy,
+    });
+
+    const verify = jwtVerifier({
+      issuerBaseURL: 'https://op.example.com',
+      audience: 'https://api/',
+    });
+    await expect(
+      Promise.all([verify(jwt), verify(jwt), verify(jwt)])
+    ).resolves.toBeTruthy();
+    expect(discoverSpy).toHaveBeenCalledTimes(1);
+  });
+
   it('handles rotated signing keys', async () => {
     // @FIXME Use jest timers when facebook/jest#10221 is fixed
     const clock = sinon.useFakeTimers();
@@ -77,6 +95,7 @@ describe('index', () => {
     });
     await expect(verify(oldJwt)).resolves.toBeTruthy();
 
+    nock.cleanAll();
     const newJwt = await createJwt({
       issuer: 'https://op.example.com',
       jwksSpy,

@@ -99,19 +99,6 @@ describe('jwt-verifier', () => {
     );
   });
 
-  it('should use discovered issuer over issuer base url', async () => {
-    const jwt = await createJwt({
-      issuer: 'https://issuer.example.com',
-    });
-
-    const verify = jwtVerifier({
-      issuerBaseURL:
-        'https://issuer.example.com/.well-known/openid-configuration',
-      audience: 'https://api/',
-    });
-    await expect(verify(jwt)).resolves.toBeTruthy();
-  });
-
   it('should fail with invalid_token error', async () => {
     const jwt = await createJwt({
       issuer: 'https://issuer.example.com',

@@ -3,7 +3,7 @@ import { URL } from 'url';
 import createRemoteJWKSet from 'jose/jwks/remote';
 import jwtVerify, { JWTPayload } from 'jose/jwt/verify';
 import { InvalidTokenError } from 'oauth2-bearer';
-import discover from './discovery';
+import discover, { IssuerMetadata } from './discovery';
 
 interface JwtVerifierOptions {
   /**
@@ -47,6 +47,7 @@ const jwtVerifier: JwtVerifier = ({
   audience,
 }: any): VerifyJwt => {
   let origJWKS: GetKeyFn;
+  let discovery: Promise<IssuerMetadata>;
 
   assert(
     (issuerBaseURL && !(issuer || jwksUri)) ||
@@ -65,7 +66,8 @@ const jwtVerifier: JwtVerifier = ({
   return async (jwt: string) => {
     try {
       if (!jwksUri) {
-        ({ jwks_uri: jwksUri, issuer } = await discover(issuerBaseURL));
+        discovery = discovery || discover(issuerBaseURL);
+        ({ jwks_uri: jwksUri, issuer } = await discovery);
       }
       const { payload } = await jwtVerify(jwt, JWKS, {
         issuer,
