@@ -7,11 +7,6 @@ import discover from './discovery';
 
 interface JwtVerifierOptions {
   /**
-   * Expected JWT "iss" (Issuer) Claim value(s).
-   */
-  issuer?: string | string[];
-
-  /**
    * Expected JWT "aud" (Audience) Claim value(s).
    */
   audience: string | string[];
@@ -52,10 +47,10 @@ const jwtVerifier: JwtVerifier = ({
   audience,
 }: any): VerifyJwt => {
   let origJWKS: GetKeyFn;
-  let discoveredIssuer: string;
 
   assert(
-    (issuer && jwksUri) || issuerBaseURL,
+    (issuerBaseURL && !(issuer || jwksUri)) ||
+      (!issuerBaseURL && issuer && jwksUri),
     'You must provide an "issuerBaseURL" or an "issuer" and "jwksUri"'
   );
   assert(audience, 'An "audience" is required to validate the "aud" claim');
@@ -70,12 +65,10 @@ const jwtVerifier: JwtVerifier = ({
   return async (jwt: string) => {
     try {
       if (!jwksUri) {
-        ({ jwks_uri: jwksUri, issuer: discoveredIssuer } = await discover(
-          issuerBaseURL
-        ));
+        ({ jwks_uri: jwksUri, issuer } = await discover(issuerBaseURL));
       }
       const { payload } = await jwtVerify(jwt, JWKS, {
-        issuer: issuer || discoveredIssuer,
+        issuer,
         audience,
       });
       return payload;

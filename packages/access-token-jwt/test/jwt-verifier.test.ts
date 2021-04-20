@@ -1,17 +1,28 @@
 import nock = require('nock');
 import { createJwt, now } from './helpers';
-import { jwtVerifier, InvalidTokenError } from '../src';
+import { jwtVerifier, InvalidTokenError, WithoutDiscovery } from '../src';
 
 describe('jwt-verifier', () => {
   afterEach(nock.cleanAll);
 
-  it('should throw when configured with no issuer', async () => {
+  it('should throw when configured with no jwksUri or issuerBaseURL and issuer', async () => {
     expect(() =>
       jwtVerifier({
-        jwksUri: '',
+        audience: 'https://api/',
+      } as WithoutDiscovery)
+    ).toThrowError(
+      'You must provide an "issuerBaseURL" or an "issuer" and "jwksUri"'
+    );
+  });
+
+  it('should throw when configured with jwksUri and issuerBaseURL and issuer', async () => {
+    expect(() =>
+      jwtVerifier({
+        issuerBaseURL: 'https://issuer.example.com/',
+        jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
         issuer: 'https://issuer.example.com/',
         audience: 'https://api/',
-      })
+      } as WithoutDiscovery)
     ).toThrowError(
       'You must provide an "issuerBaseURL" or an "issuer" and "jwksUri"'
     );
@@ -22,8 +33,7 @@ describe('jwt-verifier', () => {
       jwtVerifier({
         jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
         issuer: 'https://issuer.example.com/',
-        audience: '',
-      })
+      } as WithoutDiscovery)
     ).toThrowError('An "audience" is required to validate the "aud" claim');
   });
 
@@ -109,25 +119,8 @@ describe('jwt-verifier', () => {
     const verify = jwtVerifier({
       issuerBaseURL:
         'https://issuer.example.com/.well-known/openid-configuration',
-      issuer: 'https://wrong.example.com',
       audience: 'https://api/',
     });
     await expect(verify(`CORRUPT-${jwt}`)).rejects.toThrow(InvalidTokenError);
-  });
-
-  it('should use configured issuer over discovered issuer', async () => {
-    const jwt = await createJwt({
-      issuer: 'https://issuer.example.com',
-    });
-
-    const verify = jwtVerifier({
-      issuerBaseURL:
-        'https://issuer.example.com/.well-known/openid-configuration',
-      issuer: 'https://wrong.example.com',
-      audience: 'https://api/',
-    });
-    await expect(verify(jwt)).rejects.toThrowError(
-      'unexpected "iss" claim value'
-    );
   });
 });
