@@ -68,11 +68,22 @@ describe('get-token', () => {
     ).resolves.toEqual('token');
   });
 
+  it('should do case insensitive check for header', async () => {
+    await expect(
+      got(url, {
+        resolveBodyOnly: true,
+        headers: {
+          authorization: 'bearer token',
+        },
+      })
+    ).resolves.toEqual('token');
+  });
+
   it('should fail for malformed header', async () => {
     await expect(
       got(url, {
         headers: {
-          authorization: 'bearer token',
+          authorization: 'foo token',
         },
       })
     ).rejects.toThrowError('Response code 400 (Bearer token is missing)');

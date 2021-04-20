@@ -12,7 +12,7 @@ type HeadersLike = Record<string, unknown> & {
   'content-type'?: string;
 };
 
-const TOKEN_RE = /^Bearer\s(.+)$/;
+const TOKEN_RE = /^Bearer (.+)$/i;
 
 const getTokenFromHeader = (headers: HeadersLike) => {
   if (!headers.authorization) {
