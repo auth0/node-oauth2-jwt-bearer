@@ -21,9 +21,9 @@ export interface WithDiscovery extends JwtVerifierOptions {
 
 export interface WithoutDiscovery extends JwtVerifierOptions {
   /**
-   * Expected JWT "iss" (Issuer) Claim value(s).
+   * Expected JWT "iss" (Issuer) Claim value.
    */
-  issuer: string | string[];
+  issuer: string;
 
   /**
    *

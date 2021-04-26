@@ -7,6 +7,7 @@ export default {
     dir: 'dist',
     format: 'es',
   },
+  external: [/^jose\//],
   plugins: [
     nodeResolve(),
     typescript({ tsconfigOverride: { compilerOptions: { module: 'ES2015' } } }),

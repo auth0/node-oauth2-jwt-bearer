@@ -9,6 +9,7 @@
     "lint": "eslint --fix --ext .ts ./src",
     "prepare": "npm run build",
     "prepublishOnly": "npm test && npm run lint",
+    "prebuild": "rimraf dist",
     "build": "rollup -c"
   },
   "author": "Auth0 <support@auth0.com>",
@@ -29,33 +30,17 @@
     "jest-junit": "^12.0.0",
     "nock": "^13.0.11",
     "prettier": "^2.2.1",
+    "rimraf": "^3.0.2",
     "rollup": "^2.45.1",
     "rollup-plugin-typescript2": "^0.30.0",
     "ts-jest": "^26.5.4",
     "tslib": "^2.2.0",
     "typescript": "^4.2.3"
   },
-  "jest": {
-    "preset": "ts-jest/presets/js-with-ts",
-    "resolver": "../access-token-jwt/resolver.js",
-    "testEnvironment": "node",
-    "collectCoverageFrom": [
-      "src/*"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 100,
-        "functions": 100,
-        "lines": 100,
-        "statements": 100
-      }
-    },
-    "reporters": [
-      "default",
-      [ "jest-junit", { "suiteName": "express-oauth2-jwt-bearer", "outputDirectory": "../../test-results/express-oauth2-jwt-bearer" } ]
-    ]
+  "dependencies": {
+    "jose": "^3.11.5"
   },
   "engines": {
-    "node": ">=12.0.0"
+    "node": "^12.19.0 || ^14.15.0"
   }
 }

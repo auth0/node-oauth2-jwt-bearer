@@ -11,5 +11,6 @@
   ],
   "rules": {
     "@typescript-eslint/no-namespace": "off"
-  }
+  },
+  "ignorePatterns": ["*.js"]
 }
