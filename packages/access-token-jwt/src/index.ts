@@ -1,7 +1,8 @@
 export {
-  default as tokenVerifier,
-  TokenVerifierOptions,
+  default as jwtVerifier,
   VerifyJwt,
-} from './token-verifier';
-export * from './errors';
+  WithDiscovery,
+  WithoutDiscovery,
+} from './jwt-verifier';
+export { InvalidTokenError } from 'oauth2-bearer';
 export { default as discover, IssuerMetadata } from './discovery';

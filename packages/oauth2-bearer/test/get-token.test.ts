@@ -3,6 +3,7 @@ import { URL } from 'url';
 import { AddressInfo } from 'net';
 import anyBody = require('body/any');
 import got from 'got';
+import typeis = require('type-is');
 import { getToken } from '../src';
 
 const start = (server: Server): Promise<string> =>
@@ -24,10 +25,10 @@ const handler = (req: IncomingMessage, res: ServerResponse) => {
     try {
       res.end(
         getToken(
-          req.method as string,
           req.headers,
           query,
-          body as Record<string, string>
+          body as Record<string, string>,
+          !!typeis.is(req.headers['content-type'] as string, ['urlencoded'])
         )
       );
     } catch (e) {
@@ -68,11 +69,22 @@ describe('get-token', () => {
     ).resolves.toEqual('token');
   });
 
+  it('should do case insensitive check for header', async () => {
+    await expect(
+      got(url, {
+        resolveBodyOnly: true,
+        headers: {
+          authorization: 'bearer token',
+        },
+      })
+    ).resolves.toEqual('token');
+  });
+
   it('should fail for malformed header', async () => {
     await expect(
       got(url, {
         headers: {
-          authorization: 'bearer token',
+          authorization: 'foo token',
         },
       })
     ).rejects.toThrowError('Response code 400 (Bearer token is missing)');
@@ -97,13 +109,14 @@ describe('get-token', () => {
     ).resolves.toEqual('token');
   });
 
-  it('should fail to get the token from the query string for POST requests', async () => {
+  it('should succeed to get the token from the query string for POST requests', async () => {
     await expect(
       got(url, {
+        resolveBodyOnly: true,
         method: 'POST',
         searchParams: { access_token: 'token' },
       })
-    ).rejects.toThrowError('Response code 400 (Bearer token is missing)');
+    ).resolves.toEqual('token');
   });
 
   it('should get the token from the request payload', async () => {
@@ -125,14 +138,15 @@ describe('get-token', () => {
     ).rejects.toThrowError('Response code 400 (Bearer token is missing)');
   });
 
-  it('should fail to get the token from request payload for GETs', async () => {
+  it('should succeed to get the token from request payload for GETs', async () => {
     await expect(
       got(url, {
+        resolveBodyOnly: true,
         allowGetBody: true,
         method: 'GET',
         form: { access_token: 'token' },
       })
-    ).rejects.toThrowError('Response code 400 (Bearer token is missing)');
+    ).resolves.toEqual('token');
   });
 
   it('should fail if more than one method is used', async () => {

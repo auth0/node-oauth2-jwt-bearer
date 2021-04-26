@@ -3,7 +3,6 @@ import { get as getHttp } from 'http';
 import { get as getHttps } from 'https';
 import { once } from 'events';
 import type { ClientRequest, IncomingMessage } from 'http';
-import { FetchError, JsonParseError } from './errors';
 
 const decoder = new TextDecoder();
 
@@ -31,7 +30,9 @@ const fetch = async <TResponse>(url: URL): Promise<TResponse> => {
   const [response] = <[IncomingMessage]>await once(req, 'response');
 
   if (response.statusCode !== 200) {
-    throw new FetchError(url.href, response.statusCode, response.statusMessage);
+    throw new Error(
+      `Failed to fetch ${url.href}, responded with ${response.statusCode}`
+    );
   }
 
   const parts = [];
@@ -42,7 +43,7 @@ const fetch = async <TResponse>(url: URL): Promise<TResponse> => {
   try {
     return JSON.parse(decoder.decode(concat(...parts)));
   } catch (err) {
-    throw new JsonParseError(url.href);
+    throw new Error(`Failed to parse the response from ${url.href}`);
   }
 };
 

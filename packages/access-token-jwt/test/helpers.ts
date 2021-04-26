@@ -12,9 +12,12 @@ interface CreateJWTOptions {
   subject?: string;
   audience?: string;
   jwksUri?: string;
+  discoveryUri?: string;
   kid?: string;
   iat?: number;
   exp?: number;
+  jwksSpy?: jest.Mock;
+  discoverSpy?: jest.Mock;
 }
 
 export const createJwt = async ({
@@ -23,15 +26,30 @@ export const createJwt = async ({
   subject = 'me',
   audience = 'https://api/',
   jwksUri = '/.well-known/jwks.json',
+  discoveryUri = '/.well-known/openid-configuration',
   iat = now,
   exp = now + day,
   kid = 'kid',
+  jwksSpy = jest.fn(),
+  discoverSpy = jest.fn(),
 }: CreateJWTOptions = {}): Promise<string> => {
   const { publicKey, privateKey } = await generateKeyPair('RS256');
   const publicJwk = await fromKeyLike(publicKey);
   nock(issuer)
+    .persist()
     .get(jwksUri)
-    .reply(200, { keys: [{ kid: 'kid', ...publicJwk }] });
+    .reply(200, (...args) => {
+      jwksSpy(...args);
+      return { keys: [{ kid, ...publicJwk }] };
+    })
+    .get(discoveryUri)
+    .reply(200, (...args) => {
+      discoverSpy(...args);
+      return {
+        issuer,
+        jwks_uri: (issuer + jwksUri).replace('//.well-known', '/.well-known'),
+      };
+    });
 
   return new SignJWT(payload)
     .setProtectedHeader({

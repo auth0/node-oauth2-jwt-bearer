@@ -3,9 +3,15 @@
   "private": true,
   "version": "0.0.1",
   "workspaces": [
-    "packages/*"
+    "packages/oauth2-bearer",
+    "packages/access-token-jwt",
+    "packages/express-oauth2-jwt-bearer"
   ],
   "scripts": {
-    "test": "npm test --workspaces"
+    "install:workspace": "npm install --package-lock-only --no-package-lock --save-dev -C",
+    "postinstall:workspace": "npm install",
+    "lint": "npm run lint --workspaces",
+    "test": "npm test --workspaces",
+    "build": "npm run build --workspaces"
   }
 }
