@@ -1,14 +1,10 @@
-/* eslint-disable */
 const fs = require('fs');
-const path = require('path');
 const { ResolverFactory } = require('enhanced-resolve');
 
+// Use a special resolver for jose as it uses named and conditional exports which aren't
+// supported by the default jest resolver yet facebook/jest#9771
 module.exports = function enhancedResolve(modulePath, opts) {
-  if (
-    modulePath.startsWith('.') ||
-    modulePath.startsWith(path.sep) ||
-    modulePath.includes('access-token-jwt')
-  ) {
+  if (!modulePath.startsWith('jose/')) {
     return opts.defaultResolver(modulePath, opts);
   }
 
