@@ -1,4 +1,6 @@
 import { URL } from 'url';
+import { Agent as HttpAgent } from 'http';
+import { Agent as HttpsAgent } from 'https';
 import fetch from './fetch';
 import { strict as assert } from 'assert';
 
@@ -14,11 +16,19 @@ export interface IssuerMetadata {
 const assertIssuer = (data: IssuerMetadata) =>
   assert(data.issuer, `"issuer" not found in authorization server metadata`);
 
-const discover = async (uri: string): Promise<IssuerMetadata> => {
+export interface DiscoverOptions {
+  agent?: HttpAgent | HttpsAgent;
+  timeoutDuration?: number;
+}
+
+const discover = async (
+  uri: string,
+  { agent, timeoutDuration }: DiscoverOptions = {}
+): Promise<IssuerMetadata> => {
   const url = new URL(uri);
 
   if (url.pathname.includes('/.well-known/')) {
-    const data = await fetch<IssuerMetadata>(url);
+    const data = await fetch<IssuerMetadata>(url, { agent, timeoutDuration });
     assertIssuer(data);
     return data;
   }
@@ -39,7 +49,10 @@ const discover = async (uri: string): Promise<IssuerMetadata> => {
   for (const pathname of pathnames) {
     try {
       const wellKnownUri = new URL(pathname, url);
-      const data = await fetch<IssuerMetadata>(wellKnownUri);
+      const data = await fetch<IssuerMetadata>(wellKnownUri, {
+        agent,
+        timeoutDuration,
+      });
       assertIssuer(data);
       return data;
     } catch (err) {
