@@ -10,7 +10,7 @@
 export class UnauthorizedError extends Error {
   status = 401;
   statusCode = 401;
-  headers = { 'www-authentication': 'Bearer realm="api"' };
+  headers = { 'WWW-Authenticate': 'Bearer realm="api"' };
 
   constructor(message = 'Unauthorized') {
     super(message);
@@ -67,7 +67,7 @@ export class InsufficientScopeError extends UnauthorizedError {
 
 // Generate a response header per https://tools.ietf.org/html/rfc6750#section-3
 const getHeaders = (error: string, description: string, scopes?: string[]) => ({
-  'www-authentication': `Bearer realm="api", error="${error}", error_description="${description}"${
+  'WWW-Authenticate': `Bearer realm="api", error="${error}", error_description="${description}"${
     (scopes && `, scope="${scopes.join(' ')}"`) || ''
   }`,
 });

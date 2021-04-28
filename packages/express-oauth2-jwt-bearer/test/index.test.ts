@@ -26,7 +26,7 @@ const expectFailsWith = async (
     fail('Request should fail');
   } catch (e) {
     expect(e.response.statusCode).toBe(status);
-    expect(e.response.headers['www-authentication']).toBe(
+    expect(e.response.headers['www-authenticate']).toBe(
       `Bearer realm="api", error="${code}", error_description="${description}"${
         (scopes && ', scope="' + scopes + '"') || ''
       }`
@@ -150,7 +150,7 @@ describe('index', () => {
     } catch ({ response }) {
       expect(response.statusCode).toBe(401);
       expect(response.headers).toMatchObject({
-        'www-authentication': 'Bearer realm="api"',
+        'www-authenticate': 'Bearer realm="api"',
       });
     }
   });
