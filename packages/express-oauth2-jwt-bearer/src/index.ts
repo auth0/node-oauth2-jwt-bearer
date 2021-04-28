@@ -1,11 +1,23 @@
 import { Handler, NextFunction, Request, Response } from 'express';
-import { jwtVerifier, WithDiscovery, WithoutDiscovery } from 'access-token-jwt';
+import {
+  jwtVerifier,
+  WithDiscovery,
+  WithoutDiscovery,
+  claimCheck as _claimCheck,
+  ClaimCheck,
+  claimEquals as _claimEquals,
+  ClaimEquals,
+  claimIncludes as _claimIncludes,
+  ClaimIncludes,
+  requiredScopes as _requiredScopes,
+  RequiredScopes,
+} from 'access-token-jwt';
 import { getToken } from 'oauth2-bearer';
 
 declare global {
   namespace Express {
     interface Request {
-      auth: { payload: JWTPayload };
+      auth?: { payload: JWTPayload };
     }
   }
 }
@@ -44,3 +56,28 @@ export const auth: Auth = (opts: any): Handler => {
     }
   };
 };
+
+const toHandler = (fn: (payload?: JWTPayload) => void): Handler => (
+  req,
+  res,
+  next
+) => {
+  try {
+    fn(req.auth?.payload);
+    next();
+  } catch (e) {
+    next(e);
+  }
+};
+
+export const claimCheck: ClaimCheck<Handler> = (...args) =>
+  toHandler(_claimCheck(...args));
+
+export const claimEquals: ClaimEquals<Handler> = (...args) =>
+  toHandler(_claimEquals(...args));
+
+export const claimIncludes: ClaimIncludes<Handler> = (...args) =>
+  toHandler(_claimIncludes(...args));
+
+export const requiredScopes: RequiredScopes<Handler> = (...args) =>
+  toHandler(_requiredScopes(...args));
