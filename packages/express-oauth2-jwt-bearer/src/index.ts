@@ -64,10 +64,10 @@ const toHandler = (fn: (payload?: JWTPayload) => void): Handler => (
 ) => {
   try {
     fn(req.auth?.payload);
+    next();
   } catch (e) {
     next(e);
   }
-  next();
 };
 
 export const claimCheck: ClaimCheck<Handler> = (...args) =>
