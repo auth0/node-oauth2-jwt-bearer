@@ -17,7 +17,7 @@ import { getToken } from 'oauth2-bearer';
 declare global {
   namespace Express {
     interface Request {
-      auth: { payload: JWTPayload };
+      auth?: { payload: JWTPayload };
     }
   }
 }
@@ -57,7 +57,7 @@ export const auth: Auth = (opts: any): Handler => {
   };
 };
 
-const toHandler = (fn: (payload: JWTPayload) => void): Handler => (
+const toHandler = (fn: (payload?: JWTPayload) => void): Handler => (
   req,
   res,
   next
