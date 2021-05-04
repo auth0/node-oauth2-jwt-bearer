@@ -14,11 +14,8 @@ export interface Validators {
   typ: Validator;
   iss: Validator;
   aud: Validator;
-  sub: Validator;
-  client_id: Validator;
   exp: Validator;
   iat: Validator;
-  jti: Validator;
 }
 
 const validateProperty = async (
@@ -79,8 +76,6 @@ export const defaultValidators = (
     }
     return false;
   },
-  sub: false,
-  client_id: false,
   exp: (exp) => {
     const now = Math.floor(Date.now() / 1000);
     return typeof exp === 'number' && exp >= now - clockTolerance;
@@ -96,5 +91,4 @@ export const defaultValidators = (
       iat > now - clockTolerance - maxTokenAge
     );
   },
-  jti: false,
 });
