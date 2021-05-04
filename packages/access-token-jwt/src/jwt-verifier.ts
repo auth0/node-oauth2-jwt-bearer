@@ -4,12 +4,21 @@ import createRemoteJWKSet from 'jose/jwks/remote';
 import jwtVerify, { JWTPayload } from 'jose/jwt/verify';
 import { InvalidTokenError } from 'oauth2-bearer';
 import discover, { IssuerMetadata } from './discovery';
+import validate, { defaultValidators, Validators } from './validate';
 
 interface JwtVerifierOptions {
   /**
    * Expected JWT "aud" (Audience) Claim value(s).
    */
   audience: string | string[];
+
+  validators?: Partial<Validators>;
+
+  clockTolerance?: number;
+
+  maxTokenAge?: number;
+
+  strict?: boolean;
 }
 
 export interface WithDiscovery extends JwtVerifierOptions {
@@ -45,9 +54,14 @@ const jwtVerifier: JwtVerifier = ({
   jwksUri,
   issuer,
   audience,
+  clockTolerance = 5,
+  maxTokenAge,
+  strict = false,
+  validators: customValidators,
 }: any): VerifyJwt => {
   let origJWKS: GetKeyFn;
   let discovery: Promise<IssuerMetadata>;
+  let validators: Validators;
 
   assert(
     (issuerBaseURL && !(issuer || jwksUri)) ||
@@ -69,10 +83,18 @@ const jwtVerifier: JwtVerifier = ({
         discovery = discovery || discover(issuerBaseURL);
         ({ jwks_uri: jwksUri, issuer } = await discovery);
       }
-      const { payload } = await jwtVerify(jwt, JWKS, {
-        issuer,
-        audience,
-      });
+      validators = validators || {
+        ...defaultValidators(
+          issuer,
+          audience,
+          clockTolerance,
+          maxTokenAge,
+          strict
+        ),
+        ...customValidators,
+      };
+      const { payload, protectedHeader: header } = await jwtVerify(jwt, JWKS);
+      await validate(payload, header, validators);
       return { payload };
     } catch (e) {
       throw new InvalidTokenError(e.message);

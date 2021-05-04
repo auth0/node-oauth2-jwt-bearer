@@ -12,6 +12,9 @@
     "prebuild": "rimraf dist",
     "build": "rollup -c"
   },
+  "files": [
+    "dist"
+  ],
   "author": "Auth0 <support@auth0.com>",
   "homepage": "https://github.com/auth0/node-oauth2-jwt-bearer/tree/main/packages/express-oauth2-jwt-bearer",
   "license": "MIT",
