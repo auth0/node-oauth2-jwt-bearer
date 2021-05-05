@@ -83,7 +83,7 @@ const jwtVerifier: JwtVerifier = ({
         discovery = discovery || discover(issuerBaseURL);
         ({ jwks_uri: jwksUri, issuer } = await discovery);
       }
-      validators = validators || {
+      validators ||= {
         ...defaultValidators(
           issuer,
           audience,

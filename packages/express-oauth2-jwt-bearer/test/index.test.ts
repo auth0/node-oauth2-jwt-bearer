@@ -119,7 +119,7 @@ describe('index', () => {
       }),
       401,
       'invalid_token',
-      'unexpected "aud" claim value'
+      'unexpected "aud" value'
     );
   });
 
