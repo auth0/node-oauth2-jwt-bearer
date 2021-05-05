@@ -42,12 +42,12 @@ const validateProperty = async (
   throw new Error(`unexpected "${property}" value`);
 };
 
-export default async (
+export default (
   payload: JWTPayload,
   header: JWSHeaderParameters,
   validators: Validators
-): Promise<void> => {
-  await Promise.all(
+): Promise<void[]> =>
+  Promise.all(
     Object.entries(validators).reduce(
       (acc: Promise<void>[], [key, val]: [string, Validator]) => {
         if (key === 'alg' || key === 'typ') {
@@ -68,7 +68,6 @@ export default async (
       []
     )
   );
-};
 
 export const defaultValidators = (
   issuer: string,
