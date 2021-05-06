@@ -119,7 +119,27 @@ describe('index', () => {
       }),
       401,
       'invalid_token',
-      'unexpected "aud" claim value'
+      'unexpected "aud" value'
+    );
+  });
+
+  it('should fail when custom validator fails', async () => {
+    const jwt = await createJwt();
+    const baseUrl = await setup({
+      validators: {
+        foo: () => false,
+      },
+    });
+    await expectFailsWith(
+      got(baseUrl, {
+        headers: {
+          authorization: `Bearer ${jwt}`,
+        },
+        responseType: 'json',
+      }),
+      401,
+      'invalid_token',
+      'unexpected "foo" value'
     );
   });
 

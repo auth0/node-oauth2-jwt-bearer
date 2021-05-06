@@ -123,4 +123,23 @@ describe('index', () => {
     const promise = verify(jwt);
     await expect(promise).resolves.toBeTruthy();
   });
+
+  it('should accept custom validators', async () => {
+    const jwt = await createJwt({
+      issuer: 'https://op.example.com',
+      payload: { foo: 'baz' },
+    });
+
+    const verify = jwtVerifier({
+      issuerBaseURL: 'https://op.example.com',
+      audience: 'https://api/',
+      agent: new Agent(),
+      timeoutDuration: 1000,
+      validators: {
+        foo: 'bar',
+      },
+    });
+    const promise = verify(jwt);
+    await expect(promise).rejects.toThrow('unexpected "foo" value');
+  });
 });

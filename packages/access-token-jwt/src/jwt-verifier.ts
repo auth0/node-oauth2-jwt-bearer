@@ -6,6 +6,7 @@ import createRemoteJWKSet from 'jose/jwks/remote';
 import jwtVerify, { JWTPayload } from 'jose/jwt/verify';
 import { InvalidTokenError } from 'oauth2-bearer';
 import discover, { IssuerMetadata } from './discovery';
+import validate, { defaultValidators, Validators } from './validate';
 
 interface JwtVerifierOptions {
   /**
@@ -29,6 +30,14 @@ interface JwtVerifierOptions {
    * Default is 5000.
    */
   timeoutDuration?: number;
+
+  validators?: Partial<Validators>;
+
+  clockTolerance?: number;
+
+  maxTokenAge?: number;
+
+  strict?: boolean;
 }
 
 export interface WithDiscovery extends JwtVerifierOptions {
@@ -67,9 +76,14 @@ const jwtVerifier: JwtVerifier = ({
   agent,
   cooldownDuration = 30000,
   timeoutDuration = 5000,
+  clockTolerance = 5,
+  maxTokenAge,
+  strict = false,
+  validators: customValidators,
 }: any): VerifyJwt => {
   let origJWKS: GetKeyFn;
   let discovery: Promise<IssuerMetadata>;
+  let validators: Validators;
 
   assert(
     (issuerBaseURL && !(issuer || jwksUri)) ||
@@ -96,10 +110,18 @@ const jwtVerifier: JwtVerifier = ({
           discovery || discover(issuerBaseURL, { agent, timeoutDuration });
         ({ jwks_uri: jwksUri, issuer } = await discovery);
       }
-      const { payload } = await jwtVerify(jwt, JWKS, {
-        issuer,
-        audience,
-      });
+      validators ||= {
+        ...defaultValidators(
+          issuer,
+          audience,
+          clockTolerance,
+          maxTokenAge,
+          strict
+        ),
+        ...customValidators,
+      };
+      const { payload, protectedHeader: header } = await jwtVerify(jwt, JWKS);
+      await validate(payload, header, validators);
       return { payload };
     } catch (e) {
       throw new InvalidTokenError(e.message);
