@@ -64,9 +64,7 @@ describe('jwt-verifier', () => {
       issuer: 'https://issuer2.example.com/',
       audience: 'https://api/',
     });
-    await expect(verify(jwt)).rejects.toThrowError(
-      'unexpected "iss" claim value'
-    );
+    await expect(verify(jwt)).rejects.toThrowError('unexpected "iss" value');
   });
 
   it('should throw for unexpected audience', async () => {
@@ -79,9 +77,7 @@ describe('jwt-verifier', () => {
       issuer: 'https://issuer.example.com/',
       audience: 'https://api2/',
     });
-    await expect(verify(jwt)).rejects.toThrowError(
-      'unexpected "aud" claim value'
-    );
+    await expect(verify(jwt)).rejects.toThrowError('unexpected "aud" value');
   });
 
   it('should throw for an expired token', async () => {
