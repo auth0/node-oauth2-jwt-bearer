@@ -22,36 +22,27 @@ export interface Validators {
   [key: string]: Validator;
 }
 
-const validateProperty = async (
-  property: string,
-  value: unknown,
-  validator: Validator,
-  payload: JWTPayload,
-  header: JWSHeaderParameters
-): Promise<void> => {
-  if (
-    validator === false ||
-    (typeof validator === 'string' && value === validator) ||
-    (typeof validator === 'function' &&
-      (await validator(value, payload, header)))
-  ) {
-    return;
-  }
-  throw new Error(`unexpected "${property}" value`);
-};
-
 export default (
   payload: JWTPayload,
   header: JWSHeaderParameters,
   validators: Validators
 ): Promise<void[]> =>
   Promise.all(
-    Object.entries(validators).map(([key, val]: [string, Validator]) => {
-      if (key === 'alg' || key === 'typ') {
-        return validateProperty(key, header[key], val, payload, header);
+    Object.entries(validators).map(
+      async ([key, validator]: [string, Validator]) => {
+        const value =
+          key === 'alg' || key === 'typ' ? header[key] : payload[key];
+        if (
+          validator === false ||
+          (typeof validator === 'string' && value === validator) ||
+          (typeof validator === 'function' &&
+            (await validator(value, payload, header)))
+        ) {
+          return;
+        }
+        throw new Error(`unexpected "${key}" value`);
       }
-      return validateProperty(key, payload[key], val, payload, header);
-    })
+    )
   );
 
 export const defaultValidators = (
