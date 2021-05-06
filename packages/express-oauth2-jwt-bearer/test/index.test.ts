@@ -123,6 +123,26 @@ describe('index', () => {
     );
   });
 
+  it('should fail when custom validator fails', async () => {
+    const jwt = await createJwt();
+    const baseUrl = await setup({
+      validators: {
+        foo: () => false,
+      },
+    });
+    await expectFailsWith(
+      got(baseUrl, {
+        headers: {
+          authorization: `Bearer ${jwt}`,
+        },
+        responseType: 'json',
+      }),
+      401,
+      'invalid_token',
+      'unexpected "foo" value'
+    );
+  });
+
   it('should succeed for POST requests with custom character encoding', async () => {
     const jwt = await createJwt();
     const baseUrl = await setup();
