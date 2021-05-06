@@ -18,6 +18,7 @@ interface CreateJWTOptions {
   exp?: number;
   jwksSpy?: jest.Mock;
   discoverSpy?: jest.Mock;
+  delay?: number;
 }
 
 export const createJwt = async ({

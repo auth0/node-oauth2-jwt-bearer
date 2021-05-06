@@ -1,6 +1,6 @@
 import { URL } from 'url';
-import { get as getHttp } from 'http';
-import { get as getHttps } from 'https';
+import { Agent as HttpAgent, get as getHttp } from 'http';
+import { Agent as HttpsAgent, get as getHttps } from 'https';
 import { once } from 'events';
 import type { ClientRequest, IncomingMessage } from 'http';
 
@@ -24,8 +24,19 @@ const protocols: {
   'http:': getHttp,
 };
 
-const fetch = async <TResponse>(url: URL): Promise<TResponse> => {
-  const req = protocols[url.protocol](url.href, {});
+export interface FetchOptions {
+  agent?: HttpAgent | HttpsAgent;
+  timeoutDuration?: number;
+}
+
+const fetch = async <TResponse>(
+  url: URL,
+  { agent, timeoutDuration: timeout }: FetchOptions
+): Promise<TResponse> => {
+  const req = protocols[url.protocol](url.href, {
+    agent,
+    timeout,
+  });
 
   const [response] = <[IncomingMessage]>await once(req, 'response');
 

@@ -1,4 +1,6 @@
 import { strict as assert } from 'assert';
+import { Agent as HttpAgent } from 'http';
+import { Agent as HttpsAgent } from 'https';
 import { URL } from 'url';
 import createRemoteJWKSet from 'jose/jwks/remote';
 import jwtVerify, { JWTPayload } from 'jose/jwt/verify';
@@ -10,6 +12,23 @@ interface JwtVerifierOptions {
    * Expected JWT "aud" (Audience) Claim value(s).
    */
   audience: string | string[];
+
+  /**
+   * An instance of http.Agent or https.Agent to pass to the http.get or https.get method options. Use when behind an http(s) proxy.
+   */
+  agent?: HttpAgent | HttpsAgent;
+
+  /**
+   * Duration in ms for which no more HTTP requests to the JWKS Uri endpoint will be triggered after a previous successful fetch.
+   * Default is 30000.
+   */
+  cooldownDuration?: number;
+
+  /**
+   * Timeout in ms for the HTTP request. When reached the request will be aborted and the verification will fail.
+   * Default is 5000.
+   */
+  timeoutDuration?: number;
 }
 
 export interface WithDiscovery extends JwtVerifierOptions {
@@ -45,6 +64,9 @@ const jwtVerifier: JwtVerifier = ({
   jwksUri,
   issuer,
   audience,
+  agent,
+  cooldownDuration = 30000,
+  timeoutDuration = 5000,
 }: any): VerifyJwt => {
   let origJWKS: GetKeyFn;
   let discovery: Promise<IssuerMetadata>;
@@ -58,7 +80,11 @@ const jwtVerifier: JwtVerifier = ({
 
   const JWKS = async (...args: Parameters<GetKeyFn>) => {
     if (!origJWKS) {
-      origJWKS = createRemoteJWKSet(new URL(jwksUri));
+      origJWKS = createRemoteJWKSet(new URL(jwksUri), {
+        agent,
+        cooldownDuration,
+        timeoutDuration,
+      });
     }
     return origJWKS(...args);
   };
@@ -66,7 +92,8 @@ const jwtVerifier: JwtVerifier = ({
   return async (jwt: string) => {
     try {
       if (!jwksUri) {
-        discovery = discovery || discover(issuerBaseURL);
+        discovery =
+          discovery || discover(issuerBaseURL, { agent, timeoutDuration });
         ({ jwks_uri: jwksUri, issuer } = await discovery);
       }
       const { payload } = await jwtVerify(jwt, JWKS, {

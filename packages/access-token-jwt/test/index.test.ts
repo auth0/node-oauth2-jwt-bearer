@@ -1,3 +1,4 @@
+import { Agent } from 'http';
 import nock = require('nock');
 import sinon = require('sinon');
 import { createJwt } from './helpers';
@@ -92,6 +93,7 @@ describe('index', () => {
       issuer: 'https://op.example.com',
       jwksUri: 'https://op.example.com/.well-known/jwks.json',
       audience: 'https://api/',
+      cooldownDuration: 1000,
     });
     await expect(verify(oldJwt)).resolves.toBeTruthy();
 
@@ -101,10 +103,24 @@ describe('index', () => {
       jwksSpy,
       kid: 'b',
     });
-    // Wait for jose RemoteJWKSet default "cooldownDuration"
-    clock.tick(30000);
+    clock.tick(1000);
 
     await expect(verify(newJwt)).resolves.toBeTruthy();
     clock.restore();
+  });
+
+  it('should accept custom http options', async () => {
+    const jwt = await createJwt({
+      issuer: 'https://op.example.com',
+    });
+
+    const verify = jwtVerifier({
+      issuerBaseURL: 'https://op.example.com',
+      audience: 'https://api/',
+      agent: new Agent(),
+      timeoutDuration: 1000,
+    });
+    const promise = verify(jwt);
+    await expect(promise).resolves.toBeTruthy();
   });
 });
