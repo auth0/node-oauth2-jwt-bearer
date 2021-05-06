@@ -1,10 +1,8 @@
 import { JWTPayload, JWSHeaderParameters } from 'jose/jwt/verify';
 
-type ClaimValue = number | string | string[] | undefined;
-
 export type Validator =
   | ((
-      value: ClaimValue,
+      value: unknown,
       claims: JWTPayload,
       header: JWSHeaderParameters
     ) => Promise<boolean> | boolean)
@@ -26,7 +24,7 @@ export interface Validators {
 
 const validateProperty = async (
   property: string,
-  value: undefined | number | string | string[],
+  value: unknown,
   validator: Validator,
   payload: JWTPayload,
   header: JWSHeaderParameters
@@ -48,25 +46,12 @@ export default (
   validators: Validators
 ): Promise<void[]> =>
   Promise.all(
-    Object.entries(validators).reduce(
-      (acc: Promise<void>[], [key, val]: [string, Validator]) => {
-        if (key === 'alg' || key === 'typ') {
-          acc.push(validateProperty(key, header[key], val, payload, header));
-        } else {
-          acc.push(
-            validateProperty(
-              key,
-              payload[key] as ClaimValue,
-              val,
-              payload,
-              header
-            )
-          );
-        }
-        return acc;
-      },
-      []
-    )
+    Object.entries(validators).map(([key, val]: [string, Validator]) => {
+      if (key === 'alg' || key === 'typ') {
+        return validateProperty(key, header[key], val, payload, header);
+      }
+      return validateProperty(key, payload[key], val, payload, header);
+    })
   );
 
 export const defaultValidators = (
