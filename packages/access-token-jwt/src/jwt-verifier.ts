@@ -88,9 +88,9 @@ const jwtVerifier: JwtVerifier = ({
   assert(
     (issuerBaseURL && !(issuer || jwksUri)) ||
       (!issuerBaseURL && issuer && jwksUri),
-    'You must provide an "issuerBaseURL" or an "issuer" and "jwksUri"'
+    "You must provide an 'issuerBaseURL' or an 'issuer' and 'jwksUri'"
   );
-  assert(audience, 'An "audience" is required to validate the "aud" claim');
+  assert(audience, "An 'audience' is required to validate the 'aud' claim");
 
   const JWKS = async (...args: Parameters<GetKeyFn>) => {
     if (!origJWKS) {

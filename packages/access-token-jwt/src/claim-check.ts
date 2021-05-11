@@ -16,7 +16,7 @@ const checkJSONPrimitive = (value: JSONPrimitive): void => {
     typeof value !== 'boolean' &&
     value !== null
   ) {
-    throw new TypeError('"expected" must be a string, number, boolean or null');
+    throw new TypeError("'expected' must be a string, number, boolean or null");
   }
 };
 
@@ -46,7 +46,7 @@ export const requiredScopes: RequiredScopes = (scopes) => {
   if (typeof scopes === 'string') {
     scopes = scopes.split(' ');
   } else if (!Array.isArray(scopes)) {
-    throw new TypeError('"scopes" must be a string or array of strings');
+    throw new TypeError("'scopes' must be a string or array of strings");
   }
   const fn = isClaimIncluded('scope', scopes);
   return claimCheck((payload) => {
@@ -64,13 +64,13 @@ export type ClaimIncludes<R = ClaimChecker> = (
 
 export const claimIncludes: ClaimIncludes = (claim, ...expected) => {
   if (typeof claim !== 'string') {
-    throw new TypeError('"claim" must be a string');
+    throw new TypeError("'claim' must be a string");
   }
   expected.forEach(checkJSONPrimitive);
 
   return claimCheck(
     isClaimIncluded(claim, expected),
-    `"${claim}" claim mismatch`
+    `Unexpected '${claim}' value`
   );
 };
 
@@ -81,7 +81,7 @@ export type ClaimEquals<R = ClaimChecker> = (
 
 export const claimEquals: ClaimEquals = (claim, expected) => {
   if (typeof claim !== 'string') {
-    throw new TypeError('"claim" must be a string');
+    throw new TypeError("'claim' must be a string");
   }
   checkJSONPrimitive(expected);
 
@@ -90,7 +90,7 @@ export const claimEquals: ClaimEquals = (claim, expected) => {
       return false;
     }
     return payload[claim] === expected;
-  }, `"${claim}" claim mismatch`);
+  }, `Unexpected '${claim}' value`);
 };
 
 export type ClaimCheck<R = ClaimChecker> = (
@@ -100,7 +100,7 @@ export type ClaimCheck<R = ClaimChecker> = (
 
 export const claimCheck: ClaimCheck = (fn, errMsg) => {
   if (typeof fn !== 'function') {
-    throw new TypeError('"claimCheck" expects a function');
+    throw new TypeError("'claimCheck' expects a function");
   }
 
   return (payload?: JWTPayload) => {

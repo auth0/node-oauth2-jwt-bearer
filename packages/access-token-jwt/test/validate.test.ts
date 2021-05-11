@@ -39,7 +39,7 @@ describe('validate', () => {
   it('should throw for invalid alg header', async () => {
     await expect(
       validate(payload, { ...header, alg: 'none' }, validators())
-    ).rejects.toThrow('unexpected "alg" value');
+    ).rejects.toThrow(`Unexpected 'alg' value`);
   });
   it('should disable alg header check', async () => {
     await expect(
@@ -53,14 +53,14 @@ describe('validate', () => {
   it('should throw for invalid typ in strict mode', async () => {
     await expect(
       validate(payload, header, validators({ strict: true }))
-    ).rejects.toThrow('unexpected "typ" value');
+    ).rejects.toThrow(`Unexpected 'typ' value`);
     await expect(
       validate(
         payload,
         { ...header, typ: 1 as any },
         validators({ strict: true })
       )
-    ).rejects.toThrow('unexpected "typ" value');
+    ).rejects.toThrow(`Unexpected 'typ' value`);
   });
   it('should validate typ in strict mode', async () => {
     await expect(
@@ -92,21 +92,21 @@ describe('validate', () => {
         { ...header, typ: 'at+jwt' },
         validators({ strict: true })
       )
-    ).rejects.toThrow('unexpected "sub" value');
+    ).rejects.toThrow(`Unexpected 'sub' value`);
     await expect(
       validate(
         { ...payload, client_id: undefined },
         { ...header, typ: 'at+jwt' },
         validators({ strict: true })
       )
-    ).rejects.toThrow('unexpected "client_id" value');
+    ).rejects.toThrow(`Unexpected 'client_id' value`);
     await expect(
       validate(
         { ...payload, jti: undefined },
         { ...header, typ: 'at+jwt' },
         validators({ strict: true })
       )
-    ).rejects.toThrow('unexpected "jti" value');
+    ).rejects.toThrow(`Unexpected 'jti' value`);
   });
   it('should throw for invalid claims in strict mode', async () => {
     await expect(
@@ -115,26 +115,26 @@ describe('validate', () => {
         { ...header, typ: 'at+jwt' },
         validators({ strict: true })
       )
-    ).rejects.toThrow('unexpected "sub" value');
+    ).rejects.toThrow(`Unexpected 'sub' value`);
     await expect(
       validate(
         { ...payload, client_id: ['bar'] },
         { ...header, typ: 'at+jwt' },
         validators({ strict: true })
       )
-    ).rejects.toThrow('unexpected "client_id" value');
+    ).rejects.toThrow(`Unexpected 'client_id' value`);
     await expect(
       validate(
         { ...payload, jti: true as any },
         { ...header, typ: 'at+jwt' },
         validators({ strict: true })
       )
-    ).rejects.toThrow('unexpected "jti" value');
+    ).rejects.toThrow(`Unexpected 'jti' value`);
   });
   it('should throw for issuer mismatch', async () => {
     await expect(
       validate({ ...payload, iss: 'foo' }, header, validators())
-    ).rejects.toThrow('unexpected "iss" value');
+    ).rejects.toThrow(`Unexpected 'iss' value`);
   });
   it('should throw for audience mismatch', async () => {
     await expect(
@@ -143,21 +143,21 @@ describe('validate', () => {
         header,
         validators({ audience: ['bar'] })
       )
-    ).rejects.toThrow('unexpected "aud" value');
+    ).rejects.toThrow(`Unexpected 'aud' value`);
     await expect(
       validate(
         { ...payload, aud: ['bar'] },
         header,
         validators({ audience: ['foo'] })
       )
-    ).rejects.toThrow('unexpected "aud" value');
+    ).rejects.toThrow(`Unexpected 'aud' value`);
     await expect(
       validate(
         { ...payload, aud: 1 as any },
         header,
         validators({ audience: 'foo' })
       )
-    ).rejects.toThrow('unexpected "aud" value');
+    ).rejects.toThrow(`Unexpected 'aud' value`);
   });
   it('should validate aud claim', async () => {
     await expect(
@@ -190,14 +190,14 @@ describe('validate', () => {
         header,
         validators({ clockTolerance: 0, maxTokenAge: 100 })
       )
-    ).rejects.toThrow('unexpected "exp" value');
+    ).rejects.toThrow(`Unexpected 'exp' value`);
     await expect(
       validate(
         { ...payload, exp: 'foo' as any, iat: 0 },
         header,
         validators({ clockTolerance: 0, maxTokenAge: 100 })
       )
-    ).rejects.toThrow('unexpected "exp" value');
+    ).rejects.toThrow(`Unexpected 'exp' value`);
     clock.restore();
   });
   it('should validate exp claim with clockTolerance', async () => {
@@ -219,23 +219,23 @@ describe('validate', () => {
         header,
         validators({ clockTolerance: 0, maxTokenAge: 90 })
       )
-    ).rejects.toThrow('unexpected "iat" value');
+    ).rejects.toThrow(`Unexpected 'iat' value`);
     await expect(
       validate(
         { ...payload, iat: undefined },
         { ...header, typ: 'at+jwt' },
         validators({ maxTokenAge: 0, strict: true })
       )
-    ).rejects.toThrow('unexpected "iat" value');
+    ).rejects.toThrow(`Unexpected 'iat' value`);
     await expect(
       validate({ ...payload, iat: 'foo' as any }, header, validators())
-    ).rejects.toThrow('unexpected "iat" value');
+    ).rejects.toThrow(`Unexpected 'iat' value`);
     await expect(
       validate({ ...payload, iat: 200 }, header, validators())
-    ).rejects.toThrow('unexpected "iat" value');
+    ).rejects.toThrow(`Unexpected 'iat' value`);
     await expect(
       validate({ ...payload, iat: 0 }, header, validators())
-    ).rejects.toThrow('unexpected "iat" value');
+    ).rejects.toThrow(`Unexpected 'iat' value`);
     clock.restore();
   });
   it('should validate iat claim', async () => {
@@ -246,7 +246,7 @@ describe('validate', () => {
         header,
         validators({ maxTokenAge: 100 })
       )
-    ).rejects.toThrow('unexpected "iat" value');
+    ).rejects.toThrow(`Unexpected 'iat' value`);
     await expect(
       validate({ ...payload, iat: 0 }, header, validators({ maxTokenAge: 100 }))
     ).resolves.not.toThrow();
@@ -256,7 +256,7 @@ describe('validate', () => {
         header,
         validators({ clockTolerance: 100 })
       )
-    ).rejects.toThrow('unexpected "iat" value');
+    ).rejects.toThrow(`Unexpected 'iat' value`);
     await expect(
       validate(
         { ...payload, iat: 0 },
@@ -272,7 +272,7 @@ describe('validate', () => {
         ...validators(),
         foo: 'baz',
       })
-    ).rejects.toThrow('unexpected "foo" value');
+    ).rejects.toThrow(`Unexpected 'foo' value`);
     await expect(
       validate({ ...payload, foo: 'bar' }, header, {
         ...validators(),
@@ -284,7 +284,7 @@ describe('validate', () => {
         ...validators(),
         foo: () => false,
       })
-    ).rejects.toThrow('unexpected "foo" value');
+    ).rejects.toThrow(`Unexpected 'foo' value`);
     await expect(
       validate({ ...payload, foo: 'bar' }, header, {
         ...validators(),

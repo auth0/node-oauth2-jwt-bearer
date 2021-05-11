@@ -142,8 +142,7 @@ describe('discover', () => {
       .reply(200, '');
 
     await expect(discover('https://op.example.com')).rejects.toThrowError(
-      'Failed to fetch https://op.example.com/.well-known/openid-configuration, responded with 500\n' +
-        'Failed to parse the response from https://op.example.com/.well-known/oauth-authorization-server'
+      'Failed to fetch authorization server metadata'
     );
   });
 
@@ -185,7 +184,7 @@ describe('discover', () => {
     await expect(
       discover('https://op.example.com/.well-known/openid-configuration')
     ).rejects.toThrowError(
-      '"issuer" not found in authorization server metadata'
+      "'issuer' not found in authorization server metadata"
     );
   });
 });
