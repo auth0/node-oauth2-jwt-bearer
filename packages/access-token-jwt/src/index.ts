@@ -1,6 +1,9 @@
 export {
   default as jwtVerifier,
   VerifyJwt,
+  VerifyJwtResult,
+  JWTPayload,
+  JWSHeaderParameters as JWTHeader,
   WithDiscovery,
   WithoutDiscovery,
 } from './jwt-verifier';
@@ -20,3 +23,4 @@ export {
   requiredScopes,
   RequiredScopes,
 } from './claim-check';
+export { FunctionValidator, Validator, Validators } from './validate';
