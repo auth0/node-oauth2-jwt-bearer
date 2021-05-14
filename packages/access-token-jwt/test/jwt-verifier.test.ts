@@ -11,7 +11,7 @@ describe('jwt-verifier', () => {
         audience: 'https://api/',
       } as WithoutDiscovery)
     ).toThrowError(
-      'You must provide an "issuerBaseURL" or an "issuer" and "jwksUri"'
+      "You must provide an 'issuerBaseURL' or an 'issuer' and 'jwksUri'"
     );
   });
 
@@ -24,7 +24,7 @@ describe('jwt-verifier', () => {
         audience: 'https://api/',
       } as WithoutDiscovery)
     ).toThrowError(
-      'You must provide an "issuerBaseURL" or an "issuer" and "jwksUri"'
+      "You must provide an 'issuerBaseURL' or an 'issuer' and 'jwksUri'"
     );
   });
 
@@ -34,7 +34,7 @@ describe('jwt-verifier', () => {
         jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
         issuer: 'https://issuer.example.com/',
       } as WithoutDiscovery)
-    ).toThrowError('An "audience" is required to validate the "aud" claim');
+    ).toThrowError("An 'audience' is required to validate the 'aud' claim");
   });
 
   it('should verify the token', async () => {
@@ -64,7 +64,7 @@ describe('jwt-verifier', () => {
       issuer: 'https://issuer2.example.com/',
       audience: 'https://api/',
     });
-    await expect(verify(jwt)).rejects.toThrowError('unexpected "iss" value');
+    await expect(verify(jwt)).rejects.toThrowError(`Unexpected 'iss' value`);
   });
 
   it('should throw for unexpected audience', async () => {
@@ -77,7 +77,7 @@ describe('jwt-verifier', () => {
       issuer: 'https://issuer.example.com/',
       audience: 'https://api2/',
     });
-    await expect(verify(jwt)).rejects.toThrowError('unexpected "aud" value');
+    await expect(verify(jwt)).rejects.toThrowError(`Unexpected 'aud' value`);
   });
 
   it('should throw for an expired token', async () => {

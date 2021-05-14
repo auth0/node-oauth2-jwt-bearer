@@ -5,7 +5,8 @@
   "workspaces": [
     "packages/oauth2-bearer",
     "packages/access-token-jwt",
-    "packages/express-oauth2-jwt-bearer"
+    "packages/express-oauth2-jwt-bearer",
+    "packages/examples"
   ],
   "scripts": {
     "install:workspace": "npm install --package-lock-only --no-package-lock --save-dev -C",

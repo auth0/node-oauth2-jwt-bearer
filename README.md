@@ -44,11 +44,14 @@ npm run build --workspace=oauth2-bearer
 
 # run all tests
 npm test --workspaces
+
+# run the playground app
+npm run dev --workspace=packages/examples
 ```
 
 You can't yet run `npm install` with the `workspace` flag, so to install something - don't run install from the workspace, instead from the root run:
 
 ```sh
 # to install 'jest' to 'packages/oauth2-bearer'
-npm install:workspace -- packages/oauth2-bearer jest
+npm run install:workspace -- packages/oauth2-bearer jest
 ```

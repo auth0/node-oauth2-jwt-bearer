@@ -14,7 +14,7 @@ export interface IssuerMetadata {
 }
 
 const assertIssuer = (data: IssuerMetadata) =>
-  assert(data.issuer, `"issuer" not found in authorization server metadata`);
+  assert(data.issuer, `'issuer' not found in authorization server metadata`);
 
 export interface DiscoverOptions {
   agent?: HttpAgent | HttpsAgent;
@@ -45,7 +45,6 @@ const discover = async (
     pathnames.push(`${OAUTH2_DISCOVERY}${url.pathname}`);
   }
 
-  const errors = [];
   for (const pathname of pathnames) {
     try {
       const wellKnownUri = new URL(pathname, url);
@@ -56,11 +55,11 @@ const discover = async (
       assertIssuer(data);
       return data;
     } catch (err) {
-      errors.push(err);
+      // noop
     }
   }
 
-  throw new Error(errors.map(({ message }) => message).join('\n'));
+  throw new Error('Failed to fetch authorization server metadata');
 };
 
 export default discover;

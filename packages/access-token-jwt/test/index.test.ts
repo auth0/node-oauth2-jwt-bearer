@@ -140,6 +140,6 @@ describe('index', () => {
       },
     });
     const promise = verify(jwt);
-    await expect(promise).rejects.toThrow('unexpected "foo" value');
+    await expect(promise).rejects.toThrow(`Unexpected 'foo' value`);
   });
 });
