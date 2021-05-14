@@ -11,7 +11,7 @@ import {
 describe('claim-check', () => {
   describe('claimCheck', () => {
     it('should expect a function', () => {
-      expect(claimCheck).toThrowError('"claimCheck" expects a function');
+      expect(claimCheck).toThrowError("'claimCheck' expects a function");
     });
 
     it('should throw for no request', () => {
@@ -39,12 +39,12 @@ describe('claim-check', () => {
 
   describe('claimEquals', () => {
     it('should expect a string claim', () => {
-      expect(claimEquals).toThrowError('"claim" must be a string');
+      expect(claimEquals).toThrowError("'claim' must be a string");
     });
 
     it('should expect a JSON primitive claim value', () => {
       expect(claimEquals.bind(null, 'claim', {} as string)).toThrowError(
-        '"expected" must be a string, number, boolean or null'
+        "expected' must be a string, number, boolean or null"
       );
     });
 
@@ -56,13 +56,13 @@ describe('claim-check', () => {
 
     it('should throw if claim not in payload', () => {
       expect(claimEquals('foo', 'bar').bind(null, {})).toThrowError(
-        '"foo" claim mismatch'
+        "Unexpected 'foo' value"
       );
     });
 
     it(`should throw if claim doesn't match expected`, () => {
       expect(claimEquals('foo', 'bar').bind(null, { foo: 'baz' })).toThrowError(
-        '"foo" claim mismatch'
+        "Unexpected 'foo' value"
       );
     });
 
@@ -75,12 +75,12 @@ describe('claim-check', () => {
 
   describe('claimIncludes', () => {
     it('should expect a string claim', () => {
-      expect(claimIncludes).toThrowError('"claim" must be a string');
+      expect(claimIncludes).toThrowError("'claim' must be a string");
     });
 
     it('should throw if claim not in payload', () => {
       expect(claimIncludes('foo', 'bar').bind(null, {})).toThrowError(
-        '"foo" claim mismatch'
+        "Unexpected 'foo' value"
       );
     });
 
@@ -93,7 +93,7 @@ describe('claim-check', () => {
         claimIncludes('foo', 'bar', 'baz').bind(null, {
           foo: 'qux quxx',
         })
-      ).toThrowError('"foo" claim mismatch');
+      ).toThrowError("Unexpected 'foo' value");
     });
 
     it('should throw if all expected are not found in actual claim array', () => {
@@ -101,7 +101,7 @@ describe('claim-check', () => {
         claimIncludes('foo', 'bar', 'baz').bind(null, {
           foo: ['qux', 'bar'],
         })
-      ).toThrowError('"foo" claim mismatch');
+      ).toThrowError("Unexpected 'foo' value");
     });
 
     it('should throw if actual is not array or string', () => {
@@ -109,7 +109,7 @@ describe('claim-check', () => {
         claimIncludes('foo', 'bar', 'baz').bind(null, {
           foo: true,
         })
-      ).toThrowError('"foo" claim mismatch');
+      ).toThrowError("Unexpected 'foo' value");
     });
 
     it('should not throw if all expected found in actual string', () => {
@@ -132,13 +132,13 @@ describe('claim-check', () => {
   describe('requiredScopes', () => {
     it('should expect a string or array of strings', () => {
       expect(requiredScopes).toThrowError(
-        '"scopes" must be a string or array of strings'
+        "scopes' must be a string or array of strings"
       );
     });
 
     it('should expect a string or array of strings', () => {
       expect(requiredScopes).toThrowError(
-        '"scopes" must be a string or array of strings'
+        "scopes' must be a string or array of strings"
       );
     });
 

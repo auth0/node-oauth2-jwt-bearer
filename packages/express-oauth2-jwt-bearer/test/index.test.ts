@@ -119,7 +119,7 @@ describe('index', () => {
       }),
       401,
       'invalid_token',
-      'unexpected "aud" value'
+      `Unexpected 'aud' value`
     );
   });
 
@@ -139,7 +139,7 @@ describe('index', () => {
       }),
       401,
       'invalid_token',
-      'unexpected "foo" value'
+      `Unexpected 'foo' value`
     );
   });
 
@@ -180,7 +180,7 @@ describe('index', () => {
     const baseUrl = await setup({
       middleware: claimCheck(
         ({ num }) => typeof num === 'number' && num > 3,
-        '"num" too small'
+        "'num' too small"
       ),
     });
     await expectFailsWith(
@@ -192,7 +192,7 @@ describe('index', () => {
       }),
       401,
       'invalid_token',
-      '"num" too small'
+      "'num' too small"
     );
   });
 
@@ -229,7 +229,7 @@ describe('index', () => {
       }),
       401,
       'invalid_token',
-      '"foo" claim mismatch'
+      "Unexpected 'foo' value"
     );
   });
 
@@ -263,7 +263,7 @@ describe('index', () => {
       }),
       401,
       'invalid_token',
-      '"foo" claim mismatch'
+      "Unexpected 'foo' value"
     );
   });
 

@@ -40,7 +40,7 @@ export default (
         ) {
           return;
         }
-        throw new Error(`unexpected "${key}" value`);
+        throw new Error(`Unexpected '${key}' value`);
       }
     )
   );
