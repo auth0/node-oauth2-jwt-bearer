@@ -21,14 +21,23 @@ const validators = ({
   clockTolerance = 10,
   maxTokenAge = 10,
   strict = false,
+  idTokenSigningAlgs,
 }: {
   issuer?: string;
   audience?: string | string[];
   clockTolerance?: number;
   maxTokenAge?: number;
   strict?: boolean;
+  idTokenSigningAlgs?: string[];
 } = {}) =>
-  defaultValidators(issuer, audience, clockTolerance, maxTokenAge, strict);
+  defaultValidators(
+    issuer,
+    audience,
+    clockTolerance,
+    maxTokenAge,
+    strict,
+    idTokenSigningAlgs
+  );
 
 describe('validate', () => {
   it('should validate a jwt with default validators', async () => {
@@ -39,6 +48,19 @@ describe('validate', () => {
   it('should throw for invalid alg header', async () => {
     await expect(
       validate(payload, { ...header, alg: 'none' }, validators())
+    ).rejects.toThrow(`Unexpected 'alg' value`);
+    await expect(
+      validate(payload, { ...header, alg: 'None' }, validators())
+    ).rejects.toThrow(`Unexpected 'alg' value`);
+    await expect(
+      validate(payload, { ...header, alg: 'NONE' }, validators())
+    ).rejects.toThrow(`Unexpected 'alg' value`);
+    await expect(
+      validate(
+        payload,
+        { ...header, alg: 'RS256' },
+        validators({ idTokenSigningAlgs: ['HS256'] })
+      )
     ).rejects.toThrow(`Unexpected 'alg' value`);
   });
   it('should disable alg header check', async () => {
