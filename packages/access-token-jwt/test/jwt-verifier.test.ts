@@ -1,6 +1,6 @@
 import nock = require('nock');
 import { createJwt, now } from './helpers';
-import { jwtVerifier, InvalidTokenError, WithoutDiscovery } from '../src';
+import { jwtVerifier, InvalidTokenError } from '../src';
 
 describe('jwt-verifier', () => {
   afterEach(nock.cleanAll);
@@ -9,7 +9,7 @@ describe('jwt-verifier', () => {
     expect(() =>
       jwtVerifier({
         audience: 'https://api/',
-      } as WithoutDiscovery)
+      })
     ).toThrowError(
       "You must provide an 'issuerBaseURL' or an 'issuer' and 'jwksUri'"
     );
@@ -22,7 +22,7 @@ describe('jwt-verifier', () => {
         jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
         issuer: 'https://issuer.example.com/',
         audience: 'https://api/',
-      } as WithoutDiscovery)
+      })
     ).toThrowError(
       "You must provide an 'issuerBaseURL' or an 'issuer' and 'jwksUri'"
     );
@@ -33,7 +33,7 @@ describe('jwt-verifier', () => {
       jwtVerifier({
         jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
         issuer: 'https://issuer.example.com/',
-      } as WithoutDiscovery)
+      })
     ).toThrowError("An 'audience' is required to validate the 'aud' claim");
   });
 

@@ -4,10 +4,10 @@ import { Handler } from 'express';
 import express = require('express');
 import nock = require('nock');
 import got, { CancelableRequest } from 'got';
-import { WithDiscovery, WithoutDiscovery } from 'access-token-jwt';
 import { createJwt } from 'access-token-jwt/test/helpers';
 import {
   auth,
+  AuthOptions,
   claimCheck,
   claimEquals,
   claimIncludes,
@@ -43,7 +43,7 @@ describe('index', () => {
   });
 
   const setup = (
-    opts: Partial<WithDiscovery | WithoutDiscovery> & {
+    opts: AuthOptions & {
       middleware?: Handler;
     } = {}
   ) => {

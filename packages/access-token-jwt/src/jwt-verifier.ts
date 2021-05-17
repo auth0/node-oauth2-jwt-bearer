@@ -8,11 +8,38 @@ import { InvalidTokenError } from 'oauth2-bearer';
 import discover, { IssuerMetadata } from './discovery';
 import validate, { defaultValidators, Validators } from './validate';
 
-interface JwtVerifierOptions {
+export interface JwtVerifierOptions {
+  /**
+   * Base url, used to find the authorization server's app metadata per
+   * https://datatracker.ietf.org/doc/html/rfc8414
+   * You can pass a full url including `.well-known` if your discovery lives at
+   * a non standard path.
+   * REQUIRED (if you don't include {@Link AuthOptions.jwksUri} and
+   * {@Link AuthOptions.issuer})
+   * You can also provide the `ISSUER_BASE_URL` environment variable.
+   */
+  issuerBaseURL?: string;
+
   /**
    * Expected JWT "aud" (Audience) Claim value(s).
+   * REQUIRED: You can also provide the `AUDIENCE` environment variable.
    */
-  audience: string | string[];
+  audience?: string | string[];
+
+  /**
+   * Expected JWT "iss" (Issuer) Claim value.
+   * REQUIRED (if you don't include {@Link AuthOptions.issuerBaseURL})
+   * You can also provide the `ISSUER` environment variable.
+   */
+  issuer?: string;
+
+  /**
+   * Url for the authorization server's JWKS to find the public key to verify
+   * an Access Token JWT.
+   * REQUIRED (if you don't include {@Link AuthOptions.issuerBaseURL})
+   * You can also provide the `JWKS_URI` environment variable.
+   */
+  jwksUri?: string;
 
   /**
    * An instance of http.Agent or https.Agent to pass to the http.get or
@@ -46,7 +73,10 @@ interface JwtVerifierOptions {
    *      // Add validation for a custom claim to equal a passed in string
    *      org_id: 'my_org_123'
    *      // Add validation for a custom claim, by passing in a function that
-   *      // implements {@Link FunctionValidator}}
+   *      // accepts:
+   *      // roles: the value of the claim
+   *      // claims: an object containing the JWTPayload
+   *      // header: an object representing the JWTHeader
    *      roles: (roles, claims, header) => roles.includes('editor') && claims.isAdmin
    *    }
    *  }
@@ -61,7 +91,7 @@ interface JwtVerifierOptions {
   clockTolerance?: number;
 
   /**
-   * Maximum age (in secs) from when a token was issued to when it con no longer
+   * Maximum age (in secs) from when a token was issued to when it can no longer
    * be accepted.
    */
   maxTokenAge?: number;
@@ -73,29 +103,6 @@ interface JwtVerifierOptions {
    * Defaults to false.
    */
   strict?: boolean;
-}
-
-export interface WithDiscovery extends JwtVerifierOptions {
-  /**
-   * Base url, used to find the authorization server's app metadata per
-   * https://datatracker.ietf.org/doc/html/rfc8414
-   * You can pass a full url including `.well-known` if your discovery lives at
-   * a non standard path.
-   */
-  issuerBaseURL: string;
-}
-
-export interface WithoutDiscovery extends JwtVerifierOptions {
-  /**
-   * Expected JWT "iss" (Issuer) Claim value.
-   */
-  issuer: string;
-
-  /**
-   * Url for the authorization server's JWKS to find the public key to verify
-   * an Access Token JWT.
-   */
-  jwksUri: string;
 }
 
 export interface VerifyJwtResult {
@@ -117,16 +124,11 @@ export type VerifyJwt = (jwt: string) => Promise<VerifyJwtResult>;
 
 type GetKeyFn = ReturnType<typeof createRemoteJWKSet>;
 
-export interface JwtVerifier {
-  (opts: WithDiscovery): VerifyJwt;
-  (opts: WithoutDiscovery): VerifyJwt;
-}
-
-const jwtVerifier: JwtVerifier = ({
-  issuerBaseURL,
-  jwksUri,
-  issuer,
-  audience,
+const jwtVerifier = ({
+  issuerBaseURL = process.env.ISSUER_BASE_URL as string,
+  jwksUri = process.env.JWKS_URI as string,
+  issuer = process.env.ISSUER as string,
+  audience = process.env.AUDIENCE as string,
   agent,
   cooldownDuration = 30000,
   timeoutDuration = 5000,
@@ -134,7 +136,7 @@ const jwtVerifier: JwtVerifier = ({
   maxTokenAge,
   strict = false,
   validators: customValidators,
-}: any): VerifyJwt => {
+}: JwtVerifierOptions): VerifyJwt => {
   let origJWKS: GetKeyFn;
   let discovery: Promise<IssuerMetadata>;
   let validators: Validators;

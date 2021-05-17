@@ -9,8 +9,7 @@
     "lint": "eslint --fix --ext .ts ./src",
     "prepublishOnly": "npm test && npm run lint",
     "prebuild": "rimraf dist",
-    "build": "rollup -c",
-    "docs": "typedoc --options typedoc.js"
+    "build": "rollup -c"
   },
   "files": [
     "dist"
@@ -38,8 +37,6 @@
     "rollup-plugin-typescript2": "^0.30.0",
     "ts-jest": "^26.5.4",
     "tslib": "^2.2.0",
-    "typedoc": "^0.20.36",
-    "typedoc-plugin-markdown": "^3.8.1",
     "typescript": "^4.2.3"
   },
   "dependencies": {

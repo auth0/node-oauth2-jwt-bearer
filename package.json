@@ -1,6 +1,8 @@
 {
   "name": "oauth2-jwt-bearer",
   "private": true,
+  "license": "MIT",
+  "author": "Auth0 <support@auth0.com>",
   "version": "0.0.1",
   "workspaces": [
     "packages/oauth2-bearer",
@@ -13,6 +15,11 @@
     "postinstall:workspace": "npm install",
     "lint": "npm run lint --workspaces",
     "test": "npm test --workspaces",
-    "build": "npm run build --workspaces"
+    "build": "npm run build --workspaces",
+    "docs": "typedoc --options typedoc.js"
+  },
+  "devDependencies": {
+    "@strictsoftware/typedoc-plugin-monorepo": "^0.4.2",
+    "typedoc": "^0.20.36"
   }
 }
