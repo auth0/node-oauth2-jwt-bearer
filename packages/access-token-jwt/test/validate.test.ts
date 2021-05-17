@@ -21,14 +21,14 @@ const validators = ({
   clockTolerance = 10,
   maxTokenAge = 10,
   strict = false,
-  idTokenSigningAlgs,
+  allowedSigningAlgs,
 }: {
   issuer?: string;
   audience?: string | string[];
   clockTolerance?: number;
   maxTokenAge?: number;
   strict?: boolean;
-  idTokenSigningAlgs?: string[];
+  allowedSigningAlgs?: string[];
 } = {}) =>
   defaultValidators(
     issuer,
@@ -36,7 +36,7 @@ const validators = ({
     clockTolerance,
     maxTokenAge,
     strict,
-    idTokenSigningAlgs
+    allowedSigningAlgs
   );
 
 describe('validate', () => {
@@ -59,7 +59,7 @@ describe('validate', () => {
       validate(
         payload,
         { ...header, alg: 'RS256' },
-        validators({ idTokenSigningAlgs: ['HS256'] })
+        validators({ allowedSigningAlgs: ['HS256'] })
       )
     ).rejects.toThrow(`Unexpected 'alg' value`);
   });

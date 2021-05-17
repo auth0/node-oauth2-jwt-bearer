@@ -59,12 +59,12 @@ export const defaultValidators = (
   clockTolerance: number,
   maxTokenAge: number | undefined,
   strict: boolean,
-  idTokenSigningAlgs: string[] | undefined
+  allowedSigningAlgs: string[] | undefined
 ): Validators => ({
   alg: (alg) =>
     typeof alg === 'string' &&
     alg.toLowerCase() !== 'none' &&
-    (!idTokenSigningAlgs || idTokenSigningAlgs.includes(alg)),
+    (!allowedSigningAlgs || allowedSigningAlgs.includes(alg)),
   typ: (typ) =>
     !strict ||
     (typeof typ === 'string' &&

@@ -140,7 +140,7 @@ const jwtVerifier = ({
   let origJWKS: GetKeyFn;
   let discovery: Promise<IssuerMetadata>;
   let validators: Validators;
-  let idTokenSigningAlgs: string[] | undefined;
+  let allowedSigningAlgs: string[] | undefined;
 
   assert(
     (issuerBaseURL && !(issuer || jwksUri)) ||
@@ -168,7 +168,7 @@ const jwtVerifier = ({
         ({
           jwks_uri: jwksUri,
           issuer,
-          id_token_signing_alg_values_supported: idTokenSigningAlgs,
+          id_token_signing_alg_values_supported: allowedSigningAlgs,
         } = await discovery);
       }
       validators ||= {
@@ -178,7 +178,7 @@ const jwtVerifier = ({
           clockTolerance,
           maxTokenAge,
           strict,
-          idTokenSigningAlgs
+          allowedSigningAlgs
         ),
         ...customValidators,
       };
