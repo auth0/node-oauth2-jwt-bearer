@@ -61,7 +61,7 @@ npm run lint
 
 ## Support + Feedback
 
-Please use the [Issues queue](https://github.com/auth0/express-openid-connect/issues) in this repo for questions and feedback.
+Please use the [Issues queue](https://github.com/auth0/node-oauth2-jwt-bearer/issues) in this repo for questions and feedback.
 
 ## Vulnerability Reporting
 
