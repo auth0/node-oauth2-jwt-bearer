@@ -1,0 +1,16 @@
+{
+  "extends": "@tsconfig/node12/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "access-token-jwt": ["packages/access-token-jwt/src"],
+      "oauth2-bearer": ["packages/oauth2-bearer/src"]
+    }
+  },
+  "include": [
+    "packages/oauth2-bearer/src",
+    "packages/access-token-jwt/src",
+    "packages/express-oauth2-jwt-bearer/src",
+  ]
+}
+

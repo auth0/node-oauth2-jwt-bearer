@@ -1,8 +1,10 @@
 export {
   default as jwtVerifier,
+  JwtVerifierOptions,
   VerifyJwt,
-  WithDiscovery,
-  WithoutDiscovery,
+  VerifyJwtResult,
+  JWTPayload,
+  JWSHeaderParameters as JWTHeader,
 } from './jwt-verifier';
 export {
   InvalidTokenError,
@@ -19,4 +21,6 @@ export {
   ClaimIncludes,
   requiredScopes,
   RequiredScopes,
+  JSONPrimitive,
 } from './claim-check';
+export { FunctionValidator, Validator, Validators } from './validate';

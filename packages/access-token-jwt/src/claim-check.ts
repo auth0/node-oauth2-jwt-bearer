@@ -5,7 +5,7 @@ import {
 } from 'oauth2-bearer';
 import { JWTPayload } from 'jose/jwt/verify';
 
-type JSONPrimitive = string | number | boolean | null;
+export type JSONPrimitive = string | number | boolean | null;
 
 type ClaimChecker = (payload?: JWTPayload) => void;
 

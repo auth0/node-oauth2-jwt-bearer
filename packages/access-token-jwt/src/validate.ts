@@ -1,14 +1,22 @@
 import { JWTPayload, JWSHeaderParameters } from 'jose/jwt/verify';
 
-export type Validator =
-  | ((
-      value: unknown,
-      claims: JWTPayload,
-      header: JWSHeaderParameters
-    ) => Promise<boolean> | boolean)
-  | string
-  | false;
+/**
+ * @ignore
+ */
+export type FunctionValidator = (
+  value: unknown,
+  claims: JWTPayload,
+  header: JWSHeaderParameters
+) => Promise<boolean> | boolean;
 
+/**
+ * @ignore
+ */
+export type Validator = FunctionValidator | string | false | undefined;
+
+/**
+ * @ignore
+ */
 export interface Validators {
   alg: Validator;
   typ: Validator;
