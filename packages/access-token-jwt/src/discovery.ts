@@ -10,6 +10,7 @@ const OAUTH2_DISCOVERY = '/.well-known/oauth-authorization-server';
 export interface IssuerMetadata {
   issuer: string;
   jwks_uri: string;
+  id_token_signing_alg_values_supported?: string[];
   [key: string]: unknown;
 }
 
