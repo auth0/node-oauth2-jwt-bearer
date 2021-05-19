@@ -2,6 +2,7 @@
   "extends": "@tsconfig/node12/tsconfig.json",
   "compilerOptions": {
     "allowJs": true,
+    "removeComments": true,
     "declaration": true,
     "outDir": "./dist"
   },
