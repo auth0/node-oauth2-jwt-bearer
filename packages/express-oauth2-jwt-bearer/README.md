@@ -1,4 +1,4 @@
-# express-oauth2-jwt-bearer
+# express-oauth2-jwt-bearer (Early Access)
 
 Authentication middleware for Express.js that validates JWT Bearer Access Tokens.
 

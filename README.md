@@ -6,7 +6,7 @@ Monorepo for `oauth2-jwt-bearer`. Contains the following packages:
 |-------------------------------------------------------------------|:---------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [oauth2-bearer](./packages/oauth2-bearer)                         |     ✘     | Gets Bearer tokens from a request and issues errors per [rfc6750](https://tools.ietf.org/html/rfc6750)                                                           |
 | [access-token-jwt](./packages/access-token-jwt)                   |     ✘     | Verfies and decodes Access Token JWTs loosley following [draft-ietf-oauth-access-token-jwt-12](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-12) |
-| [express-oauth2-jwt-bearer](./packages/express-oauth2-jwt-bearer) |     ✔     | Authentication middleware for Express.js that validates JWT Bearer Access Tokens                                                                                 |
+| [express-oauth2-jwt-bearer](./packages/express-oauth2-jwt-bearer) |     ✔     | Authentication middleware for Express.js that validates JWT Bearer Access Tokens (Early Access)                                                                  |
 
 ## Developing
 
