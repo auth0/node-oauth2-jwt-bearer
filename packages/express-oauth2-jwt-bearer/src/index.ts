@@ -59,7 +59,7 @@ declare global {
  * used to match against the Access Token's `aud` claim.
  *
  */
-export const auth = (opts: JwtVerifierOptions): Handler => {
+export const auth = (opts: JwtVerifierOptions = {}): Handler => {
   const verifyJwt = jwtVerifier(opts);
 
   return async (req: Request, res: Response, next: NextFunction) => {

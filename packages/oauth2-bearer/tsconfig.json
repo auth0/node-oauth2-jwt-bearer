@@ -2,6 +2,7 @@
   "extends": "@tsconfig/node12/tsconfig.json",
   "compilerOptions": {
     "module": "ES2020",
+    "removeComments": true,
     "declaration": true,
     "outDir": "./dist"
   },

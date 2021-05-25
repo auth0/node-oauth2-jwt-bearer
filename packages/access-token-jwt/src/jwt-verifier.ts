@@ -2,8 +2,11 @@ import { strict as assert } from 'assert';
 import { Agent as HttpAgent } from 'http';
 import { Agent as HttpsAgent } from 'https';
 import { URL } from 'url';
-import createRemoteJWKSet from 'jose/jwks/remote';
-import jwtVerify, { JWTPayload, JWSHeaderParameters } from 'jose/jwt/verify';
+import createRemoteJWKSet from 'jose-node-cjs-runtime/jwks/remote';
+import jwtVerify, {
+  JWTPayload,
+  JWSHeaderParameters,
+} from 'jose-node-cjs-runtime/jwt/verify';
 import { InvalidTokenError } from 'oauth2-bearer';
 import discover, { IssuerMetadata } from './discovery';
 import validate, { defaultValidators, Validators } from './validate';

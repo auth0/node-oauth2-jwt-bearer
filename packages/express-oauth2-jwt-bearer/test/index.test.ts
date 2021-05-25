@@ -39,7 +39,7 @@ describe('index', () => {
 
   afterEach((done) => {
     nock.cleanAll();
-    server && server.close(done);
+    (server?.listening && server.close(done)) || done();
   });
 
   const setup = (
@@ -87,6 +87,40 @@ describe('index', () => {
       'invalid_request',
       'Bearer token is missing'
     );
+  });
+
+  it('should accept empty arguments and env vars', async () => {
+    const env = process.env;
+    await expect(auth).toThrowError(
+      "You must provide an 'issuerBaseURL' or an 'issuer' and 'jwksUri'"
+    );
+    process.env = Object.assign({}, env, {
+      ISSUER_BASE_URL: 'foo',
+      ISSUER: 'bar',
+      AUDIENCE: 'baz',
+      JWKS_URI: 'qux',
+    });
+    expect(auth).toThrow(
+      "You must provide an 'issuerBaseURL' or an 'issuer' and 'jwksUri'"
+    );
+    process.env = Object.assign({}, env, {
+      ISSUER_BASE_URL: 'foo',
+    });
+    expect(auth).toThrow(
+      "An 'audience' is required to validate the 'aud' claim"
+    );
+    process.env = Object.assign({}, env, {
+      ISSUER_BASE_URL: 'foo',
+      AUDIENCE: 'baz',
+    });
+    expect(auth).not.toThrow();
+    process.env = Object.assign({}, env, {
+      ISSUER: 'bar',
+      JWKS_URI: 'qux',
+      AUDIENCE: 'baz',
+    });
+    expect(auth).not.toThrow();
+    process.env = env;
   });
 
   it('should succeed for authenticated requests', async () => {

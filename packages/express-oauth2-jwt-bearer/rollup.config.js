@@ -7,7 +7,7 @@ export default {
     dir: 'dist',
     format: 'cjs',
   },
-  external: [/^jose\//],
+  external: [/^jose-node-cjs-runtime\//],
   plugins: [
     nodeResolve(),
     typescript({ tsconfigOverride: { compilerOptions: { module: 'ES2015' } } }),

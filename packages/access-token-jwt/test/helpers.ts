@@ -1,6 +1,6 @@
-import SignJWT from 'jose/jwt/sign';
-import { generateKeyPair } from 'jose/util/generate_key_pair';
-import { fromKeyLike } from 'jose/jwk/from_key_like';
+import SignJWT from 'jose-node-cjs-runtime/jwt/sign';
+import { generateKeyPair } from 'jose-node-cjs-runtime/util/generate_key_pair';
+import { fromKeyLike } from 'jose-node-cjs-runtime/jwk/from_key_like';
 import nock = require('nock');
 
 export const now = (Date.now() / 1000) | 0;
