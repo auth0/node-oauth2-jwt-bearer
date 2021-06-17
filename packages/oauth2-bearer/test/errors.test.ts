@@ -46,6 +46,19 @@ describe('errors', () => {
     });
   });
 
+  it('should avoid nested double quotes in header', () => {
+    expect(new InvalidRequestError('expected "foo" got "bar"')).toMatchObject({
+      code: 'invalid_request',
+      headers: {
+        'WWW-Authenticate': `Bearer realm="api", error="invalid_request", error_description="expected 'foo' got 'bar'"`,
+      },
+      message: 'expected "foo" got "bar"',
+      name: 'InvalidRequestError',
+      status: 400,
+      statusCode: 400,
+    });
+  });
+
   it('should raise an Invalid Token error', () => {
     expect(new InvalidTokenError()).toMatchObject({
       code: 'invalid_token',

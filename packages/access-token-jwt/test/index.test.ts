@@ -142,23 +142,4 @@ describe('index', () => {
     const promise = verify(jwt);
     await expect(promise).rejects.toThrow(`Unexpected 'foo' value`);
   });
-
-  it('should accept custom validators', async () => {
-    const jwt = await createJwt({
-      issuer: 'https://op.example.com',
-      payload: { foo: 'baz' },
-    });
-
-    const verify = jwtVerifier({
-      issuerBaseURL: 'https://op.example.com',
-      audience: 'https://api/',
-      agent: new Agent(),
-      timeoutDuration: 1000,
-      validators: {
-        foo: 'bar',
-      },
-    });
-    const promise = verify(jwt);
-    await expect(promise).rejects.toThrow(`Unexpected 'foo' value`);
-  });
 });
