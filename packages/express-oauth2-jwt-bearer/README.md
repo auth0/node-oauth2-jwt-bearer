@@ -103,7 +103,7 @@ app.get('/api/admin/edit',
 
 ## Security Headers
 
-Along with the other [security best practices](https://expressjs.com/en/advanced/best-practice-security.html) in the Express.js documentation, we recommend you use [helmet](https://www.npmjs.com/package/helmet) in addition to this middleware which can help protect your app from some well-known web vulnerabilities by setting HTTP headers securely.
+Along with the other [security best practices](https://expressjs.com/en/advanced/best-practice-security.html) in the Express.js documentation, we recommend you use [helmet](https://www.npmjs.com/package/helmet) in addition to this middleware which can help protect your app from some well-known web vulnerabilities by setting default security HTTP headers.
 
 ## Error Handling
 
