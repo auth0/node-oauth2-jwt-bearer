@@ -355,4 +355,20 @@ describe('index', () => {
       })
     );
   });
+
+  it('should replace double quotes in header with single quotes', async () => {
+    const jwt = await createJwt({ payload: { nbf: false } });
+    const baseUrl = await setup();
+    await expectFailsWith(
+      got(baseUrl, {
+        headers: {
+          authorization: `Bearer ${jwt}`,
+        },
+        responseType: 'json',
+      }),
+      401,
+      'invalid_token',
+      "'nbf' claim must be a number"
+    );
+  });
 });
