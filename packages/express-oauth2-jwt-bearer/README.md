@@ -1,8 +1,15 @@
 # express-oauth2-jwt-bearer (Early Access)
 
+- [Install](#install)
+- [Getting started](#getting-started)
+- [API Documentation](#api-documentation)
+- [Examples](#examples)
+- [Security Headers](#security-headers)
+- [Error Handling](#error-handling)
+
 Authentication middleware for Express.js that validates JWT Bearer Access Tokens.
 
-## Install
+## Install (note: this is not yet published)
 
 This package supports Node `^12.19.0 || ^14.15.0`
 
@@ -93,3 +100,20 @@ app.get('/api/admin/edit',
    }
 );
 ```
+
+## Security Headers
+
+Along with the other [security best practices](https://expressjs.com/en/advanced/best-practice-security.html) in the Express.js documentation, we recommend you use [helmet](https://www.npmjs.com/package/helmet) in addition to this middleware which can help protect your app from some well-known web vulnerabilities by setting default security HTTP headers.
+
+## Error Handling
+
+This SDK raises errors with `err.status` and `err.headers` according to [rfc6750](https://datatracker.ietf.org/doc/html/rfc6750#section-3). The Express.js default error handler will set the error response with:
+
+- `res.statusCode` set from `err.status`
+- `res.statusMessage` set according to the status code.
+- The body will be the HTML of the status code message when in production environment, otherwise will be `err.stack`.
+- Any headers specified in an `err.headers` object.
+
+The `error_description` in the `WWW-Authenticate` header will contain useful information about the error, which you may not want to disclose in Production.
+
+See the Express.js [docs on error handling](https://expressjs.com/en/guide/error-handling.html) for more information on writing custom error handlers.
