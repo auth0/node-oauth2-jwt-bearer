@@ -1,4 +1,13 @@
-# express-oauth2-jwt-bearer (Early Access)
+# express-oauth2-jwt-bearer (Beta)
+
+Authentication middleware for Express.js that validates JWT Bearer Access Tokens.
+
+> **Note:** This library is currently in Beta status and has not had a complete security review. We do not recommend using this library in production yet. As we move towards general availability, please be aware that releases may contain breaking changes. We will be monitoring the Issues queue here for feedback and questions. PRs and comments on existing PRs are welcome!
+
+[![CircleCI](https://img.shields.io/circleci/build/github/auth0/node-oauth2-jwt-bearer.svg?branch=master&style=flat)](https://circleci.com/gh/auth0/node-oauth2-jwt-bearer)
+[![License](https://img.shields.io/:license-mit-blue.svg?style=flat)](https://opensource.org/licenses/MIT)
+[![npm](https://img.shields.io/npm/v/express-oauth2-jwt-bearer.svg?style=flat)](https://www.npmjs.com/package/express-oauth2-jwt-bearer)
+[![codecov](https://img.shields.io/badge/coverage-100%25-green)](./jest.config.js#L6-L13)
 
 - [Install](#install)
 - [Getting started](#getting-started)
@@ -6,10 +15,13 @@
 - [Examples](#examples)
 - [Security Headers](#security-headers)
 - [Error Handling](#error-handling)
+- [Contributing](#contributing)
+- [Support + Feedback](#support---feedback)
+- [Vulnerability Reporting](#vulnerability-reporting)
+- [What is Auth0?](#what-is-auth0-)
+- [License](#license)
 
-Authentication middleware for Express.js that validates JWT Bearer Access Tokens.
-
-## Install (note: this is not yet published)
+## Install
 
 This package supports Node `^12.19.0 || ^14.15.0`
 
@@ -48,10 +60,10 @@ With this basic configuration, your api will require a valid Access Token JWT be
 ## API Documentation
 
 - [auth](https://auth0.github.io/node-oauth2-jwt-bearer#auth) - Middleware that will return a 401 if a valid Access token JWT bearer token is not provided in the request.
-- [requiredScopes](https://auth0.github.io/node-oauth2-jwt-bearer#requiredscopes) - Check a token's scope claim to include a number of given scopes, raises a 401 `insufficient_scope` error if the value of the scope claim does not include all the given scopes.
+- [requiredScopes](https://auth0.github.io/node-oauth2-jwt-bearer#requiredscopes) - Check a token's scope claim to include a number of given scopes, raises a 403 `insufficient_scope` error if the value of the scope claim does not include all the given scopes.
 - [claimEquals](https://auth0.github.io/node-oauth2-jwt-bearer#claimequals) - Check a token's claim to be equal a given JSONPrimitive (string, number, boolean or null) raises a 401 `invalid_token` error if the value of the claim does not match.
 - [claimIncludes](https://auth0.github.io/node-oauth2-jwt-bearer#claimincludes) - Check a token's claim to include a number of given JSONPrimitives (string, number, boolean or null) raises a 401 `invalid_token` error if the value of the claim does not include all the given values.
-- [claimCheck](https://auth0.github.io/node-oauth2-jwt-bearer#claimCheck) - Check the token's claims using a custom method that receives the JWT Payload and should return `true` if the token is valid. Raises a 401 `invalid_token` error if the function returns `false`.
+- [claimCheck](https://auth0.github.io/node-oauth2-jwt-bearer#claimcheck) - Check the token's claims using a custom method that receives the JWT Payload and should return `true` if the token is valid. Raises a 401 `invalid_token` error if the function returns `false`.
 
 ## Examples
 
@@ -117,3 +129,32 @@ This SDK raises errors with `err.status` and `err.headers` according to [rfc6750
 The `error_description` in the `WWW-Authenticate` header will contain useful information about the error, which you may not want to disclose in Production.
 
 See the Express.js [docs on error handling](https://expressjs.com/en/guide/error-handling.html) for more information on writing custom error handlers.
+
+## Contributing
+
+See monorepo's [contributing guidelines](../../README.md#contributing).
+
+## Support + Feedback
+
+Please use the [Issues queue](https://github.com/auth0/node-oauth2-jwt-bearer/issues) in this repo for questions and feedback.
+
+## Vulnerability Reporting
+
+Please do not report security vulnerabilities on the public GitHub issue tracker. The [Responsible Disclosure Program](https://auth0.com/whitehat) details the procedure for disclosing security issues.
+
+## What is Auth0?
+
+Auth0 helps you to easily:
+
+- implement authentication with multiple identity providers, including social (e.g., Google, Facebook, Microsoft, LinkedIn, GitHub, Twitter, etc), or enterprise (e.g., Windows Azure AD, Google Apps, Active Directory, ADFS, SAML, etc.)
+- log in users with username/password databases, passwordless, or multi-factor authentication
+- link multiple user accounts together
+- generate signed JSON Web Tokens to authorize your API calls and flow the user identity securely
+- access demographics and analytics detailing how, when, and where users are logging in
+- enrich user profiles from other data sources using customizable JavaScript rules
+
+[Why Auth0?](https://auth0.com/why-auth0)
+
+## License
+
+This project is licensed under the MIT license. See the [LICENSE](LICENSE) file for more info.
