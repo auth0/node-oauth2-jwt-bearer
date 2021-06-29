@@ -15,6 +15,7 @@ Authentication middleware for Express.js that validates JWT Bearer Access Tokens
 - [Examples](#examples)
 - [Security Headers](#security-headers)
 - [Error Handling](#error-handling)
+- [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [Support + Feedback](#support---feedback)
 - [Vulnerability Reporting](#vulnerability-reporting)
@@ -129,6 +130,16 @@ This SDK raises errors with `err.status` and `err.headers` according to [rfc6750
 The `error_description` in the `WWW-Authenticate` header will contain useful information about the error, which you may not want to disclose in Production.
 
 See the Express.js [docs on error handling](https://expressjs.com/en/guide/error-handling.html) for more information on writing custom error handlers.
+
+## Troubleshooting
+
+### Getting `Error: Cannot find module 'jose-node-cjs-runtime/jwks/remote'` when I run the SDK
+
+This package takes a dependency on [jose](https://github.com/panva/jose) which uses [package exports](https://nodejs.org/api/packages.html#packages_exports) which requires Node `^12.19.0 || ^14.15.0`.
+
+Even if you are using the correct version of Node, you may still run into this in some tooling that does not yet support package exports, like [jest](https://github.com/facebook/jest/issues/9771) or Webpack 4. 
+
+To workaround this issue in jest, see how we use a [custom resolver](../../packages/access-token-jwt/resolver.js) for this project.
 
 ## Contributing
 
