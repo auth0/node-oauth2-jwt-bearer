@@ -7,6 +7,7 @@ import {
 import express = require('express');
 import cors = require('cors');
 import { Handler } from 'express';
+import secret from './secret';
 
 const app = express();
 const issuerBaseURL = 'http://localhost:3000';
@@ -44,5 +45,11 @@ app.get(
 );
 
 app.get('/strict', auth({ issuerBaseURL, audience, strict: true }), handler);
+
+app.get(
+  '/symmetric',
+  auth({ secret, issuer: issuerBaseURL, audience, tokenSigningAlg: 'HS256' }),
+  handler
+);
 
 export default app;

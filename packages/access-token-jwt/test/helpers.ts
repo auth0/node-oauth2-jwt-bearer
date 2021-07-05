@@ -1,3 +1,5 @@
+import { Buffer } from 'buffer';
+import { createSecretKey } from 'crypto';
 import SignJWT from 'jose-node-cjs-runtime/jwt/sign';
 import { generateKeyPair } from 'jose-node-cjs-runtime/util/generate_key_pair';
 import { fromKeyLike } from 'jose-node-cjs-runtime/jwk/from_key_like';
@@ -19,6 +21,7 @@ interface CreateJWTOptions {
   jwksSpy?: jest.Mock;
   discoverSpy?: jest.Mock;
   delay?: number;
+  secret?: string;
 }
 
 export const createJwt = async ({
@@ -33,6 +36,7 @@ export const createJwt = async ({
   kid = 'kid',
   jwksSpy = jest.fn(),
   discoverSpy = jest.fn(),
+  secret,
 }: CreateJWTOptions = {}): Promise<string> => {
   const { publicKey, privateKey } = await generateKeyPair('RS256');
   const publicJwk = await fromKeyLike(publicKey);
@@ -52,9 +56,11 @@ export const createJwt = async ({
       };
     });
 
+  const secretKey = secret && createSecretKey(Buffer.from(secret));
+
   return new SignJWT(payload)
     .setProtectedHeader({
-      alg: 'RS256',
+      alg: secretKey ? 'HS256' : 'RS256',
       typ: 'JWT',
       kid,
     })
@@ -63,5 +69,5 @@ export const createJwt = async ({
     .setAudience(audience)
     .setIssuedAt(iat)
     .setExpirationTime(exp)
-    .sign(privateKey);
+    .sign(secretKey || privateKey);
 };

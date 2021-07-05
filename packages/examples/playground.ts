@@ -1,6 +1,7 @@
 import express = require('express');
 import { generateKeyPair } from 'jose/util/generate_key_pair';
 import { fromKeyLike, JWK } from 'jose/jwk/from_key_like';
+import secret from './secret';
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.get('/', async (req, res, next) => {
   const { privateJwk } = await keys();
   res.render('playground.ejs', {
     privateJwk,
+    secret,
     issuer,
     audience,
   });

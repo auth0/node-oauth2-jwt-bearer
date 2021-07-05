@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { Agent } from 'http';
 import nock = require('nock');
 import sinon = require('sinon');
@@ -29,6 +30,28 @@ describe('index', () => {
     const verify = jwtVerifier({
       issuer: 'https://op.example.com',
       jwksUri: 'https://op.example.com/.well-known/jwks.json',
+      audience: 'https://api/',
+    });
+    await expect(verify(jwt)).resolves.toHaveProperty('payload', {
+      iss: 'https://op.example.com',
+      sub: 'me',
+      aud: 'https://api/',
+      iat: expect.any(Number),
+      exp: expect.any(Number),
+    });
+  });
+
+  it('verifies jwt signed with symmetric secret', async () => {
+    const secret = randomBytes(32).toString('hex');
+    const jwt = await createJwt({
+      issuer: 'https://op.example.com',
+      secret,
+    });
+
+    const verify = jwtVerifier({
+      issuer: 'https://op.example.com',
+      secret,
+      tokenSigningAlg: 'HS256',
       audience: 'https://api/',
     });
     await expect(verify(jwt)).resolves.toHaveProperty('payload', {

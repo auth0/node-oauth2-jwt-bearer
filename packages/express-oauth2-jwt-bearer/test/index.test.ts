@@ -1,5 +1,6 @@
 import { AddressInfo } from 'net';
 import { Server } from 'http';
+import { randomBytes } from 'crypto';
 import { Handler } from 'express';
 import express = require('express');
 import nock = require('nock');
@@ -92,16 +93,7 @@ describe('index', () => {
   it('should accept empty arguments and env vars', async () => {
     const env = process.env;
     await expect(auth).toThrowError(
-      "You must provide an 'issuerBaseURL' or an 'issuer' and 'jwksUri'"
-    );
-    process.env = Object.assign({}, env, {
-      ISSUER_BASE_URL: 'foo',
-      ISSUER: 'bar',
-      AUDIENCE: 'baz',
-      JWKS_URI: 'qux',
-    });
-    expect(auth).toThrow(
-      "You must provide an 'issuerBaseURL' or an 'issuer' and 'jwksUri'"
+      "You must provide an 'issuerBaseURL', an 'issuer' and 'jwksUri' or an 'issuer' and 'secret'"
     );
     process.env = Object.assign({}, env, {
       ISSUER_BASE_URL: 'foo',
@@ -117,6 +109,13 @@ describe('index', () => {
     process.env = Object.assign({}, env, {
       ISSUER: 'bar',
       JWKS_URI: 'qux',
+      AUDIENCE: 'baz',
+    });
+    expect(auth).not.toThrow();
+    process.env = Object.assign({}, env, {
+      ISSUER: 'bar',
+      SECRET: randomBytes(32).toString('hex'),
+      TOKEN_SIGNING_ALG: 'HS256',
       AUDIENCE: 'baz',
     });
     expect(auth).not.toThrow();
@@ -136,6 +135,45 @@ describe('index', () => {
       expect.objectContaining({
         iss: 'https://issuer.example.com/',
       })
+    );
+  });
+
+  it('should succeed for authenticated requests signed with symmetric keys', async () => {
+    const secret = randomBytes(32).toString('hex');
+    const jwt = await createJwt({ secret });
+    const baseUrl = await setup({
+      secret,
+      tokenSigningAlg: 'HS256',
+    });
+    const response = await got(baseUrl, {
+      headers: { authorization: `Bearer ${jwt}` },
+      responseType: 'json',
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toHaveProperty(
+      'payload',
+      expect.objectContaining({
+        iss: 'https://issuer.example.com/',
+      })
+    );
+  });
+
+  it('should fail for requests signed with invalid symmetric keys', async () => {
+    const jwt = await createJwt({ secret: randomBytes(32).toString('hex') });
+    const baseUrl = await setup({
+      secret: randomBytes(32).toString('hex'),
+      tokenSigningAlg: 'HS256',
+    });
+    await expectFailsWith(
+      got(baseUrl, {
+        headers: {
+          authorization: `Bearer ${jwt}`,
+        },
+        responseType: 'json',
+      }),
+      401,
+      'invalid_token',
+      'signature verification failed'
     );
   });
 
