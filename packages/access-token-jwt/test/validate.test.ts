@@ -22,6 +22,7 @@ const validators = ({
   maxTokenAge = 10,
   strict = false,
   allowedSigningAlgs,
+  tokenSigningAlg,
 }: {
   issuer?: string;
   audience?: string | string[];
@@ -29,6 +30,7 @@ const validators = ({
   maxTokenAge?: number;
   strict?: boolean;
   allowedSigningAlgs?: string[];
+  tokenSigningAlg?: string;
 } = {}) =>
   defaultValidators(
     issuer,
@@ -36,7 +38,8 @@ const validators = ({
     clockTolerance,
     maxTokenAge,
     strict,
-    allowedSigningAlgs
+    allowedSigningAlgs,
+    tokenSigningAlg
   );
 
 describe('validate', () => {

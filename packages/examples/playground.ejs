@@ -53,11 +53,15 @@
           <button onclick="request(3001, '/claim-includes')">claimIncludes('foo', 'bar', 'baz')</button>
           <button onclick="request(3001, '/custom')">auth({ validators: { iss: false } })</button>
           <button onclick="request(3001, '/strict')">auth({ strict: true })</button>
+          <button onclick="request(3001, '/symmetric')">auth({ secret: '...' })</button>
         </fieldset>
         <h3>Log:</h3>
         <div id="result"></div>
         <textarea id="privateJwk" style="display: none;">
           <%= JSON.stringify(privateJwk, null, 2) %>
+        </textarea>
+        <textarea id="secret" style="display: none;">
+          <%= secret %>
         </textarea>
       </div>
     </div>
@@ -71,6 +75,7 @@
       const payload = document.querySelector('#payload');
       const at = document.querySelector('#at');
       const privateJwk = document.querySelector('#privateJwk');
+      const secret = document.querySelector('#secret');
 
       const log = (msg) => {
         const item = document.createElement('p');
@@ -80,10 +85,12 @@
 
       window.makeAccessToken = async () => {
         const privateKey = await parseJwk(JSON.parse(privateJwk.value), 'RS256');
+        const symmetricSecret = (new TextEncoder()).encode(secret.value.trim());
         try {
+          const head = JSON.parse(header.value);
           at.value = await new SignJWT(JSON.parse(payload.value))
-            .setProtectedHeader(JSON.parse(header.value))
-            .sign(privateKey);
+            .setProtectedHeader(head)
+            .sign(head.alg.startsWith('HS') ? symmetricSecret : privateKey);
         } catch (e) {
           at.value = '';
           console.error(e);

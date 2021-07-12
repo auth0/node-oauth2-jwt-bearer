@@ -35,7 +35,7 @@ npm install express-oauth2-jwt-bearer
 The library requires [issuerBaseURL](https://auth0.github.io/node-oauth2-jwt-bearer/interfaces/authoptions.html#issuerbaseurl) and [audience](http://localhost:8000/docs/interfaces/authoptions.html#audience), which can be configured with environmental variables:
 
 ```shell
-ISSUER_BASE_URL=https://YOUR_DOMAIN
+ISSUER_BASE_URL=https://YOUR_ISSUER_DOMAIN
 AUDIENCE=https://my-api.com
 ```
 
@@ -50,8 +50,22 @@ app.use(auth());
 const { auth } = require('express-oauth2-jwt-bearer');
 app.use(
     auth({
-      issuerBaseURL: 'https://YOUR_DOMAIN',
+      issuerBaseURL: 'https://YOUR_ISSUER_DOMAIN',
       audience: 'https://my-api.com'
+    })
+);
+```
+
+... or for JWTs signed with symmetric algorithms (eg `HS256`)
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+app.use(
+    auth({
+      issuer: 'https://YOUR_ISSUER_DOMAIN',
+      audience: 'https://my-api.com',
+      secret: 'YOUR SECRET',
+      tokenSigningAlg: 'HS256'
     })
 );
 ```
