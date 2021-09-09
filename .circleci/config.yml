@@ -7,7 +7,7 @@ jobs:
       name: ship/node
     steps:
       - checkout
-      - ship/install-packages
+      - ship/node-install-packages
       - run: npm run build
       - run: npm run lint
       - run: npm run test
