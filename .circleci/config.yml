@@ -1,21 +1,16 @@
 version: 2.1
 orbs:
-  node: circleci/node@3.0.0
   ship: auth0/ship@0.3.0
 jobs:
   test:
     executor:
-      name: node/default
-      tag: '15.14'
+      name: ship/node
     steps:
       - checkout
-      - node/install-packages
-      - run:
-          command: npm run build
-      - run:
-          command: npm run lint
-      - run:
-          command: npm run test
+      - ship/install-packages
+      - run: npm run build
+      - run: npm run lint
+      - run: npm run test
       - store_test_results:
           path: test-results
 workflows:
