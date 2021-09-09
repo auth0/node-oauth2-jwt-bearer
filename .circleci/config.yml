@@ -5,6 +5,7 @@ jobs:
   test:
     executor:
       name: ship/node
+      tag: '15.14'
     steps:
       - checkout
       - ship/node-install-packages
