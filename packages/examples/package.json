@@ -7,6 +7,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "lint": "exit 0",
     "test": "exit 0",
     "build": "exit 0",
     "dev": "tsnd index.ts"

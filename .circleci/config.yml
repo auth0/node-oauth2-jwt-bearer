@@ -1,21 +1,32 @@
 version: 2.1
 orbs:
-  node: circleci/node@3.0.0
+  ship: auth0/ship@0.3.0
 jobs:
   test:
     executor:
-      name: node/default
+      name: ship/node
       tag: '15.14'
     steps:
       - checkout
-      - node/install-packages
-      - run:
-          command: npm run build
-      - run:
-          command: npm run test
+      - ship/node-install-packages
+      - run: npm run build
+      - run: npm run lint
+      - run: npm run test
       - store_test_results:
           path: test-results
 workflows:
-  tests:
+  build_test_publish:
     jobs:
       - test
+      - ship/node-publish:
+          publish-command: npm publish --workspace=packages/express-oauth2-jwt-bearer
+          app-directory: "packages/express-oauth2-jwt-bearer"
+          requires:
+            - test
+          context:
+            - publish-npm
+            - publish-gh
+          filters:
+            branches:
+              only:
+                - main
