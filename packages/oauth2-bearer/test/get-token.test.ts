@@ -54,7 +54,7 @@ describe('get-token', () => {
 
   it('should fail when there are no tokens', async () => {
     await expect(got(url)).rejects.toThrowError(
-      'Response code 400 (Bearer token is missing)'
+      'Response code 401 (Unauthorized)'
     );
   });
 
@@ -87,7 +87,7 @@ describe('get-token', () => {
           authorization: 'foo token',
         },
       })
-    ).rejects.toThrowError('Response code 400 (Bearer token is missing)');
+    ).rejects.toThrowError('Response code 401 (Unauthorized)');
   });
 
   it('should fail for empty header', async () => {
@@ -97,7 +97,7 @@ describe('get-token', () => {
           authorization: 'Bearer ',
         },
       })
-    ).rejects.toThrowError('Response code 400 (Bearer token is missing)');
+    ).rejects.toThrowError('Response code 401 (Unauthorized)');
   });
 
   it('should get the token from the query string', async () => {
@@ -135,7 +135,7 @@ describe('get-token', () => {
         method: 'POST',
         json: { access_token: 'token' },
       })
-    ).rejects.toThrowError('Response code 400 (Bearer token is missing)');
+    ).rejects.toThrowError('Response code 401 (Unauthorized)');
   });
 
   it('should succeed to get the token from request payload for GETs', async () => {

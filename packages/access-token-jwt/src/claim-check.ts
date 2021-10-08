@@ -25,7 +25,7 @@ const isClaimIncluded = (
   expected: JSONPrimitive[]
 ): ((payload: JWTPayload) => boolean) => (payload) => {
   if (!(claim in payload)) {
-    return false;
+    throw new InvalidTokenError(`Missing '${claim}' claim`);
   }
 
   let actual = payload[claim];
@@ -87,7 +87,7 @@ export const claimEquals: ClaimEquals = (claim, expected) => {
 
   return claimCheck((payload) => {
     if (!(claim in payload)) {
-      return false;
+      throw new InvalidTokenError(`Missing '${claim}' claim`);
     }
     return payload[claim] === expected;
   }, `Unexpected '${claim}' value`);

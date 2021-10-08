@@ -18,17 +18,21 @@ import {
 const expectFailsWith = async (
   promise: CancelableRequest,
   status: number,
-  code: string,
-  description: string,
+  code?: string,
+  description?: string,
   scopes?: string
 ) => {
   try {
     await promise;
     fail('Request should fail');
   } catch (e) {
+    const error = code ? `, error="${code}"` : '';
+    const errorDescription = description
+      ? `, error_description="${description}"`
+      : '';
     expect(e.response.statusCode).toBe(status);
     expect(e.response.headers['www-authenticate']).toBe(
-      `Bearer realm="api", error="${code}", error_description="${description}"${
+      `Bearer realm="api"${error}${errorDescription}${
         (scopes && ', scope="' + scopes + '"') || ''
       }`
     );
@@ -82,12 +86,7 @@ describe('index', () => {
 
   it('should fail for anonymous requests', async () => {
     const baseUrl = await setup();
-    await expectFailsWith(
-      got(baseUrl),
-      400,
-      'invalid_request',
-      'Bearer token is missing'
-    );
+    await expectFailsWith(got(baseUrl), 401);
   });
 
   it('should accept empty arguments and env vars', async () => {
