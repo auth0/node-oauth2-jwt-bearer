@@ -1,7 +1,7 @@
 /**
  * Get a Bearer Token from a request per https://tools.ietf.org/html/rfc6750#section-2
  */
-import { InvalidRequestError } from './errors';
+import { InvalidRequestError, UnauthorizedError } from './errors';
 
 type QueryLike = Record<string, unknown> & { access_token?: string };
 type BodyLike = QueryLike;
@@ -56,7 +56,7 @@ export default function getToken(
   const fromBody = getFromBody(body, urlEncoded);
 
   if (!fromQuery && !fromHeader && !fromBody) {
-    throw new InvalidRequestError('Bearer token is missing');
+    throw new UnauthorizedError();
   }
 
   if (+!!fromQuery + +!!fromBody + +!!fromHeader > 1) {

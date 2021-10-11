@@ -56,7 +56,7 @@ describe('claim-check', () => {
 
     it('should throw if claim not in payload', () => {
       expect(claimEquals('foo', 'bar').bind(null, {})).toThrowError(
-        "Unexpected 'foo' value"
+        "Missing 'foo' claim"
       );
     });
 
@@ -80,7 +80,7 @@ describe('claim-check', () => {
 
     it('should throw if claim not in payload', () => {
       expect(claimIncludes('foo', 'bar').bind(null, {})).toThrowError(
-        "Unexpected 'foo' value"
+        "Missing 'foo' claim"
       );
     });
 
