@@ -1,6 +1,5 @@
 module.exports = {
   preset: 'ts-jest/presets/js-with-ts',
-  resolver: '../access-token-jwt/resolver.js',
   testEnvironment: 'node',
   collectCoverageFrom: ['src/*'],
   coverageThreshold: {

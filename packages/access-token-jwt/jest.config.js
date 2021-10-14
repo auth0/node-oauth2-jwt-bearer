@@ -10,7 +10,6 @@ module.exports = {
       },
     ],
   ],
-  resolver: './resolver.js',
   testEnvironment: 'node',
   collectCoverageFrom: ['src/*'],
   coverageThreshold: {

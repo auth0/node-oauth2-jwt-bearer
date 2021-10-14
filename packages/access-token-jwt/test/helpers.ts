@@ -1,8 +1,6 @@
 import { Buffer } from 'buffer';
 import { createSecretKey } from 'crypto';
-import SignJWT from 'jose-node-cjs-runtime/jwt/sign';
-import { generateKeyPair } from 'jose-node-cjs-runtime/util/generate_key_pair';
-import { fromKeyLike } from 'jose-node-cjs-runtime/jwk/from_key_like';
+import { SignJWT, generateKeyPair, exportJWK } from 'jose';
 import nock = require('nock');
 
 export const now = (Date.now() / 1000) | 0;
@@ -39,7 +37,7 @@ export const createJwt = async ({
   secret,
 }: CreateJWTOptions = {}): Promise<string> => {
   const { publicKey, privateKey } = await generateKeyPair('RS256');
-  const publicJwk = await fromKeyLike(publicKey);
+  const publicJwk = await exportJWK(publicKey);
   nock(issuer)
     .persist()
     .get(jwksUri)
