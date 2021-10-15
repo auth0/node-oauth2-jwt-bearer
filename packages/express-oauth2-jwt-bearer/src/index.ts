@@ -11,8 +11,8 @@ import {
   requiredScopes as _requiredScopes,
   RequiredScopes,
   VerifyJwtResult as AuthResult,
-  JWTPayload,
 } from 'access-token-jwt';
+import type { JWTPayload } from 'access-token-jwt';
 import { getToken } from 'oauth2-bearer';
 
 declare global {

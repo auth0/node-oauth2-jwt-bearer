@@ -3,7 +3,7 @@ import {
   InsufficientScopeError,
   UnauthorizedError,
 } from 'oauth2-bearer';
-import { JWTPayload } from 'jose-node-cjs-runtime/jwt/verify';
+import type { JWTPayload } from 'jose';
 
 export type JSONPrimitive = string | number | boolean | null;
 

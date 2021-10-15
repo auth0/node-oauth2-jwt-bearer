@@ -1,7 +1,4 @@
-import {
-  JWTPayload,
-  JWSHeaderParameters,
-} from 'jose-node-cjs-runtime/jwt/verify';
+import type { JWTPayload, JWSHeaderParameters } from 'jose';
 
 /**
  * @ignore

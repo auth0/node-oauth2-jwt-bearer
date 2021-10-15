@@ -4,11 +4,8 @@ import { createSecretKey } from 'crypto';
 import { Agent as HttpAgent } from 'http';
 import { Agent as HttpsAgent } from 'https';
 import { URL } from 'url';
-import createRemoteJWKSet from 'jose-node-cjs-runtime/jwks/remote';
-import jwtVerify, {
-  JWTPayload,
-  JWSHeaderParameters,
-} from 'jose-node-cjs-runtime/jwt/verify';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
+import type { JWTPayload, JWSHeaderParameters } from 'jose'
 import { InvalidTokenError } from 'oauth2-bearer';
 import discover, { IssuerMetadata } from './discovery';
 import validate, { defaultValidators, Validators } from './validate';
@@ -208,6 +205,7 @@ const jwtVerifier = ({
   const secretKey = secret && createSecretKey(Buffer.from(secret));
 
   const JWKS = async (...args: Parameters<GetKeyFn>) => {
+    if (secretKey) return secretKey;
     if (!origJWKS) {
       origJWKS = createRemoteJWKSet(new URL(jwksUri), {
         agent,
@@ -243,7 +241,7 @@ const jwtVerifier = ({
       };
       const { payload, protectedHeader: header } = await jwtVerify(
         jwt,
-        secretKey || JWKS
+        JWKS,
       );
       await validate(payload, header, validators);
       return { payload, header, token: jwt };

@@ -3,6 +3,7 @@ import { Agent as HttpAgent, get as getHttp } from 'http';
 import { Agent as HttpsAgent, get as getHttps } from 'https';
 import { once } from 'events';
 import type { ClientRequest, IncomingMessage } from 'http';
+import { TextDecoder } from 'util';
 
 const decoder = new TextDecoder();
 

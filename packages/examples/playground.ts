@@ -1,6 +1,6 @@
 import express = require('express');
-import { generateKeyPair } from 'jose/util/generate_key_pair';
-import { fromKeyLike, JWK } from 'jose/jwk/from_key_like';
+import { generateKeyPair, exportJWK } from 'jose';
+import type { JWK } from 'jose';
 import secret from './secret';
 
 const app = express();
@@ -16,8 +16,8 @@ const keys = async () => {
     return { publicJwk, privateJwk };
   }
   const { publicKey, privateKey } = await generateKeyPair('RS256');
-  publicJwk = await fromKeyLike(publicKey);
-  privateJwk = await fromKeyLike(privateKey);
+  publicJwk = await exportJWK(publicKey);
+  privateJwk = await exportJWK(privateKey);
   return { publicJwk, privateJwk };
 };
 

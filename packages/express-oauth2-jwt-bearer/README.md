@@ -147,14 +147,6 @@ See the Express.js [docs on error handling](https://expressjs.com/en/guide/error
 
 ## Troubleshooting
 
-### Getting `Error: Cannot find module 'jose-node-cjs-runtime/jwks/remote'` when I run the SDK
-
-This package takes a dependency on [jose](https://github.com/panva/jose) which uses [package exports](https://nodejs.org/api/packages.html#packages_exports) which requires Node `^12.19.0 || ^14.15.0`.
-
-Even if you are using the correct version of Node, you may still run into this in some tooling that does not yet support package exports, like [jest](https://github.com/facebook/jest/issues/9771) or Webpack 4. 
-
-To workaround this issue in jest, see how we use a [custom resolver](../../packages/access-token-jwt/resolver.js) for this project.
-
 ## Contributing
 
 See monorepo's [contributing guidelines](../../README.md#contributing).
