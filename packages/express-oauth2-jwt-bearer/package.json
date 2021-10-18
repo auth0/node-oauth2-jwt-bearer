@@ -7,7 +7,6 @@
   "scripts": {
     "test": "jest test --coverage",
     "lint": "eslint --fix --ext .ts ./src",
-    "prepublishOnly": "npm run build",
     "prebuild": "rimraf dist",
     "build": "rollup -c"
   },

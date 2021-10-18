@@ -11,8 +11,6 @@
     "packages/examples"
   ],
   "scripts": {
-    "install:workspace": "npm install --package-lock-only --no-package-lock --save-dev -C",
-    "postinstall:workspace": "npm install",
     "lint": "npm run lint --workspaces",
     "test": "npm test --workspaces",
     "build": "npm run build --workspaces",
