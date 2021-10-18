@@ -10,11 +10,14 @@ Monorepo for `oauth2-jwt-bearer`. Contains the following packages:
 
 ## Developing
 
-This package uses npm workspaces. You must have `npm >= @7.7` to develop this package
+This package uses npm workspaces. You must have `npm >= @7.14` to develop this package
 
 To run a command in the context of a workspace from the root use the `--workspace` or `--workspaces` arguments.
 
 ```shell
+# install jose on access-token-jwt
+npm run install jose --workspace=access-token-jwt
+
 # build oauth2-bearer
 npm run build --workspace=oauth2-bearer
 
@@ -26,15 +29,6 @@ npm test --workspaces # you can also use the `npm test` script
 
 ```shell
 npm run dev --workspace=packages/examples
-```
-
-### Install new packages
-
-You can't yet run `npm install` with the `workspace` flag, so to install something - don't run install from the workspace, instead from the root run:
-
-```sh
-# to install 'jest' to 'packages/oauth2-bearer'
-npm run install:workspace -- packages/oauth2-bearer jest
 ```
 
 ## Contributing
