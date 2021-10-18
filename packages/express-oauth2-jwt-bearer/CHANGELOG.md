@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.0.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.0.0) (2021-10-18)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v0.2.0...v1.0.0)
+
+**Changed**
+- refactor: use jose@4 [\#31](https://github.com/auth0/node-oauth2-jwt-bearer/pull/31) ([panva](https://github.com/panva))
+
 ## [v0.2.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v0.2.0) (2021-10-14)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v0.1.0...v0.2.0)
 
