@@ -15,7 +15,6 @@ Authentication middleware for Express.js that validates JWT Bearer Access Tokens
 - [Examples](#examples)
 - [Security Headers](#security-headers)
 - [Error Handling](#error-handling)
-- [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [Support + Feedback](#support---feedback)
 - [Vulnerability Reporting](#vulnerability-reporting)
@@ -144,8 +143,6 @@ This SDK raises errors with `err.status` and `err.headers` according to [rfc6750
 The `error_description` in the `WWW-Authenticate` header will contain useful information about the error, which you may not want to disclose in Production.
 
 See the Express.js [docs on error handling](https://expressjs.com/en/guide/error-handling.html) for more information on writing custom error handlers.
-
-## Troubleshooting
 
 ## Contributing
 
