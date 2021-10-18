@@ -10,7 +10,7 @@ Monorepo for `oauth2-jwt-bearer`. Contains the following packages:
 
 ## Developing
 
-This package uses npm workspaces. You must have `npm >= @7.14` to develop this package
+This monorepo uses npm workspaces. You must have `npm >= @7.14` to develop this package
 
 To run a command in the context of a workspace from the root use the `--workspace` or `--workspaces` arguments.
 
