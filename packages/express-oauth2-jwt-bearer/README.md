@@ -1,8 +1,6 @@
-# express-oauth2-jwt-bearer (Beta)
+# express-oauth2-jwt-bearer
 
 Authentication middleware for Express.js that validates JWT Bearer Access Tokens.
-
-> **Note:** This library is currently in Beta status and has not had a complete security review. We do not recommend using this library in production yet. As we move towards general availability, please be aware that releases may contain breaking changes. We will be monitoring the Issues queue here for feedback and questions. PRs and comments on existing PRs are welcome!
 
 [![CircleCI](https://img.shields.io/circleci/build/github/auth0/node-oauth2-jwt-bearer.svg?branch=master&style=flat)](https://circleci.com/gh/auth0/node-oauth2-jwt-bearer)
 [![License](https://img.shields.io/:license-mit-blue.svg?style=flat)](https://opensource.org/licenses/MIT)
