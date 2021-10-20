@@ -136,9 +136,9 @@ describe('claim-check', () => {
       );
     });
 
-    it('should expect a string or array of strings', () => {
-      expect(requiredScopes).toThrowError(
-        "scopes' must be a string or array of strings"
+    it('should throw if no scope claim found', () => {
+      expect(requiredScopes('foo bar').bind(null, { foo: 'bar' })).toThrowError(
+        new InsufficientScopeError(['foo', 'bar'], "Missing 'scope' claim")
       );
     });
 
