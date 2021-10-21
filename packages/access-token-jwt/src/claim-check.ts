@@ -50,6 +50,12 @@ export const requiredScopes: RequiredScopes = (scopes) => {
   }
   const fn = isClaimIncluded('scope', scopes);
   return claimCheck((payload) => {
+    if (!('scope' in payload)) {
+      throw new InsufficientScopeError(
+        scopes as string[],
+        "Missing 'scope' claim"
+      );
+    }
     if (!fn(payload)) {
       throw new InsufficientScopeError(scopes as string[]);
     }
