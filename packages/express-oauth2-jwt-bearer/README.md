@@ -29,7 +29,7 @@ npm install express-oauth2-jwt-bearer
 
 ## Getting started
 
-The library requires [issuerBaseURL](https://auth0.github.io/node-oauth2-jwt-bearer/interfaces/authoptions.html#issuerbaseurl) and [audience](http://localhost:8000/docs/interfaces/authoptions.html#audience), which can be configured with environmental variables:
+The library requires [issuerBaseURL](https://auth0.github.io/node-oauth2-jwt-bearer/interfaces/authoptions.html#issuerbaseurl) and [audience](https://auth0.github.io/docs/interfaces/authoptions.html#audience), which can be configured with environmental variables:
 
 ```shell
 ISSUER_BASE_URL=https://YOUR_ISSUER_DOMAIN
