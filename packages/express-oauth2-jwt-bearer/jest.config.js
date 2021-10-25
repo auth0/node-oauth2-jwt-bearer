@@ -32,6 +32,7 @@ module.exports = {
           'oauth2-bearer': ['../oauth2-bearer/src'],
           'access-token-jwt': ['../access-token-jwt/src'],
         },
+        useUnknownInCatchVariables: false,
       },
     },
   },
