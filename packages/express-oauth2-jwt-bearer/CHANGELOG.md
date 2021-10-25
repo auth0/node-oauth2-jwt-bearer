@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.0.1](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.0.1) (2021-10-25)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.0.0...v1.0.1)
+
+**Fixed**
+- Bundle type definitions for monorepo packages [\#39](https://github.com/auth0/node-oauth2-jwt-bearer/pull/39) ([adamjmcgrath](https://github.com/adamjmcgrath))
+
 ## [v1.0.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.0.0) (2021-10-18)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v0.2.0...v1.0.0)
 
