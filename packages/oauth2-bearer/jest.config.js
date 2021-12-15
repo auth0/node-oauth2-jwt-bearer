@@ -1,6 +1,8 @@
 module.exports = {
   preset: 'ts-jest',
   roots: ['<rootDir>'],
+  moduleDirectories: ['node_modules', '<module-directory>'],
+  modulePaths: ['<path-of-module>'],
   reporters: [
     'default',
     [
