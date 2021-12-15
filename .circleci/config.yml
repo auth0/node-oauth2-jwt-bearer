@@ -5,11 +5,10 @@ jobs:
   test:
     executor:
       name: ship/node
-      tag: '14.18'
+      tag: 'lts'
     steps:
       - checkout
-      - ship/node-install-packages:
-          install-command: npm install
+      - ship/node-install-packages
       - run: npm run build
       - run: npm run lint
       - run: npm run test
