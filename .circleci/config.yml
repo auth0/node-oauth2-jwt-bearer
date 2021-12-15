@@ -9,7 +9,7 @@ jobs:
     steps:
       - checkout
       - ship/node-install-packages:
-          - install-command: npm install
+          install-command: npm install
       - run: npm run build
       - run: npm run lint
       - run: npm run test
