@@ -78,18 +78,16 @@ export const auth = (opts: JwtVerifierOptions = {}): Handler => {
   };
 };
 
-const toHandler = (fn: (payload?: JWTPayload) => void): Handler => (
-  req,
-  res,
-  next
-) => {
-  try {
-    fn(req.auth?.payload);
-    next();
-  } catch (e) {
-    next(e);
-  }
-};
+const toHandler =
+  (fn: (payload?: JWTPayload) => void): Handler =>
+  (req, res, next) => {
+    try {
+      fn(req.auth?.payload);
+      next();
+    } catch (e) {
+      next(e);
+    }
+  };
 
 /**
  * Check the token's claims using a custom method that receives the
@@ -160,3 +158,9 @@ export {
   JWTHeader,
   JSONPrimitive,
 } from 'access-token-jwt';
+export {
+  UnauthorizedError,
+  InvalidRequestError,
+  InvalidTokenError,
+  InsufficientScopeError,
+} from 'oauth2-bearer';
