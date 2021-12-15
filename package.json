@@ -19,5 +19,8 @@
   "devDependencies": {
     "@strictsoftware/typedoc-plugin-monorepo": "^0.4.2",
     "typedoc": "^0.20.36"
+  },
+  "dependencies": {
+    "npm": "^8.3.0"
   }
 }
