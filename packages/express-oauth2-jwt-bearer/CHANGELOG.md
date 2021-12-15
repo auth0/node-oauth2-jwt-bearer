@@ -1,5 +1,12 @@
 # Change Log
 
+## [v1.1.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.1.0) (2021-12-15)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.0.1...v1.1.0)
+
+**Added**
+- Export error types [SDK-2941] [\#46](https://github.com/auth0/node-oauth2-jwt-bearer/pull/46) ([adamjmcgrath](https://github.com/adamjmcgrath))
+- Add Node 16 LTS to engines [\#43](https://github.com/auth0/node-oauth2-jwt-bearer/pull/43) ([adamjmcgrath](https://github.com/adamjmcgrath))
+
 ## [v1.0.1](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.0.1) (2021-10-25)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.0.0...v1.0.1)
 
