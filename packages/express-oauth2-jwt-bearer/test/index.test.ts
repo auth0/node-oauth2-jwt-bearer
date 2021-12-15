@@ -13,6 +13,10 @@ import {
   claimEquals,
   claimIncludes,
   requiredScopes,
+  UnauthorizedError,
+  InvalidRequestError,
+  InvalidTokenError,
+  InsufficientScopeError,
 } from '../src';
 
 const expectFailsWith = async (
@@ -407,5 +411,20 @@ describe('index', () => {
       'invalid_token',
       "'nbf' claim must be a number"
     );
+  });
+
+  it('should export errors', () => {
+    expect(() => {
+      throw new UnauthorizedError();
+    }).toThrow(UnauthorizedError);
+    expect(() => {
+      throw new InvalidRequestError();
+    }).toThrow(InvalidRequestError);
+    expect(() => {
+      throw new InvalidTokenError();
+    }).toThrow(InvalidTokenError);
+    expect(() => {
+      throw new InsufficientScopeError();
+    }).toThrow(InsufficientScopeError);
   });
 });
