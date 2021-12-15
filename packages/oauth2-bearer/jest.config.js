@@ -1,6 +1,6 @@
 module.exports = {
   preset: 'ts-jest',
-  rootDir: '<rootDir>/packages/oauth2-bearer',
+  rootDir: '<rootDir>../../',
   reporters: [
     'default',
     [
