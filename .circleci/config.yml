@@ -8,7 +8,8 @@ jobs:
       tag: '14.18'
     steps:
       - checkout
-      - ship/node-install-packages
+      - ship/node-install-packages:
+          - install-command: npm install
       - run: npm run build
       - run: npm run lint
       - run: npm run test
