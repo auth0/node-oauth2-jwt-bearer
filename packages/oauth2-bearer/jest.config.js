@@ -1,5 +1,6 @@
 module.exports = {
   preset: 'ts-jest',
+  roots: ['.'],
   reporters: [
     'default',
     [
