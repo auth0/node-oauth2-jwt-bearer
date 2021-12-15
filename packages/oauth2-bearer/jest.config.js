@@ -18,4 +18,11 @@ module.exports = {
       statements: 100,
     },
   },
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        module: 'commonjs',
+      },
+    },
+  },
 };

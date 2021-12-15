@@ -5,7 +5,7 @@ jobs:
   test:
     executor:
       name: ship/node
-      tag: '15.14'
+      tag: 'lts'
     steps:
       - checkout
       - ship/node-install-packages
