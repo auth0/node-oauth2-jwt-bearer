@@ -173,7 +173,7 @@ describe('discover', () => {
   it('is rejected with Error when no absolute URL is provided', async () => {
     await expect(
       discover('op.example.com/.well-known/foobar')
-    ).rejects.toThrowError('Invalid URL: op.example.com/.well-known/foobar');
+    ).rejects.toThrowError('Invalid URL');
   });
 
   it('is rejected when .well-known Metadata does not provide the required "issuer" property', async () => {

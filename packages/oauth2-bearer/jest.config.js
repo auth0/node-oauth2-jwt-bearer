@@ -1,6 +1,5 @@
 module.exports = {
   preset: 'ts-jest',
-  rootDir: '<rootDir>../../',
   reporters: [
     'default',
     [
@@ -17,6 +16,13 @@ module.exports = {
       functions: 100,
       lines: 100,
       statements: 100,
+    },
+  },
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        module: 'commonjs',
+      },
     },
   },
 };
