@@ -21,7 +21,7 @@ Authentication middleware for Express.js that validates JWT Bearer Access Tokens
 
 ## Install
 
-This package supports Node `^12.19.0 || ^14.15.0`
+This package supports Node `^12.19.0 || ^14.15.0 || ^16.13.0`
 
 ```shell
 npm install express-oauth2-jwt-bearer
