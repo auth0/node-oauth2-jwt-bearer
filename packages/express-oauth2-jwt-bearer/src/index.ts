@@ -33,10 +33,10 @@ declare global {
  * variable `ISSUER_BASE_URL`)
  *
  * ```js
- * app.use({
+ * app.use(auth({
  *   issuerBaseURL: 'http://issuer.example.com',
  *   audience: 'https://myapi.com'
- * });
+ * }));
  * ```
  *
  * This uses the {@Link AuthOptions.issuerBaseURL} to find the OAuth 2.0
@@ -48,11 +48,11 @@ declare global {
  * the env variable `ISSUER`) yourself.
  *
  * ```js
- * app.use({
+ * app.use(auth({
  *   jwksUri: 'http://issuer.example.com/well-known/jwks.json',
  *   issuer: 'http://issuer.example.com',
  *   audience: 'https://myapi.com'
- * });
+ * }));
  * ```
  *
  * You must provide the `audience` argument (or `AUDIENCE` environment variable)
