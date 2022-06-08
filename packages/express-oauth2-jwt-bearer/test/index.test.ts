@@ -379,7 +379,7 @@ describe('index', () => {
     );
   });
 
-  it('should succeed when required scopes are included', async () => {
+  it('should succeed when required scopes are included in scope alias', async () => {
     const jwt = await createJwt({ payload: { scope: ['foo', 'bar', 'baz'] } });
     const baseUrl = await setup({
       middleware: requiredScopes('foo bar'),
@@ -394,6 +394,42 @@ describe('index', () => {
       expect.objectContaining({
         scope: ['foo', 'bar', 'baz'],
       })
+    );
+  });
+
+  it('should succeed when required scopes are included in scp alias', async () => {
+    const jwt = await createJwt({ payload: { scp: ['foo', 'bar', 'baz'] } });
+    const baseUrl = await setup({
+      middleware: requiredScopes('foo bar'),
+    });
+    const response = await got(baseUrl, {
+      headers: { authorization: `Bearer ${jwt}` },
+      responseType: 'json',
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toHaveProperty(
+        'payload',
+        expect.objectContaining({
+          scp: ['foo', 'bar', 'baz'],
+        })
+    );
+  });
+
+  it('should succeed when required scopes are included in scopes alias', async () => {
+    const jwt = await createJwt({ payload: { scopes: ['foo', 'bar', 'baz'] } });
+    const baseUrl = await setup({
+      middleware: requiredScopes('foo bar'),
+    });
+    const response = await got(baseUrl, {
+      headers: { authorization: `Bearer ${jwt}` },
+      responseType: 'json',
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toHaveProperty(
+        'payload',
+        expect.objectContaining({
+          scopes: ['foo', 'bar', 'baz'],
+        })
     );
   });
 

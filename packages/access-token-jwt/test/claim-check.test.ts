@@ -156,11 +156,27 @@ describe('claim-check', () => {
       ).toThrowError(new InsufficientScopeError(['foo', 'bar']));
     });
 
-    it('should not throw if all scopes found in actual', () => {
+    it('should not throw if all scopes found in actual in scope alias', () => {
       expect(
         requiredScopes(['foo', 'bar']).bind(null, {
           scope: 'foo bar',
         })
+      ).not.toThrow();
+    });
+
+    it('should not throw if all scopes found in actual in scp alias', () => {
+      expect(
+          requiredScopes(['foo', 'bar']).bind(null, {
+            scp: 'foo bar',
+          })
+      ).not.toThrow();
+    });
+
+    it('should not throw if all scopes found in actual in scopes alias', () => {
+      expect(
+          requiredScopes(['foo', 'bar']).bind(null, {
+            scopes: 'foo bar',
+          })
       ).not.toThrow();
     });
   });
