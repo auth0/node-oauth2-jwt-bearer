@@ -48,15 +48,23 @@ export const requiredScopes: RequiredScopes = (scopes) => {
   } else if (!Array.isArray(scopes)) {
     throw new TypeError("'scopes' must be a string or array of strings");
   }
-  const fn = isClaimIncluded('scope', scopes);
+  const fn = (scope: string) => isClaimIncluded(scope, scopes as string[]);
   return claimCheck((payload) => {
-    if (!('scope' in payload)) {
+    let scopeField: string
+    if ('scp' in payload) {
+      scopeField = 'scp';
+    } else if ('scopes' in payload) {
+      scopeField = 'scopes';
+    } else if ('scope' in payload) {
+      scopeField = 'scope';
+    } else {
       throw new InsufficientScopeError(
-        scopes as string[],
-        "Missing 'scope' claim"
+          scopes as string[],
+          "Missing 'scope' claim"
       );
     }
-    if (!fn(payload)) {
+
+    if (!fn(scopeField)(payload)) {
       throw new InsufficientScopeError(scopes as string[]);
     }
     return true;
