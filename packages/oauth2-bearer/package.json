@@ -22,7 +22,7 @@
     "@typescript-eslint/parser": "^5.7.0",
     "body": "^5.1.0",
     "eslint": "^8.4.1",
-    "got": "^11.8.2",
+    "got": "^11.8.5",
     "jest": "^27.4.5",
     "jest-junit": "^13.0.0",
     "prettier": "~2.5.1",
