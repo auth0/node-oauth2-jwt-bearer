@@ -71,7 +71,7 @@ With this basic configuration, your api will require a valid Access Token JWT be
 
 ## API Documentation
 
-- [auth](https://auth0.github.io/node-oauth2-jwt-bearer#auth) - Middleware that will return a 401 if a valid Access token JWT bearer token is not provided in the request.
+- [auth](https://auth0.github.io/node-oauth2-jwt-bearer#auth) - Middleware that will return a 401 if a valid Access token JWT bearer token is not provided in the request. It will also populate `req.auth` with `{ payload, header, token }`.
 - [requiredScopes](https://auth0.github.io/node-oauth2-jwt-bearer#requiredscopes) - Check a token's scope claim to include a number of given scopes, raises a 403 `insufficient_scope` error if the value of the scope claim does not include all the given scopes.
 - [claimEquals](https://auth0.github.io/node-oauth2-jwt-bearer#claimequals) - Check a token's claim to be equal a given JSONPrimitive (string, number, boolean or null) raises a 401 `invalid_token` error if the value of the claim does not match.
 - [claimIncludes](https://auth0.github.io/node-oauth2-jwt-bearer#claimincludes) - Check a token's claim to include a number of given JSONPrimitives (string, number, boolean or null) raises a 401 `invalid_token` error if the value of the claim does not include all the given values.
