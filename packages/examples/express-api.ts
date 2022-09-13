@@ -20,7 +20,7 @@ const requiresAuth = auth({ issuerBaseURL, audience });
 app.use(
   cors({
     origin: issuerBaseURL,
-    allowedHeaders: ['Authorization'],
+    allowedHeaders: ['Authorization', 'DPoP'],
     exposedHeaders: ['WWW-Authenticate'],
   })
 );

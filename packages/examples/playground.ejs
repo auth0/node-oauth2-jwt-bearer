@@ -8,7 +8,6 @@
       textarea { width: 100%; height: 130px; font-family: monospace; font-size: 16px; padding: 10px; }
       fieldset { border: 1px solid #555; line-height: 1.6rem; }
       fieldset button { font-family: monospace; }
-      #at { font-size: 10px; }
       #result { border: 1px solid black; padding: 10px; font-family: monospace; }
       .wrapper { display: flex; gap: 12px; }
       .column { flex-direction: column; flex: 1; }
@@ -42,6 +41,8 @@
         </textarea>
         <h3>Access Token</h3>
         <textarea id="at" style="height: 150px;"></textarea>
+        <h3>DPoP Proof JWT</h3>
+        <textarea id="dpop" style="height: 150px;"></textarea>
       </div>
       <div class="column">
         <h3>Test:</h3>
@@ -69,6 +70,11 @@
     <script type="module">
       import { SignJWT } from 'https://cdn.jsdelivr.net/npm/jose@latest/dist/browser/jwt/sign.js';
       import { parseJwk } from 'https://cdn.jsdelivr.net/npm/jose@latest/dist/browser/jwk/parse.js';
+      import { exportJWK } from 'https://cdn.jsdelivr.net/npm/jose@latest/dist/browser/key/export.js';
+      import { calculateJwkThumbprint } from 'https://cdn.jsdelivr.net/npm/jose@latest/dist/browser/jwk/thumbprint.js';
+
+      import DPoP, { generateKeyPair } from 'https://cdn.jsdelivr.net/npm/dpop@latest';
+
 
       const result = document.querySelector('#result');
       const header = document.querySelector('#header');
@@ -76,6 +82,8 @@
       const at = document.querySelector('#at');
       const privateJwk = document.querySelector('#privateJwk');
       const secret = document.querySelector('#secret');
+      const dpop = document.querySelector('#dpop');
+      let keyPair;
 
       const log = (msg) => {
         const item = document.createElement('p');
@@ -88,9 +96,10 @@
         const symmetricSecret = (new TextEncoder()).encode(secret.value.trim());
         try {
           const head = JSON.parse(header.value);
-          at.value = await new SignJWT(JSON.parse(payload.value))
+          const accessToken = await new SignJWT(JSON.parse(payload.value))
             .setProtectedHeader(head)
             .sign(head.alg.startsWith('HS') ? symmetricSecret : privateKey);
+          at.value = accessToken;
         } catch (e) {
           at.value = '';
           console.error(e);
@@ -98,9 +107,14 @@
       };
 
       window.request = async (port, path) => {
-        const response = await fetch(`http://localhost:${port}${path}`, {
+        const url = `http://localhost:${port}${path}`;
+        const accessToken = at.value.trim();
+        const dPoPProofJwt = await makeDPoPProofJwt(accessToken, url);
+
+        const response = await fetch(url, {
           headers: {
-            authorization: `Bearer ${at.value.trim()}`,
+            authorization: `DPoP ${accessToken}`,
+            DPoP: dPoPProofJwt
           },
         });
         const header = response.headers.get('www-authenticate');
@@ -117,7 +131,20 @@
         }
       };
 
-      makeAccessToken();
+      window.makeDPoPProofJwt = async (accessToken, url) => {
+        const dPoPProofJwt = await DPoP(keyPair, url, 'GET', undefined, accessToken);
+        dpop.value = dPoPProofJwt;
+        return dPoPProofJwt;
+      }
+
+      (async () => {
+        (keyPair = await generateKeyPair('RS256'));
+        const publicJwk = await exportJWK(keyPair.publicKey, 'RS256');
+        const jkt = await calculateJwkThumbprint(publicJwk);
+        payload.value = JSON.stringify({ ...JSON.parse(payload.value), cnf: { jkt } }, null, 2)
+
+        makeAccessToken();
+      })();
     </script>
   </body>
 </html>
