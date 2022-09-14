@@ -40,7 +40,7 @@ app.use(
 git checkout dpop
 # Hack, hack, hack
 npm build
-# Bump the package version and update the install instructions
+# Bump the express-oauth2-jwt-dpop package version and update the install instructions
 npm pack --workspace=packages/express-oauth2-jwt-dpop
 # Delete old tgz
 # Push to git

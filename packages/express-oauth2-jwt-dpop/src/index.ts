@@ -93,7 +93,7 @@ const verifyProof = async (
     `${req.protocol}://${req.get('Host')}`
   ).toString();
   if (payload.htu !== url) {
-    throw new Error('htu mismatch');
+    throw new Error(`htu mismatch: expected ${payload.htu}, got ${url}`);
   }
 
   const ath = base64url.encode(
