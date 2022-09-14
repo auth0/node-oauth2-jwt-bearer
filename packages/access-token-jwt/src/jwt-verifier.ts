@@ -5,7 +5,7 @@ import { Agent as HttpAgent } from 'http';
 import { Agent as HttpsAgent } from 'https';
 import { URL } from 'url';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
-import type { JWTPayload, JWSHeaderParameters } from 'jose'
+import type { JWTPayload, JWSHeaderParameters } from 'jose';
 import { InvalidTokenError } from 'oauth2-bearer';
 import discover, { IssuerMetadata } from './discovery';
 import validate, { defaultValidators, Validators } from './validate';
@@ -137,7 +137,10 @@ export interface VerifyJwtResult {
   token: string;
 }
 
-export type VerifyJwt = (jwt: string) => Promise<VerifyJwtResult>;
+export type VerifyJwt = (
+  jwt: string,
+  validators?: Partial<Validators>
+) => Promise<VerifyJwtResult>;
 
 type GetKeyFn = ReturnType<typeof createRemoteJWKSet>;
 
@@ -216,7 +219,7 @@ const jwtVerifier = ({
     return origJWKS(...args);
   };
 
-  return async (jwt: string) => {
+  return async (jwt: string, requestTimeValidators?: Partial<Validators>) => {
     try {
       if (issuerBaseURL) {
         discovery =
@@ -239,11 +242,11 @@ const jwtVerifier = ({
         ),
         ...customValidators,
       };
-      const { payload, protectedHeader: header } = await jwtVerify(
-        jwt,
-        JWKS,
-      );
-      await validate(payload, header, validators);
+      const { payload, protectedHeader: header } = await jwtVerify(jwt, JWKS);
+      await validate(payload, header, {
+        ...validators,
+        ...requestTimeValidators,
+      });
       return { payload, header, token: jwt };
     } catch (e) {
       throw new InvalidTokenError(e.message);

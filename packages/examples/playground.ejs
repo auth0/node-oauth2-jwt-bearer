@@ -41,7 +41,7 @@
         </textarea>
         <h3>Access Token</h3>
         <textarea id="at" style="height: 150px;"></textarea>
-        <h3>DPoP Proof JWT</h3>
+        <h3>DPoP Proof JWT <button style="float: right;" onclick="makeDPoPProofJwt()">re-generate</button></h3>
         <textarea id="dpop" style="height: 150px;"></textarea>
       </div>
       <div class="column">
@@ -49,12 +49,6 @@
         <fieldset>
           <legend>Express</legend>
           <button onclick="request(3001, '/auth')">auth()</button>
-          <button onclick="request(3001, '/scope')">requiredScopes('read:msg')</button>
-          <button onclick="request(3001, '/claim-equals')">claimEquals('foo', 'bar')</button>
-          <button onclick="request(3001, '/claim-includes')">claimIncludes('foo', 'bar', 'baz')</button>
-          <button onclick="request(3001, '/custom')">auth({ validators: { iss: false } })</button>
-          <button onclick="request(3001, '/strict')">auth({ strict: true })</button>
-          <button onclick="request(3001, '/symmetric')">auth({ secret: '...' })</button>
         </fieldset>
         <h3>Log:</h3>
         <div id="result"></div>
@@ -96,10 +90,10 @@
         const symmetricSecret = (new TextEncoder()).encode(secret.value.trim());
         try {
           const head = JSON.parse(header.value);
-          const accessToken = await new SignJWT(JSON.parse(payload.value))
+          at.value = await new SignJWT(JSON.parse(payload.value))
             .setProtectedHeader(head)
             .sign(head.alg.startsWith('HS') ? symmetricSecret : privateKey);
-          at.value = accessToken;
+          await makeDPoPProofJwt();
         } catch (e) {
           at.value = '';
           console.error(e);
@@ -109,7 +103,7 @@
       window.request = async (port, path) => {
         const url = `http://localhost:${port}${path}`;
         const accessToken = at.value.trim();
-        const dPoPProofJwt = await makeDPoPProofJwt(accessToken, url);
+        const dPoPProofJwt = dpop.value.trim();
 
         const response = await fetch(url, {
           headers: {
@@ -129,12 +123,13 @@
         } else {
           log('Unexpected error: check console');
         }
+        // Create a new proof after each request
+        await makeDPoPProofJwt();
       };
 
-      window.makeDPoPProofJwt = async (accessToken, url) => {
-        const dPoPProofJwt = await DPoP(keyPair, url, 'GET', undefined, accessToken);
-        dpop.value = dPoPProofJwt;
-        return dPoPProofJwt;
+      window.makeDPoPProofJwt = async () => {
+        const accessToken = at.value.trim();
+        dpop.value = await DPoP(keyPair, `http://localhost:3001/auth`, 'GET', undefined, accessToken);
       }
 
       (async () => {
