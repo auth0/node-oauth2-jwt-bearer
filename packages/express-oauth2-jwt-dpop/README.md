@@ -4,7 +4,7 @@ Authentication middleware for Express.js that validates JWT DPoP Access Tokens.
 
 # Install
 ```bash
-npm install https://github.com/auth0/node-oauth2-jwt-bearer/raw/dpop/express-oauth2-jwt-dpop-0.0.0-alpha.1.tgz
+npm install https://github.com/auth0/node-oauth2-jwt-bearer/raw/dpop/express-oauth2-jwt-dpop-0.0.0-alpha.2.tgz
 ```
 
 ## Getting started
