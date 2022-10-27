@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.2.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.2.0) (2022-10-27)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.1.0...v1.2.0)
+
+**Added**
+- Add 18 LTS to engines [\#80](https://github.com/auth0/node-oauth2-jwt-bearer/pull/80) ([adamjmcgrath](https://github.com/adamjmcgrath))
+
 ## [v1.1.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.1.0) (2021-12-15)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.0.1...v1.1.0)
 
