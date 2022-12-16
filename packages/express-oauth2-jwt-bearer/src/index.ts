@@ -154,7 +154,7 @@ export const requiredScopes: RequiredScopes<Handler> = (...args) =>
 /**
  * Check a token's `scope` claim to include any of the given scopes, raises a
  * 403 `insufficient_scope` error if the value of the `scope` claim does not
- * include any the given scopes.
+ * include any of the given scopes.
  *
  * ```js
  * app.use(auth());
