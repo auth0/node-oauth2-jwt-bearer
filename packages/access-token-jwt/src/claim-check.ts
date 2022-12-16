@@ -22,7 +22,8 @@ const checkJSONPrimitive = (value: JSONPrimitive): void => {
 
 const isClaimIncluded = (
   claim: string,
-  expected: JSONPrimitive[]
+  expected: JSONPrimitive[],
+  matchAll = true
 ): ((payload: JWTPayload) => boolean) => (payload) => {
   if (!(claim in payload)) {
     throw new InvalidTokenError(`Missing '${claim}' claim`);
@@ -37,7 +38,9 @@ const isClaimIncluded = (
 
   actual = new Set(actual as JSONPrimitive[]);
 
-  return expected.every(Set.prototype.has.bind(actual));
+  return matchAll
+    ? expected.every(Set.prototype.has.bind(actual))
+    : expected.some(Set.prototype.has.bind(actual));
 };
 
 export type RequiredScopes<R = ClaimChecker> = (scopes: string | string[]) => R;
@@ -49,6 +52,27 @@ export const requiredScopes: RequiredScopes = (scopes) => {
     throw new TypeError("'scopes' must be a string or array of strings");
   }
   const fn = isClaimIncluded('scope', scopes);
+  return claimCheck((payload) => {
+    if (!('scope' in payload)) {
+      throw new InsufficientScopeError(
+        scopes as string[],
+        "Missing 'scope' claim"
+      );
+    }
+    if (!fn(payload)) {
+      throw new InsufficientScopeError(scopes as string[]);
+    }
+    return true;
+  });
+};
+
+export const scopeIncludesAny: RequiredScopes = (scopes) => {
+  if (typeof scopes === 'string') {
+    scopes = scopes.split(' ');
+  } else if (!Array.isArray(scopes)) {
+    throw new TypeError("'scopes' must be a string or array of strings");
+  }
+  const fn = isClaimIncluded('scope', scopes, false);
   return claimCheck((payload) => {
     if (!('scope' in payload)) {
       throw new InsufficientScopeError(

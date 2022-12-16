@@ -13,6 +13,7 @@ import {
   claimEquals,
   claimIncludes,
   requiredScopes,
+  scopeIncludesAny,
   UnauthorizedError,
   InvalidRequestError,
   InvalidTokenError,
@@ -426,5 +427,42 @@ describe('index', () => {
     expect(() => {
       throw new InsufficientScopeError();
     }).toThrow(InsufficientScopeError);
+  });
+
+  it('should fail when required scopes are not included', async () => {
+    const jwt = await createJwt({ payload: { scope: 'qux quxx' } });
+    const baseUrl = await setup({
+      middleware: scopeIncludesAny(['foo', 'bar', 'baz']),
+    });
+    await expectFailsWith(
+      got(baseUrl, {
+        headers: {
+          authorization: `Bearer ${jwt}`,
+        },
+        responseType: 'json',
+      }),
+      403,
+      'insufficient_scope',
+      'Insufficient Scope',
+      'foo bar baz'
+    );
+  });
+
+  it('should succeed when required scopes are included', async () => {
+    const jwt = await createJwt({ payload: { scope: ['foo', 'bar', 'baz'] } });
+    const baseUrl = await setup({
+      middleware: scopeIncludesAny('foo bar'),
+    });
+    const response = await got(baseUrl, {
+      headers: { authorization: `Bearer ${jwt}` },
+      responseType: 'json',
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toHaveProperty(
+      'payload',
+      expect.objectContaining({
+        scope: ['foo', 'bar', 'baz'],
+      })
+    );
   });
 });

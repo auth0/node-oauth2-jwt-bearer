@@ -10,6 +10,7 @@ import {
   ClaimIncludes,
   requiredScopes as _requiredScopes,
   RequiredScopes,
+  scopeIncludesAny as _scopeIncludesAny,
   VerifyJwtResult as AuthResult,
 } from 'access-token-jwt';
 import type { JWTPayload } from 'access-token-jwt';
@@ -137,7 +138,7 @@ export const claimIncludes: ClaimIncludes<Handler> = (...args) =>
 
 /**
  * Check a token's `scope` claim to include a number of given scopes, raises a
- * 401 `insufficient_scope` error if the value of the `scope` claim does not
+ * 403 `insufficient_scope` error if the value of the `scope` claim does not
  * include all the given scopes.
  *
  * ```js
@@ -149,6 +150,21 @@ export const claimIncludes: ClaimIncludes<Handler> = (...args) =>
  */
 export const requiredScopes: RequiredScopes<Handler> = (...args) =>
   toHandler(_requiredScopes(...args));
+
+/**
+ * Check a token's `scope` claim to include any of the given scopes, raises a
+ * 403 `insufficient_scope` error if the value of the `scope` claim does not
+ * include any the given scopes.
+ *
+ * ```js
+ * app.use(auth());
+ *
+ * app.get('/admin/edit', requiredScopes('read:admin write:admin'),
+ *    (req, res) => { ... });
+ * ```
+ */
+export const scopeIncludesAny: RequiredScopes<Handler> = (...args) =>
+  toHandler(_scopeIncludesAny(...args));
 
 export { JwtVerifierOptions as AuthOptions, AuthResult, JWTPayload };
 export {

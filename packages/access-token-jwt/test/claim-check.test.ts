@@ -3,6 +3,7 @@ import {
   claimEquals,
   claimIncludes,
   requiredScopes,
+  scopeIncludesAny,
   UnauthorizedError,
   InvalidTokenError,
   InsufficientScopeError,
@@ -164,4 +165,48 @@ describe('claim-check', () => {
       ).not.toThrow();
     });
   });
+
+  describe('scopeIncludesAny', () => {
+    it('should expect a string or array of strings', () => {
+      expect(scopeIncludesAny).toThrowError(
+        "scopes' must be a string or array of strings"
+      );
+    });
+
+    it('should throw if no scope claim found', () => {
+      expect(scopeIncludesAny('foo bar').bind(null, { foo: 'bar' })).toThrowError(
+        new InsufficientScopeError(['foo', 'bar'], "Missing 'scope' claim")
+      );
+    });
+
+    it('should throw if all scopes from string not found in actual', () => {
+      expect(
+        scopeIncludesAny('foo bar').bind(null, { scope: 'baz' })
+      ).toThrowError(new InsufficientScopeError(['foo', 'bar']));
+    });
+
+    it('should throw if no scopes from array not found in actual', () => {
+      expect(
+        scopeIncludesAny(['foo', 'bar']).bind(null, {
+          scope: 'baz',
+        })
+      ).toThrowError(new InsufficientScopeError(['foo', 'bar']));
+    });
+
+    it('should not throw if all scopes found in actual', () => {
+      expect(
+        scopeIncludesAny(['foo', 'bar']).bind(null, {
+          scope: 'foo bar',
+        })
+      ).not.toThrow();
+    });
+
+    it('should not throw if any scopes found in actual', () => {
+      expect(
+        scopeIncludesAny(['foo', 'bar']).bind(null, {
+          scope: 'foo qux quxx',
+        })
+      ).not.toThrow();
+    });
+  })
 });
