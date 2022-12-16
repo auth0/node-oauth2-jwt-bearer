@@ -159,7 +159,7 @@ export const requiredScopes: RequiredScopes<Handler> = (...args) =>
  * ```js
  * app.use(auth());
  *
- * app.get('/admin/edit', requiredScopes('read:admin write:admin'),
+ * app.get('/admin/edit', scopeIncludesAny('read:msg read:admin'),
  *    (req, res) => { ... });
  * ```
  */
