@@ -93,6 +93,7 @@
 								<li class="tsd-kind-function"><a href="index.html#claimequals" class="tsd-kind-icon">claim<wbr>Equals</a></li>
 								<li class="tsd-kind-function"><a href="index.html#claimincludes" class="tsd-kind-icon">claim<wbr>Includes</a></li>
 								<li class="tsd-kind-function"><a href="index.html#requiredscopes" class="tsd-kind-icon">required<wbr>Scopes</a></li>
+								<li class="tsd-kind-function"><a href="index.html#scopeincludesany" class="tsd-kind-icon">scope<wbr>Includes<wbr>Any</a></li>
 							</ul>
 						</section>
 					</div>
@@ -106,7 +107,7 @@
 					<div class="tsd-signature tsd-kind-icon">JSONPrimitive<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/f7d2349/packages/access-token-jwt/src/claim-check.ts#L8">packages/access-token-jwt/src/claim-check.ts:8</a></li>
+							<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/dec4f6f/packages/access-token-jwt/src/claim-check.ts#L8">packages/access-token-jwt/src/claim-check.ts:8</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -123,7 +124,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/f7d2349/packages/express-oauth2-jwt-bearer/src/index.ts#L62">packages/express-oauth2-jwt-bearer/src/index.ts:62</a></li>
+									<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/dec4f6f/packages/express-oauth2-jwt-bearer/src/index.ts#L63">packages/express-oauth2-jwt-bearer/src/index.ts:63</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -178,7 +179,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/f7d2349/packages/express-oauth2-jwt-bearer/src/index.ts#L106">packages/express-oauth2-jwt-bearer/src/index.ts:106</a></li>
+									<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/dec4f6f/packages/express-oauth2-jwt-bearer/src/index.ts#L107">packages/express-oauth2-jwt-bearer/src/index.ts:107</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -236,7 +237,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/f7d2349/packages/express-oauth2-jwt-bearer/src/index.ts#L120">packages/express-oauth2-jwt-bearer/src/index.ts:120</a></li>
+									<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/dec4f6f/packages/express-oauth2-jwt-bearer/src/index.ts#L121">packages/express-oauth2-jwt-bearer/src/index.ts:121</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -273,7 +274,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/f7d2349/packages/express-oauth2-jwt-bearer/src/index.ts#L135">packages/express-oauth2-jwt-bearer/src/index.ts:135</a></li>
+									<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/dec4f6f/packages/express-oauth2-jwt-bearer/src/index.ts#L136">packages/express-oauth2-jwt-bearer/src/index.ts:136</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -311,18 +312,53 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/f7d2349/packages/express-oauth2-jwt-bearer/src/index.ts#L150">packages/express-oauth2-jwt-bearer/src/index.ts:150</a></li>
+									<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/dec4f6f/packages/express-oauth2-jwt-bearer/src/index.ts#L151">packages/express-oauth2-jwt-bearer/src/index.ts:151</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
 									<p>Check a token&#39;s <code>scope</code> claim to include a number of given scopes, raises a
-										401 <code>insufficient_scope</code> error if the value of the <code>scope</code> claim does not
+										403 <code>insufficient_scope</code> error if the value of the <code>scope</code> claim does not
 									include all the given scopes.</p>
 								</div>
 								<pre><code class="language-js"><span style="color: #001080">app</span><span style="color: #000000">.</span><span style="color: #795E26">use</span><span style="color: #000000">(</span><span style="color: #795E26">auth</span><span style="color: #000000">());</span>
 
 <span style="color: #001080">app</span><span style="color: #000000">.</span><span style="color: #795E26">get</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;/admin/edit&#039;</span><span style="color: #000000">, </span><span style="color: #795E26">requiredScopes</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;read:admin write:admin&#039;</span><span style="color: #000000">),</span>
+<span style="color: #000000">   (</span><span style="color: #001080">req</span><span style="color: #000000">, </span><span style="color: #001080">res</span><span style="color: #000000">) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> { ... });</span>
+</code></pre>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>scopes: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Handler</span></h4>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-function">
+					<a name="scopeincludesany" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> scope<wbr>Includes<wbr>Any</h3>
+					<ul class="tsd-signatures tsd-kind-function">
+						<li class="tsd-signature tsd-kind-icon">scope<wbr>Includes<wbr>Any<span class="tsd-signature-symbol">(</span>scopes<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Handler</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/dec4f6f/packages/express-oauth2-jwt-bearer/src/index.ts#L166">packages/express-oauth2-jwt-bearer/src/index.ts:166</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Check a token&#39;s <code>scope</code> claim to include any of the given scopes, raises a
+										403 <code>insufficient_scope</code> error if the value of the <code>scope</code> claim does not
+									include any of the given scopes.</p>
+								</div>
+								<pre><code class="language-js"><span style="color: #001080">app</span><span style="color: #000000">.</span><span style="color: #795E26">use</span><span style="color: #000000">(</span><span style="color: #795E26">auth</span><span style="color: #000000">());</span>
+
+<span style="color: #001080">app</span><span style="color: #000000">.</span><span style="color: #795E26">get</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;/admin/edit&#039;</span><span style="color: #000000">, </span><span style="color: #795E26">scopeIncludesAny</span><span style="color: #000000">(</span><span style="color: #A31515">&#039;read:msg read:admin&#039;</span><span style="color: #000000">),</span>
 <span style="color: #000000">   (</span><span style="color: #001080">req</span><span style="color: #000000">, </span><span style="color: #001080">res</span><span style="color: #000000">) </span><span style="color: #0000FF">=&gt;</span><span style="color: #000000"> { ... });</span>
 </code></pre>
 							</div>
@@ -389,6 +425,9 @@
 					</li>
 					<li class=" tsd-kind-function">
 						<a href="index.html#requiredscopes" class="tsd-kind-icon">required<wbr>Scopes</a>
+					</li>
+					<li class=" tsd-kind-function">
+						<a href="index.html#scopeincludesany" class="tsd-kind-icon">scope<wbr>Includes<wbr>Any</a>
 					</li>
 				</ul>
 			</nav>
