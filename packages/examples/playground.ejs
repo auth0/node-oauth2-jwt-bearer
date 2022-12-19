@@ -49,6 +49,7 @@
           <legend>Express</legend>
           <button onclick="request(3001, '/auth')">auth()</button>
           <button onclick="request(3001, '/scope')">requiredScopes('read:msg')</button>
+          <button onclick="request(3001, '/any-scope')">scopeIncludesAny(['read:msg', 'audit:read'])</button>
           <button onclick="request(3001, '/claim-equals')">claimEquals('foo', 'bar')</button>
           <button onclick="request(3001, '/claim-includes')">claimIncludes('foo', 'bar', 'baz')</button>
           <button onclick="request(3001, '/custom')">auth({ validators: { iss: false } })</button>

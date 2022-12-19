@@ -21,6 +21,7 @@ export {
   ClaimIncludes,
   requiredScopes,
   RequiredScopes,
+  scopeIncludesAny,
   JSONPrimitive,
 } from './claim-check';
 export { FunctionValidator, Validator, Validators } from './validate';

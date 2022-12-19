@@ -1,6 +1,7 @@
 import {
   auth,
   requiredScopes,
+  scopeIncludesAny,
   claimEquals,
   claimIncludes,
 } from 'express-oauth2-jwt-bearer';
@@ -28,6 +29,13 @@ app.use(
 app.get('/auth', requiresAuth, handler);
 
 app.get('/scope', requiresAuth, requiredScopes('read:msg'), handler);
+
+app.get(
+  '/any-scope',
+  requiresAuth,
+  scopeIncludesAny(['read:msg', 'audit:read']),
+  handler
+);
 
 app.get('/claim-equals', requiresAuth, claimEquals('foo', 'bar'), handler);
 
