@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.3.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.3.0) (2022-12-19)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.2.0...v1.3.0)
+
+**Added**
+- Add scopeIncludesAny middleware [\#84](https://github.com/auth0/node-oauth2-jwt-bearer/pull/84) ([ewanharris](https://github.com/ewanharris))
+
 ## [v1.2.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.2.0) (2022-10-27)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.1.0...v1.2.0)
 
