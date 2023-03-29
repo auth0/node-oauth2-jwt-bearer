@@ -24,16 +24,19 @@ module.exports = {
     '^oauth2-bearer$': '<rootDir>/../oauth2-bearer/src/',
     '^access-token-jwt$': '<rootDir>/../access-token-jwt/src/',
   },
-  globals: {
-    'ts-jest': {
-      tsconfig: {
-        baseUrl: '.',
-        paths: {
-          'oauth2-bearer': ['../oauth2-bearer/src'],
-          'access-token-jwt': ['../access-token-jwt/src'],
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          baseUrl: '.',
+          paths: {
+            'oauth2-bearer': ['../oauth2-bearer/src'],
+            'access-token-jwt': ['../access-token-jwt/src'],
+          },
+          useUnknownInCatchVariables: false,
         },
-        useUnknownInCatchVariables: false,
       },
-    },
+    ],
   },
 };
