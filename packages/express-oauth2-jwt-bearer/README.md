@@ -13,6 +13,7 @@
 - [Docs Site](https://auth0.com/docs) - explore our Docs site and learn more about Auth0.
 
 ## Getting started
+
 ### Requirements
 
 This package supports the following tooling versions:
@@ -31,7 +32,7 @@ npm install express-oauth2-jwt-bearer
 
 ### Configure the SDK
 
-The library requires [issuerBaseURL](https://auth0.github.io/node-oauth2-jwt-bearer/interfaces/authoptions.html#issuerbaseurl) and [audience](https://auth0.github.io/node-oauth2-jwt-bearer/interfaces/authoptions.html#audience).
+The library requires [issuerBaseURL](https://auth0.github.io/node-oauth2-jwt-bearer/interfaces/AuthOptions.html#issuerBaseURL) and [audience](https://auth0.github.io/node-oauth2-jwt-bearer/interfaces/AuthOptions.html#audience).
 
 #### Environment Variables
 
@@ -50,10 +51,10 @@ app.use(auth());
 ```js
 const { auth } = require('express-oauth2-jwt-bearer');
 app.use(
-    auth({
-      issuerBaseURL: 'https://YOUR_ISSUER_DOMAIN',
-      audience: 'https://my-api.com'
-    })
+  auth({
+    issuerBaseURL: 'https://YOUR_ISSUER_DOMAIN',
+    audience: 'https://my-api.com',
+  })
 );
 ```
 
@@ -62,12 +63,12 @@ app.use(
 ```js
 const { auth } = require('express-oauth2-jwt-bearer');
 app.use(
-    auth({
-      issuer: 'https://YOUR_ISSUER_DOMAIN',
-      audience: 'https://my-api.com',
-      secret: 'YOUR SECRET',
-      tokenSigningAlg: 'HS256'
-    })
+  auth({
+    issuer: 'https://YOUR_ISSUER_DOMAIN',
+    audience: 'https://my-api.com',
+    secret: 'YOUR SECRET',
+    tokenSigningAlg: 'HS256',
+  })
 );
 ```
 
@@ -76,14 +77,12 @@ With this configuration, your api will require a valid Access Token JWT bearer t
 Successful requests will have the following properties added to them:
 
 ```js
-app.get('/api/messages',
-    (req, res, next) => {
-      const auth = req.auth;
-      auth.header; // The decoded JWT header.
-      auth.payload;  // The decoded JWT payload.
-      auth.token; // The raw JWT token.
-    }
-);
+app.get('/api/messages', (req, res, next) => {
+  const auth = req.auth;
+  auth.header; // The decoded JWT header.
+  auth.payload; // The decoded JWT payload.
+  auth.token; // The raw JWT token.
+});
 ```
 
 ### Security Headers
@@ -105,14 +104,15 @@ See the Express.js [docs on error handling](https://expressjs.com/en/guide/error
 
 ## API Reference
 
-- [auth](https://auth0.github.io/node-oauth2-jwt-bearer#auth) - Middleware that will return a 401 if a valid Access token JWT bearer token is not provided in the request.
-- [AuthResult](https://auth0.github.io/node-oauth2-jwt-bearer/interfaces/authresult.html) - The properties added to `req.auth` upon successful authorization.
-- [requiredScopes](https://auth0.github.io/node-oauth2-jwt-bearer#requiredscopes) - Check a token's scope claim to include a number of given scopes, raises a 403 `insufficient_scope` error if the value of the scope claim does not include all the given scopes.
-- [claimEquals](https://auth0.github.io/node-oauth2-jwt-bearer#claimequals) - Check a token's claim to be equal a given JSONPrimitive (string, number, boolean or null) raises a 401 `invalid_token` error if the value of the claim does not match.
-- [claimIncludes](https://auth0.github.io/node-oauth2-jwt-bearer#claimincludes) - Check a token's claim to include a number of given JSONPrimitives (string, number, boolean or null) raises a 401 `invalid_token` error if the value of the claim does not include all the given values.
-- [claimCheck](https://auth0.github.io/node-oauth2-jwt-bearer#claimcheck) - Check the token's claims using a custom method that receives the JWT Payload and should return `true` if the token is valid. Raises a 401 `invalid_token` error if the function returns `false`.
+- [auth](https://auth0.github.io/node-oauth2-jwt-bearer/functions/auth.html) - Middleware that will return a 401 if a valid Access token JWT bearer token is not provided in the request.
+- [AuthResult](https://auth0.github.io/node-oauth2-jwt-bearer/interfaces/AuthResult.html) - The properties added to `req.auth` upon successful authorization.
+- [requiredScopes](https://auth0.github.io/node-oauth2-jwt-bearer/functions/requiredScopes.html) - Check a token's scope claim to include a number of given scopes, raises a 403 `insufficient_scope` error if the value of the scope claim does not include all the given scopes.
+- [claimEquals](https://auth0.github.io/node-oauth2-jwt-bearer/functions/claimEquals.html) - Check a token's claim to be equal a given JSONPrimitive (string, number, boolean or null) raises a 401 `invalid_token` error if the value of the claim does not match.
+- [claimIncludes](https://auth0.github.io/node-oauth2-jwt-bearer/functions/claimIncludes.html) - Check a token's claim to include a number of given JSONPrimitives (string, number, boolean or null) raises a 401 `invalid_token` error if the value of the claim does not include all the given values.
+- [claimCheck](https://auth0.github.io/node-oauth2-jwt-bearer/functions/claimCheck.html) - Check the token's claims using a custom method that receives the JWT Payload and should return `true` if the token is valid. Raises a 401 `invalid_token` error if the function returns `false`.
 
 ## Feedback
+
 ### Contributing
 
 We appreciate feedback and contribution to this repo! Before you get started, please see the following:

@@ -17,8 +17,7 @@
     "docs": "typedoc --options typedoc.js"
   },
   "devDependencies": {
-    "@strictsoftware/typedoc-plugin-monorepo": "^0.4.2",
-    "typedoc": "^0.20.36",
-    "typescript": "4.2.4"
+    "typedoc": "^0.23.28",
+    "typescript": "^5.0.2"
   }
 }
