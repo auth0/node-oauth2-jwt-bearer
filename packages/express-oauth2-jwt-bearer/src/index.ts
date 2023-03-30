@@ -16,6 +16,14 @@ import {
 import type { JWTPayload } from 'access-token-jwt';
 import { getToken } from 'oauth2-bearer';
 
+export interface AuthOptions extends JwtVerifierOptions {
+  /**
+   * True if a valid Access Token JWT should be required for all routes.
+   * Defaults to true.
+   */
+  authRequired?: boolean;
+}
+
 declare global {
   namespace Express {
     interface Request {
@@ -60,7 +68,7 @@ declare global {
  * used to match against the Access Token's `aud` claim.
  *
  */
-export const auth = (opts: JwtVerifierOptions = {}): Handler => {
+export const auth = (opts: AuthOptions = {}): Handler => {
   const verifyJwt = jwtVerifier(opts);
 
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -74,7 +82,11 @@ export const auth = (opts: JwtVerifierOptions = {}): Handler => {
       req.auth = await verifyJwt(jwt);
       next();
     } catch (e) {
-      next(e);
+      if (opts.authRequired === false) {
+        next();
+      } else {
+        next(e);
+      }
     }
   };
 };
@@ -166,7 +178,7 @@ export const requiredScopes: RequiredScopes<Handler> = (...args) =>
 export const scopeIncludesAny: RequiredScopes<Handler> = (...args) =>
   toHandler(_scopeIncludesAny(...args));
 
-export { JwtVerifierOptions as AuthOptions, AuthResult, JWTPayload };
+export { AuthResult, JWTPayload };
 export {
   FunctionValidator,
   Validator,
