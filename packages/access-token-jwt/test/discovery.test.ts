@@ -1,7 +1,23 @@
-import nock = require('nock');
-import { discover } from '../src';
+import nock from 'nock';
+import sinon from 'sinon';
+import { discover as discovery } from '../src';
 
 const success = { issuer: 'https://op.example.com' };
+
+const discover = (
+  uri: string,
+  timeoutDuration = 5000,
+  cacheMaxAge = 600000
+) => {
+  const getDiscovery = discovery({
+    issuerBaseURL: uri,
+    timeoutDuration,
+    cacheMaxAge,
+  });
+  return getDiscovery();
+};
+
+const mins = 60000;
 
 describe('discover', () => {
   afterEach(nock.cleanAll);
@@ -186,5 +202,110 @@ describe('discover', () => {
     ).rejects.toThrowError(
       "'issuer' not found in authorization server metadata"
     );
+  });
+
+  it('should cache discovery calls', async function () {
+    const spy = jest.fn(() => success);
+    nock('https://op.example.com')
+      .persist()
+      .get('/.well-known/openid-configuration')
+      .reply(200, spy);
+
+    const getDiscovery = discovery({
+      issuerBaseURL: 'https://op.example.com/.well-known/openid-configuration',
+      timeoutDuration: 5000,
+      cacheMaxAge: 600000,
+    });
+
+    await getDiscovery();
+    await getDiscovery();
+    await getDiscovery();
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should handle concurrent discovery calls', async function () {
+    const spy = jest.fn(() => success);
+    nock('https://op.example.com')
+      .persist()
+      .get('/.well-known/openid-configuration')
+      .reply(200, spy);
+
+    const getDiscovery = discovery({
+      issuerBaseURL: 'https://op.example.com/.well-known/openid-configuration',
+      timeoutDuration: 5000,
+      cacheMaxAge: 10 * mins,
+    });
+
+    await Promise.all([getDiscovery(), getDiscovery(), getDiscovery()]);
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should make new calls after max age', async function () {
+    const clock = sinon.useFakeTimers({
+      toFake: ['Date'],
+    });
+    const spy = jest.fn(() => success);
+    nock('https://op.example.com')
+      .persist()
+      .get('/.well-known/openid-configuration')
+      .reply(200, spy);
+
+    const getDiscovery = discovery({
+      issuerBaseURL: 'https://op.example.com/.well-known/openid-configuration',
+      timeoutDuration: 5000,
+      cacheMaxAge: 10 * mins,
+    });
+
+    await getDiscovery();
+    expect(spy).toHaveBeenCalledTimes(1);
+    clock.tick(5 * mins);
+    await getDiscovery();
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    clock.tick(10 * mins);
+    await getDiscovery();
+    expect(spy).toHaveBeenCalledTimes(2);
+
+    clock.restore();
+  });
+
+  it('should not cache failed discovery calls', async function () {
+    nock('https://op.example.com')
+      .get('/.well-known/openid-configuration')
+      .reply(500);
+    nock('https://op.example.com')
+      .get('/.well-known/openid-configuration')
+      .reply(200, () => success);
+
+    const getDiscovery = discovery({
+      issuerBaseURL: 'https://op.example.com/.well-known/openid-configuration',
+      timeoutDuration: 5000,
+      cacheMaxAge: 600000,
+    });
+
+    await expect(getDiscovery()).rejects.toThrowError();
+    await expect(getDiscovery()).resolves.toMatchObject(success);
+  });
+
+  it('should handle concurrent client calls with failures', async function () {
+    nock('https://op.example.com')
+      .get('/.well-known/openid-configuration')
+      .reply(500);
+    nock('https://op.example.com')
+      .get('/.well-known/openid-configuration')
+      .reply(200, () => success);
+
+    const getDiscovery = discovery({
+      issuerBaseURL: 'https://op.example.com/.well-known/openid-configuration',
+      timeoutDuration: 5000,
+      cacheMaxAge: 600000,
+    });
+
+    await Promise.all([
+      expect(getDiscovery()).rejects.toThrowError(),
+      expect(getDiscovery()).rejects.toThrowError(),
+      expect(getDiscovery()).rejects.toThrowError(),
+    ]);
+    await expect(getDiscovery()).resolves.toMatchObject(success);
   });
 });

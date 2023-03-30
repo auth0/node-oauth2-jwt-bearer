@@ -1,13 +1,11 @@
 import { strict as assert } from 'assert';
-import { Buffer } from 'buffer';
-import { createSecretKey } from 'crypto';
 import { Agent as HttpAgent } from 'http';
 import { Agent as HttpsAgent } from 'https';
-import { URL } from 'url';
-import { createRemoteJWKSet, jwtVerify } from 'jose';
-import type { JWTPayload, JWSHeaderParameters } from 'jose'
+import { jwtVerify } from 'jose';
+import type { JWTPayload, JWSHeaderParameters } from 'jose';
 import { InvalidTokenError } from 'oauth2-bearer';
-import discover, { IssuerMetadata } from './discovery';
+import discovery from './discovery';
+import getKeyFn from './get-key-fn';
 import validate, { defaultValidators, Validators } from './validate';
 
 export interface JwtVerifierOptions {
@@ -57,11 +55,18 @@ export interface JwtVerifierOptions {
   cooldownDuration?: number;
 
   /**
-   * Timeout in ms for the HTTP request. When reached the request will be
-   * aborted.
+   * Timeout in ms for HTTP requests to the JWKS and Discovery endpoint. When
+   * reached the request will be aborted.
    * Default is 5000.
    */
   timeoutDuration?: number;
+
+  /**
+   * Maximum time (in milliseconds) between successful HTTP requests to the
+   * JWKS and Discovery endpoint.
+   * Default is 600000 (10 minutes).
+   */
+  cacheMaxAge?: number;
 
   /**
    * Pass in custom validators to override the existing validation behavior on
@@ -139,8 +144,6 @@ export interface VerifyJwtResult {
 
 export type VerifyJwt = (jwt: string) => Promise<VerifyJwtResult>;
 
-type GetKeyFn = ReturnType<typeof createRemoteJWKSet>;
-
 const ASYMMETRIC_ALGS = [
   'RS256',
   'RS384',
@@ -166,13 +169,12 @@ const jwtVerifier = ({
   agent,
   cooldownDuration = 30000,
   timeoutDuration = 5000,
+  cacheMaxAge = 600000,
   clockTolerance = 5,
   maxTokenAge,
   strict = false,
   validators: customValidators,
 }: JwtVerifierOptions): VerifyJwt => {
-  let origJWKS: GetKeyFn;
-  let discovery: Promise<IssuerMetadata>;
   let validators: Validators;
   let allowedSigningAlgs: string[] | undefined;
 
@@ -202,30 +204,33 @@ const jwtVerifier = ({
     )} for 'tokenSigningAlg' to validate symmetrically signed tokens`
   );
 
-  const secretKey = secret && createSecretKey(Buffer.from(secret));
+  const getDiscovery = discovery({
+    issuerBaseURL,
+    agent,
+    timeoutDuration,
+    cacheMaxAge,
+  });
 
-  const JWKS = async (...args: Parameters<GetKeyFn>) => {
-    if (secretKey) return secretKey;
-    if (!origJWKS) {
-      origJWKS = createRemoteJWKSet(new URL(jwksUri), {
-        agent,
-        cooldownDuration,
-        timeoutDuration,
-      });
-    }
-    return origJWKS(...args);
-  };
+  const getKeyFnGetter = getKeyFn({
+    agent,
+    cooldownDuration,
+    timeoutDuration,
+    cacheMaxAge,
+    secret,
+  });
 
   return async (jwt: string) => {
     try {
       if (issuerBaseURL) {
-        discovery =
-          discovery || discover(issuerBaseURL, { agent, timeoutDuration });
-        ({
-          jwks_uri: jwksUri,
-          issuer,
-          id_token_signing_alg_values_supported: allowedSigningAlgs,
-        } = await discovery);
+        const {
+          jwks_uri: discoveredJwksUri,
+          issuer: discoveredIssuer,
+          id_token_signing_alg_values_supported:
+            idTokenSigningAlgValuesSupported,
+        } = await getDiscovery();
+        jwksUri = jwksUri || discoveredJwksUri;
+        issuer = issuer || discoveredIssuer;
+        allowedSigningAlgs = idTokenSigningAlgValuesSupported;
       }
       validators ||= {
         ...defaultValidators(
@@ -241,7 +246,7 @@ const jwtVerifier = ({
       };
       const { payload, protectedHeader: header } = await jwtVerify(
         jwt,
-        JWKS,
+        getKeyFnGetter(jwksUri)
       );
       await validate(payload, header, validators);
       return { payload, header, token: jwt };
