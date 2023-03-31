@@ -1,5 +1,6 @@
 import nock = require('nock');
 import { discover } from '../src';
+import { defaultDiscoveryDocumentValidator } from '../src/discovery';
 
 const success = { issuer: 'https://op.example.com' };
 
@@ -186,5 +187,35 @@ describe('discover', () => {
     ).rejects.toThrowError(
       "'issuer' not found in authorization server metadata"
     );
+  });
+
+  it('unexpected type for discovery documents not accepted', async () => {
+    await expect(
+      defaultDiscoveryDocumentValidator('test')
+    ).rejects.toThrowError('Discovery document of unexpected type');
+  });
+
+  it('missing issuer for discovery documents not accepted', async () => {
+    await expect(
+      defaultDiscoveryDocumentValidator({ jwks_uri: 'https://example' })
+    ).rejects.toThrowError('Discovery document had invalid of missing properties: issuer');
+  });
+  
+  it('unexpected issuer for discovery documents not accepted', async () => {
+    await expect(
+      defaultDiscoveryDocumentValidator({ jwks_uri: 'https://example', issuer: 5 })
+    ).rejects.toThrowError('Discovery document had invalid of missing properties: issuer');
+  });
+  
+  it('missing jwks_uri for discovery documents not accepted', async () => {
+    await expect(
+      defaultDiscoveryDocumentValidator({ issuer: 'https://example' })
+    ).rejects.toThrowError('Discovery document had invalid of missing properties: jwks_uri');
+  });
+  
+  it('unexpected jwks_uri for discovery documents not accepted', async () => {
+    await expect(
+      defaultDiscoveryDocumentValidator({ issuer: 'https://example', jwks_uri: {} })
+    ).rejects.toThrowError('Discovery document had invalid of missing properties: jwks_uri');
   });
 });

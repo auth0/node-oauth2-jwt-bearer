@@ -63,4 +63,15 @@ const discover = async (
   throw new Error('Failed to fetch authorization server metadata');
 };
 
+export const defaultDiscoveryDocumentValidator = async (maybeDiscoveryDocument: unknown): Promise<IssuerMetadata> => {
+  if (!maybeDiscoveryDocument || typeof(maybeDiscoveryDocument) !== 'object') {
+    throw new Error('Discovery document of unexpected type: ' + typeof(maybeDiscoveryDocument));
+  }
+  const invalidProperties = ['issuer', 'jwks_uri'].filter(p => !(p in maybeDiscoveryDocument && typeof((maybeDiscoveryDocument as Record<typeof p, unknown>)[p])==='string'));
+  if (invalidProperties.length > 0) {
+    throw new Error('Discovery document had invalid of missing properties: ' + invalidProperties.join(', '));
+  }
+  return maybeDiscoveryDocument as IssuerMetadata;
+};
+
 export default discover;

@@ -7,7 +7,7 @@ import { URL } from 'url';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import type { JWTPayload, JWSHeaderParameters } from 'jose'
 import { InvalidTokenError } from 'oauth2-bearer';
-import discover, { IssuerMetadata } from './discovery';
+import discover, { IssuerMetadata, defaultDiscoveryDocumentValidator } from './discovery';
 import validate, { defaultValidators, Validators } from './validate';
 
 export interface JwtVerifierOptions {
@@ -120,6 +120,13 @@ export interface JwtVerifierOptions {
    * PS512, ES256, ES256K, ES384, ES512 or EdDSA (case-sensitive).
    */
   tokenSigningAlg?: string;
+  
+  /**
+   * Checks if retrieved OpenID discovery document is as expected.
+   * 
+   * Receives server response for discover document.
+   */
+  discoveryDocumentValidator?: (maybeDiscoveryDocument: unknown) => Promise<IssuerMetadata>;
 }
 
 export interface VerifyJwtResult {
@@ -170,9 +177,10 @@ const jwtVerifier = ({
   maxTokenAge,
   strict = false,
   validators: customValidators,
+  discoveryDocumentValidator = defaultDiscoveryDocumentValidator
 }: JwtVerifierOptions): VerifyJwt => {
   let origJWKS: GetKeyFn;
-  let discovery: Promise<IssuerMetadata>;
+  let discovery: Promise<IssuerMetadata> | undefined;
   let validators: Validators;
   let allowedSigningAlgs: string[] | undefined;
 
@@ -220,7 +228,11 @@ const jwtVerifier = ({
     try {
       if (issuerBaseURL) {
         discovery =
-          discovery || discover(issuerBaseURL, { agent, timeoutDuration });
+          discovery || discover(issuerBaseURL, { agent, timeoutDuration }).then(discoveryDocumentValidator).catch(e => {
+            // Do not cache erroneous discovery document.
+            discovery = undefined;
+            throw e;
+          });
         ({
           jwks_uri: jwksUri,
           issuer,

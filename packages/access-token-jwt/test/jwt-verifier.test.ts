@@ -145,4 +145,37 @@ describe('jwt-verifier', () => {
     });
     await expect(verify(`CORRUPT-${jwt}`)).rejects.toThrow(InvalidTokenError);
   });
+
+  it('should recover from failing to download OpenID discovery docuent', async () => {
+    const jwt = await createJwt({
+      discoveryUri: '/something-unused'
+    });
+
+    const verify = jwtVerifier({
+      issuerBaseURL:
+        'https://issuer.example.com/.well-known/openid-configuration',
+      audience: 'https://api/',
+    });
+    
+    // Token verifications should fail while server is broken.
+    nock('https://issuer.example.com')
+      .get('/.well-known/openid-configuration')
+      .reply(503, 'some error message');
+    await expect(verify(jwt)).rejects.toThrow(InvalidTokenError);
+
+    // Token verifications should start working once server is behaving as expected.
+    nock('https://issuer.example.com')
+      .get('/.well-known/openid-configuration')
+      .reply(200, {
+        issuer: 'https://issuer.example.com/',
+        jwks_uri: 'https://issuer.example.com/.well-known/jwks.json',
+      });
+    await expect(verify(jwt)).resolves.toHaveProperty('payload', {
+      iss: 'https://issuer.example.com/',
+      sub: 'me',
+      aud: 'https://api/',
+      iat: expect.any(Number),
+      exp: expect.any(Number),
+    });
+  });
 });
