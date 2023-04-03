@@ -1,8 +1,7 @@
 import { URL } from 'url';
-import { Agent as HttpAgent } from 'http';
-import { Agent as HttpsAgent } from 'https';
 import fetch from './fetch';
 import { strict as assert } from 'assert';
+import { JwtVerifierOptions } from './jwt-verifier';
 
 const OIDC_DISCOVERY = '/.well-known/openid-configuration';
 const OAUTH2_DISCOVERY = '/.well-known/oauth-authorization-server';
@@ -17,15 +16,16 @@ export interface IssuerMetadata {
 const assertIssuer = (data: IssuerMetadata) =>
   assert(data.issuer, `'issuer' not found in authorization server metadata`);
 
-export interface DiscoverOptions {
-  agent?: HttpAgent | HttpsAgent;
-  timeoutDuration?: number;
-}
+export type DiscoverOptions = Required<
+  Pick<JwtVerifierOptions, 'issuerBaseURL' | 'timeoutDuration' | 'cacheMaxAge'>
+> &
+  Pick<JwtVerifierOptions, 'agent'>;
 
-const discover = async (
-  uri: string,
-  { agent, timeoutDuration }: DiscoverOptions = {}
-): Promise<IssuerMetadata> => {
+const discover = async ({
+  issuerBaseURL: uri,
+  agent,
+  timeoutDuration,
+}: DiscoverOptions): Promise<IssuerMetadata> => {
   const url = new URL(uri);
 
   if (url.pathname.includes('/.well-known/')) {
@@ -63,4 +63,20 @@ const discover = async (
   throw new Error('Failed to fetch authorization server metadata');
 };
 
-export default discover;
+export default (opts: DiscoverOptions) => {
+  let discovery: Promise<IssuerMetadata> | undefined;
+  let timestamp = 0;
+
+  return () => {
+    const now = Date.now();
+
+    if (!discovery || now > timestamp + opts.cacheMaxAge) {
+      timestamp = now;
+      discovery = discover(opts).catch((e) => {
+        discovery = undefined;
+        throw e;
+      });
+    }
+    return discovery;
+  };
+};

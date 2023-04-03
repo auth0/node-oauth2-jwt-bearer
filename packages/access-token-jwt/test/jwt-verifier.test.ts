@@ -1,5 +1,6 @@
 import { randomBytes } from 'crypto';
-import nock = require('nock');
+import nock from 'nock';
+import sinon from 'sinon';
 import { createJwt, now } from './helpers';
 import { jwtVerifier, InvalidTokenError } from '../src';
 
@@ -144,5 +145,55 @@ describe('jwt-verifier', () => {
       audience: 'https://api/',
     });
     await expect(verify(`CORRUPT-${jwt}`)).rejects.toThrow(InvalidTokenError);
+  });
+
+  it('should honor configured cache max age', async () => {
+    const clock = sinon.useFakeTimers({
+      toFake: ['Date'],
+    });
+    const jwksSpy = jest.fn();
+    const discoverSpy = jest.fn();
+    const jwt = await createJwt({
+      jwksSpy,
+      discoverSpy,
+    });
+
+    const verify = jwtVerifier({
+      issuerBaseURL: 'https://issuer.example.com/',
+      audience: 'https://api/',
+      cacheMaxAge: 10,
+    });
+    await expect(verify(jwt)).resolves.toHaveProperty('payload');
+    await expect(verify(jwt)).resolves.toHaveProperty('payload');
+    expect(jwksSpy).toHaveBeenCalledTimes(1);
+    expect(discoverSpy).toHaveBeenCalledTimes(1);
+    clock.tick(11);
+    await expect(verify(jwt)).resolves.toHaveProperty('payload');
+    expect(jwksSpy).toHaveBeenCalledTimes(2);
+    expect(discoverSpy).toHaveBeenCalledTimes(2);
+    clock.restore();
+  });
+
+  it('should not cache failed requests', async () => {
+    nock('https://issuer.example.com/')
+      .get('/.well-known/openid-configuration')
+      .reply(500)
+      .get('/.well-known/jwks.json')
+      .reply(500);
+
+    const jwt = await createJwt();
+
+    const verify = jwtVerifier({
+      issuerBaseURL: 'https://issuer.example.com/',
+      audience: 'https://api/',
+      cacheMaxAge: 10,
+    });
+    await expect(verify(jwt)).rejects.toThrowError(
+      /Failed to fetch authorization server metadata/
+    );
+    await expect(verify(jwt)).rejects.toThrowError(
+      /Expected 200 OK from the JSON Web Key Set HTTP response/
+    );
+    await expect(verify(jwt)).resolves.toHaveProperty('payload');
   });
 });
