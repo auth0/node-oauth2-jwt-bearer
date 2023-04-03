@@ -67,6 +67,17 @@ declare global {
  * You must provide the `audience` argument (or `AUDIENCE` environment variable)
  * used to match against the Access Token's `aud` claim.
  *
+ * Successful requests will have the following properties added to them:
+ *
+ * ```js
+ * app.get('/foo', auth(), (req, res, next) => {
+ *   const auth = req.auth;
+ *   auth.header; // The decoded JWT header.
+ *   auth.payload; // The decoded JWT payload.
+ *   auth.token; // The raw JWT token.
+ * });
+ * ```
+ *
  */
 export const auth = (opts: AuthOptions = {}): Handler => {
   const verifyJwt = jwtVerifier(opts);
