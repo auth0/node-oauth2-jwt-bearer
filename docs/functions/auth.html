@@ -40,6 +40,9 @@ the env variable <code>ISSUER</code>) yourself.</li>
 </code></pre>
 <p>You must provide the <code>audience</code> argument (or <code>AUDIENCE</code> environment variable)
 used to match against the Access Token&#39;s <code>aud</code> claim.</p>
+<p>Successful requests will have the following properties added to them:</p>
+<pre><code class="language-js"><span class="hl-5">app</span><span class="hl-0">.</span><span class="hl-6">get</span><span class="hl-0">(</span><span class="hl-4">&#39;/foo&#39;</span><span class="hl-0">, </span><span class="hl-6">auth</span><span class="hl-0">(), (</span><span class="hl-5">req</span><span class="hl-0">, </span><span class="hl-5">res</span><span class="hl-0">, </span><span class="hl-5">next</span><span class="hl-0">) </span><span class="hl-3">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-3">const</span><span class="hl-0"> </span><span class="hl-7">auth</span><span class="hl-0"> = </span><span class="hl-5">req</span><span class="hl-0">.</span><span class="hl-5">auth</span><span class="hl-0">;</span><br/><span class="hl-0">  </span><span class="hl-5">auth</span><span class="hl-0">.</span><span class="hl-5">header</span><span class="hl-0">; </span><span class="hl-2">// The decoded JWT header.</span><br/><span class="hl-0">  </span><span class="hl-5">auth</span><span class="hl-0">.</span><span class="hl-5">payload</span><span class="hl-0">; </span><span class="hl-2">// The decoded JWT payload.</span><br/><span class="hl-0">  </span><span class="hl-5">auth</span><span class="hl-0">.</span><span class="hl-5">token</span><span class="hl-0">; </span><span class="hl-2">// The raw JWT token.</span><br/><span class="hl-0">});</span>
+</code></pre>
 </div>
 <div class="tsd-parameters">
 <h4 class="tsd-parameters-title">Parameters</h4>
@@ -48,7 +51,7 @@ used to match against the Access Token&#39;s <code>aud</code> claim.</p>
 <h5>opts: <a href="../interfaces/AuthOptions.html" class="tsd-signature-type" data-tsd-kind="Interface">AuthOptions</a><span class="tsd-signature-symbol"> = {}</span></h5></li></ul></div>
 <h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Handler</span></h4><aside class="tsd-sources">
 <ul>
-<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/fe0dace/packages/express-oauth2-jwt-bearer/src/index.ts#L63">packages/express-oauth2-jwt-bearer/src/index.ts:63</a></li></ul></aside></li></ul></section></div>
+<li>Defined in <a href="https://github.com/auth0/node-oauth2-jwt-bearer/blob/0245f71/packages/express-oauth2-jwt-bearer/src/index.ts#L82">packages/express-oauth2-jwt-bearer/src/index.ts:82</a></li></ul></aside></li></ul></section></div>
 <div class="col-4 col-menu menu-sticky-wrap menu-highlight">
 <div class="tsd-navigation settings">
 <details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
