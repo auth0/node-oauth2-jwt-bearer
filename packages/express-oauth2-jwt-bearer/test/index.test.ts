@@ -2,8 +2,8 @@ import { AddressInfo } from 'net';
 import { Server } from 'http';
 import { randomBytes } from 'crypto';
 import { Handler } from 'express';
-import express = require('express');
-import nock = require('nock');
+import express from 'express';
+import nock from 'nock';
 import got, { CancelableRequest } from 'got';
 import { createJwt } from 'access-token-jwt/test/helpers';
 import {
@@ -91,6 +91,30 @@ describe('index', () => {
 
   it('should fail for anonymous requests', async () => {
     const baseUrl = await setup();
+    await expectFailsWith(got(baseUrl), 401);
+  });
+
+  it('should succeed for anonymous requests when authRequired is false', async () => {
+    const baseUrl = await setup({ authRequired: false });
+    const response = await got(baseUrl, {
+      responseType: 'json',
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toBeFalsy();
+  });
+
+  it('should succeed for invalid requests when authRequired is false', async () => {
+    const baseUrl = await setup({ authRequired: false });
+    const response = await got(baseUrl, {
+      headers: { authorization: 'Bearer invalid.jwt' },
+      responseType: 'json',
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toBeFalsy();
+  });
+
+  it('should fail for anonymous requests when authRequired is true', async () => {
+    const baseUrl = await setup({ authRequired: true });
     await expectFailsWith(got(baseUrl), 401);
   });
 
