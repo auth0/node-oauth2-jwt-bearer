@@ -2,6 +2,8 @@ import {
   InvalidTokenError,
   InsufficientScopeError,
   UnauthorizedError,
+  InsufficientUserAuthenticationAcrValuesError,
+  InsufficientUserAuthenticationMaxAgeError,
 } from 'oauth2-bearer';
 import type { JWTPayload } from 'jose';
 
@@ -20,27 +22,61 @@ const checkJSONPrimitive = (value: JSONPrimitive): void => {
   }
 };
 
-const isClaimIncluded = (
-  claim: string,
-  expected: JSONPrimitive[],
-  matchAll = true
-): ((payload: JWTPayload) => boolean) => (payload) => {
-  if (!(claim in payload)) {
-    throw new InvalidTokenError(`Missing '${claim}' claim`);
+const isClaimIncluded =
+  (
+    claim: string,
+    expected: JSONPrimitive[],
+    matchAll = true
+  ): ((payload: JWTPayload) => boolean) =>
+  (payload) => {
+    if (!(claim in payload)) {
+      throw new InvalidTokenError(`Missing '${claim}' claim`);
+    }
+
+    let actual = payload[claim];
+    if (typeof actual === 'string') {
+      actual = actual.split(' ');
+    } else if (!Array.isArray(actual)) {
+      return false;
+    }
+
+    actual = new Set(actual as JSONPrimitive[]);
+
+    return matchAll
+      ? expected.every(Set.prototype.has.bind(actual))
+      : expected.some(Set.prototype.has.bind(actual));
+  };
+
+export type RequiredAcrValues<R = ClaimChecker> = (
+  acrValues: string | string[]
+) => R;
+
+export const requiredAcrValues: RequiredAcrValues = (acrValues) => {
+  if (typeof acrValues === 'string') {
+    acrValues = acrValues.split(' ');
+  } else if (!Array.isArray(acrValues)) {
+    throw new TypeError("'acrValues' must be a string or array of strings");
   }
+  return claimCheck((payload) => {
+    if (!payload.acr || !acrValues.includes(payload.acr as string)) {
+      throw new InsufficientUserAuthenticationAcrValuesError(
+        acrValues as string[]
+      );
+    }
+    return true;
+  });
+};
 
-  let actual = payload[claim];
-  if (typeof actual === 'string') {
-    actual = actual.split(' ');
-  } else if (!Array.isArray(actual)) {
-    return false;
-  }
+export type RequiredMaxAge<R = ClaimChecker> = (maxAge: number) => R;
 
-  actual = new Set(actual as JSONPrimitive[]);
-
-  return matchAll
-    ? expected.every(Set.prototype.has.bind(actual))
-    : expected.some(Set.prototype.has.bind(actual));
+export const requiredMaxAge: RequiredMaxAge = (maxAge) => {
+  return claimCheck((payload) => {
+    const authTime = payload.auth_time as number | undefined;
+    if (!authTime || authTime + maxAge * 1000 < Date.now()) {
+      throw new InsufficientUserAuthenticationMaxAgeError(maxAge);
+    }
+    return true;
+  });
 };
 
 export type RequiredScopes<R = ClaimChecker> = (scopes: string | string[]) => R;

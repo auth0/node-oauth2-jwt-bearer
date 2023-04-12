@@ -4,6 +4,8 @@ import {
   scopeIncludesAny,
   claimEquals,
   claimIncludes,
+  requiredAcrValues,
+  requiredMaxAge,
 } from 'express-oauth2-jwt-bearer';
 import express = require('express');
 import cors = require('cors');
@@ -36,6 +38,15 @@ app.get(
   scopeIncludesAny(['read:msg', 'audit:read']),
   handler
 );
+
+app.get(
+  '/acr',
+  requiresAuth,
+  requiredAcrValues(['myAcr', 'anotherAcr']),
+  handler
+);
+
+app.get('/max-age', requiresAuth, requiredMaxAge(10), handler);
 
 app.get('/claim-equals', requiresAuth, claimEquals('foo', 'bar'), handler);
 

@@ -10,6 +10,8 @@ export {
   InvalidTokenError,
   UnauthorizedError,
   InsufficientScopeError,
+  InsufficientUserAuthenticationAcrValuesError,
+  InsufficientUserAuthenticationMaxAgeError,
 } from 'oauth2-bearer';
 export { default as discover, IssuerMetadata } from './discovery';
 export {
@@ -21,6 +23,10 @@ export {
   ClaimIncludes,
   requiredScopes,
   RequiredScopes,
+  requiredAcrValues,
+  RequiredAcrValues,
+  requiredMaxAge,
+  RequiredMaxAge,
   scopeIncludesAny,
   JSONPrimitive,
 } from './claim-check';

@@ -11,6 +11,10 @@ import {
   requiredScopes as _requiredScopes,
   RequiredScopes,
   scopeIncludesAny as _scopeIncludesAny,
+  requiredAcrValues as _requiredAcrValues,
+  RequiredAcrValues,
+  requiredMaxAge as _requiredMaxAge,
+  RequiredMaxAge,
   VerifyJwtResult as AuthResult,
 } from 'access-token-jwt';
 import type { JWTPayload } from 'access-token-jwt';
@@ -189,6 +193,18 @@ export const requiredScopes: RequiredScopes<Handler> = (...args) =>
 export const scopeIncludesAny: RequiredScopes<Handler> = (...args) =>
   toHandler(_scopeIncludesAny(...args));
 
+/**
+ * Checks the authentication method of the token.
+ */
+export const requiredAcrValues: RequiredAcrValues<Handler> = (...args) =>
+  toHandler(_requiredAcrValues(...args));
+
+/**
+ * Checks the freshness of the token.
+ */
+export const requiredMaxAge: RequiredMaxAge<Handler> = (...args) =>
+  toHandler(_requiredMaxAge(...args));
+
 export { AuthResult, JWTPayload };
 export {
   FunctionValidator,
@@ -202,4 +218,6 @@ export {
   InvalidRequestError,
   InvalidTokenError,
   InsufficientScopeError,
+  InsufficientUserAuthenticationAcrValuesError,
+  InsufficientUserAuthenticationMaxAgeError,
 } from 'oauth2-bearer';

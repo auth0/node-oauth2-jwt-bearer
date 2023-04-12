@@ -61,14 +61,55 @@ export class InsufficientScopeError extends UnauthorizedError {
 
   constructor(scopes?: string[], message = 'Insufficient Scope') {
     super(message);
-    this.headers = getHeaders(this.code, this.message, scopes);
+    this.headers = getHeaders(this.code, this.message, 'scope', scopes);
+  }
+}
+
+/**
+ * The request does not meet the authentication requirements of the protected resource.
+ */
+export class InsufficientUserAuthenticationAcrValuesError extends UnauthorizedError {
+  code = 'insufficient_user_authentication';
+  status = 401;
+  statusCode = 401;
+
+  constructor(
+    acrValues?: string[],
+    message = 'A different authentication level is required'
+  ) {
+    super(message);
+    this.headers = getHeaders(this.code, this.message, 'acr_values', acrValues);
+  }
+}
+
+/**
+ * The request does not meet the authentication requirements of the protected resource.
+ */
+export class InsufficientUserAuthenticationMaxAgeError extends UnauthorizedError {
+  code = 'insufficient_user_authentication';
+  status = 401;
+  statusCode = 401;
+
+  constructor(
+    maxAge?: number,
+    message = 'More recent authentication is required'
+  ) {
+    super(message);
+    this.headers = getHeaders(this.code, this.message, 'max_age', [
+      `${maxAge}`,
+    ]);
   }
 }
 
 // Generate a response header per https://tools.ietf.org/html/rfc6750#section-3
-const getHeaders = (error: string, description: string, scopes?: string[]) => ({
+const getHeaders = (
+  error: string,
+  description: string,
+  key?: string,
+  values?: string[]
+) => ({
   'WWW-Authenticate': `Bearer realm="api", error="${error}", error_description="${description.replace(
     /"/g,
     "'"
-  )}"${(scopes && `, scope="${scopes.join(' ')}"`) || ''}`,
+  )}"${(values && `, ${key}="${values.join(' ')}"`) || ''}`,
 });
