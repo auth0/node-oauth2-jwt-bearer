@@ -46,7 +46,7 @@ app.get(
   handler
 );
 
-app.get('/max-age', requiresAuth, requiredMaxAge(10), handler);
+app.get('/max-age', requiresAuth, requiredMaxAge(100), handler);
 
 app.get('/claim-equals', requiresAuth, claimEquals('foo', 'bar'), handler);
 
