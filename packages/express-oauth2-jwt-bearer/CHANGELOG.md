@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.4.1](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.4.1) (2023-04-14)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.4.0...v1.4.1)
+
+**Fixed**
+- fix missing agent [\#103](https://github.com/auth0/node-oauth2-jwt-bearer/pull/103) ([indeed404](https://github.com/indeed404))
+
 ## [v1.4.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.4.0) (2023-04-03)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.3.0...v1.4.0)
 
