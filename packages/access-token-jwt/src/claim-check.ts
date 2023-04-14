@@ -72,7 +72,7 @@ export type RequiredMaxAge<R = ClaimChecker> = (maxAge: number) => R;
 export const requiredMaxAge: RequiredMaxAge = (maxAge) => {
   return claimCheck((payload) => {
     const authTime = payload.auth_time as number | undefined;
-    if (!authTime || authTime + maxAge * 1000 < Date.now()) {
+    if (!authTime || (authTime + maxAge) * 1000 < Date.now()) {
       throw new InsufficientUserAuthenticationMaxAgeError(maxAge);
     }
     return true;
