@@ -13,10 +13,11 @@ export type JWKSOptions = Required<
   Pick<JwtVerifierOptions, 'agent' | 'secret'>;
 
 export default ({
-  secret,
+  agent,
   cooldownDuration,
   timeoutDuration,
   cacheMaxAge,
+  secret
 }: JWKSOptions) => {
   let getKeyFn: GetKeyFn;
   let prevjwksUri: string;
@@ -28,6 +29,7 @@ export default ({
     if (!getKeyFn || prevjwksUri !== jwksUri) {
       prevjwksUri = jwksUri;
       getKeyFn = createRemoteJWKSet(new URL(jwksUri), {
+        agent,
         cooldownDuration,
         timeoutDuration,
         cacheMaxAge,
