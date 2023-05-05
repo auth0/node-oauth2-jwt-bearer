@@ -17,7 +17,7 @@
     "docs": "typedoc --options typedoc.js"
   },
   "devDependencies": {
-    "typedoc": "^0.23.28",
+    "typedoc": "^0.24.6",
     "typescript": "^5.0.2"
   }
 }
