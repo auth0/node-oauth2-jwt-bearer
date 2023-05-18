@@ -18,7 +18,7 @@
 
 This package supports the following tooling versions:
 
-- Node.js: `^12.19.0 || ^14.15.0 || ^16.13.0` || ^18.12.0
+- Node.js: `^12.19.0 || ^14.15.0 || ^16.13.0 || ^18.12.0 || ^20.2.0`
 
 ### Installation
 
