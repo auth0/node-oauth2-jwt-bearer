@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.5.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.5.0) (2023-05-24)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.4.1...v1.5.0)
+
+**Added**
+- Add support for Node version 20 [\#108](https://github.com/auth0/node-oauth2-jwt-bearer/pull/108) ([EdenGottlieb](https://github.com/EdenGottlieb))
+
 ## [v1.4.1](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.4.1) (2023-04-14)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.4.0...v1.4.1)
 
