@@ -6,11 +6,11 @@ on:
       branch:
         description: The branch to release from
         required: true
-        default: master
+        default: main
       version:
         description: The version being published. This should be a valid semver version, such as `1.0.0`.
         required: true
-        default: ''
+        default: ""
         type: string
       dry-run:
         type: boolean
@@ -85,7 +85,7 @@ jobs:
 
     name: Publish to NPM
     runs-on: ubuntu-latest
-    environment: 'release'
+    environment: "release"
 
     steps:
       - name: Checkout code
@@ -115,7 +115,7 @@ jobs:
 
     name: Publish to GitHub Packages
     runs-on: ubuntu-latest
-    environment: 'release'
+    environment: "release"
 
     steps:
       - name: Checkout code
@@ -125,7 +125,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          registry-url: 'https://npm.pkg.github.com'
+          registry-url: "https://npm.pkg.github.com"
           cache: npm
 
       - name: Install dependencies

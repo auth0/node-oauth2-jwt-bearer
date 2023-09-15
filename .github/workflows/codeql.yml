@@ -8,9 +8,9 @@ on:
       - synchronize
   push:
     branches:
-      - master
+      - main
   schedule:
-    - cron: '37 10 * * 2'
+    - cron: "37 10 * * 2"
 
 permissions:
   actions: read
@@ -19,7 +19,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   analyze:
@@ -50,4 +50,4 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
         with:
-          category: '/language:${{ matrix.language }}'
+          category: "/language:${{ matrix.language }}"
