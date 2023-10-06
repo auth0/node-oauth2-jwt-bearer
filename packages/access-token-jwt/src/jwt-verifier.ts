@@ -246,7 +246,8 @@ const jwtVerifier = ({
       };
       const { payload, protectedHeader: header } = await jwtVerify(
         jwt,
-        getKeyFnGetter(jwksUri)
+        getKeyFnGetter(jwksUri),
+        { clockTolerance }
       );
       await validate(payload, header, validators);
       return { payload, header, token: jwt };
