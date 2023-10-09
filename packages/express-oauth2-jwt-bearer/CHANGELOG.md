@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.6.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.6.0) (2023-10-09)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.5.0...v1.6.0)
+
+**Added**
+- nbf claim validation should include clockTolerance [\#115](https://github.com/auth0/node-oauth2-jwt-bearer/pull/115) ([adamjmcgrath](https://github.com/adamjmcgrath))
+
 ## [v1.5.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.5.0) (2023-05-24)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.4.1...v1.5.0)
 
