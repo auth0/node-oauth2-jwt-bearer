@@ -3,6 +3,7 @@ import nock from 'nock';
 import sinon from 'sinon';
 import { createJwt, now } from './helpers';
 import { jwtVerifier, InvalidTokenError } from '../src';
+import validate from '../src/validate.js';
 
 describe('jwt-verifier', () => {
   afterEach(nock.cleanAll);
@@ -120,6 +121,43 @@ describe('jwt-verifier', () => {
     await expect(verify(jwt)).rejects.toThrowError(
       '"exp" claim timestamp check failed'
     );
+  });
+
+  it('should throw for invalid nbf', async () => {
+    const clock = sinon.useFakeTimers(1000);
+    const jwt = await createJwt({
+      payload: {
+        nbf: 2000,
+      },
+    });
+
+    const verify = jwtVerifier({
+      jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
+      issuer: 'https://issuer.example.com/',
+      audience: 'https://api/',
+    });
+    await expect(verify(jwt)).rejects.toThrowError(
+      '"nbf" claim timestamp check failed'
+    );
+    clock.restore();
+  });
+
+  it('should validate nbf claim with clockTolerance', async () => {
+    const clock = sinon.useFakeTimers(1000);
+    const jwt = await createJwt({
+      payload: {
+        nbf: 2000,
+      },
+    });
+
+    const verify = jwtVerifier({
+      jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
+      issuer: 'https://issuer.example.com/',
+      audience: 'https://api/',
+      clockTolerance: 5000,
+    });
+    await expect(verify(jwt)).resolves.not.toThrow();
+    clock.restore();
   });
 
   it('should throw unexpected token signing alg', async () => {
