@@ -1,5 +1,13 @@
 # Change Log
 
+## [FOOBAR-v1.6.1](https://github.com/auth0/node-oauth2-jwt-bearer/tree/FOOBAR-v1.6.1) (2023-11-08)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.6.0...FOOBAR-v1.6.1)
+
+**Fixed**
+- chore: Remove obsolete CircleCI config [\#123](https://github.com/auth0/node-oauth2-jwt-bearer/pull/123) ([evansims](https://github.com/evansims))
+- Bump actions/setup-node from 3 to 4 [\#122](https://github.com/auth0/node-oauth2-jwt-bearer/pull/122) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump @babel/traverse from 7.21.3 to 7.23.2 [\#120](https://github.com/auth0/node-oauth2-jwt-bearer/pull/120) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [v1.6.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.6.0) (2023-10-09)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.5.0...v1.6.0)
 
