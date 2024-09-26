@@ -2,7 +2,7 @@ import { URL } from 'url';
 import { Agent as HttpAgent, get as getHttp } from 'http';
 import { Agent as HttpsAgent, get as getHttps } from 'https';
 import { once } from 'events';
-import type { ClientRequest, IncomingMessage } from 'http';
+import type { IncomingMessage } from 'http';
 import { TextDecoder } from 'util';
 
 const decoder = new TextDecoder();
@@ -18,13 +18,6 @@ const concat = (...buffers: Uint8Array[]): Uint8Array => {
   return buf;
 };
 
-const protocols: {
-  [protocol: string]: (...args: Parameters<typeof getHttps>) => ClientRequest;
-} = {
-  'https:': getHttps,
-  'http:': getHttp,
-};
-
 export interface FetchOptions {
   agent?: HttpAgent | HttpsAgent;
   timeoutDuration?: number;
@@ -34,7 +27,9 @@ const fetch = async <TResponse>(
   url: URL,
   { agent, timeoutDuration: timeout }: FetchOptions
 ): Promise<TResponse> => {
-  const req = protocols[url.protocol](url.href, {
+  const get = url.protocol === 'https:' ? getHttps : getHttp;
+
+  const req = get(url.href, {
     agent,
     timeout,
   });
