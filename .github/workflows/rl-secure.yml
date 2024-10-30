@@ -47,6 +47,8 @@ jobs:
 
       - id: get_version
         uses: ./.github/actions/get-version
+        with:
+          working-directory: "./packages/express-oauth2-jwt-bearer"
 
       - name: Run RL Scanner
         id: rl-scan-conclusion
