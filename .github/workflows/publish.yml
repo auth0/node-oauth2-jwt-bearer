@@ -5,9 +5,6 @@ on:
     types:
       - closed
   workflow_dispatch:
-  push:
-    branches:
-      - 'reversinglabs-implementation'
 
 permissions:
   contents: read
@@ -18,7 +15,7 @@ jobs:
     uses: ./.github/workflows/rl-secure.yml
     with:
       node-version: 18
-      artifact-name: 'node-oauth2-jwt-bearer.tgz'
+      artifact-name: "node-oauth2-jwt-bearer.tgz"
     secrets:
       RLSECURE_LICENSE: ${{ secrets.RLSECURE_LICENSE }}
       RLSECURE_SITE_KEY: ${{ secrets.RLSECURE_SITE_KEY }}
@@ -33,7 +30,7 @@ jobs:
     with:
       node-version: 18
       require-build: true
-      release-directory: './packages/express-oauth2-jwt-bearer'
+      release-directory: "./packages/express-oauth2-jwt-bearer"
     secrets:
       npm-token: ${{ secrets.NPM_TOKEN }}
       github-token: ${{ secrets.GITHUB_TOKEN }}
