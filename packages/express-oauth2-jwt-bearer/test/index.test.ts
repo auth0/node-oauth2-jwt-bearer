@@ -166,6 +166,23 @@ describe('index', () => {
     );
   });
 
+  it('should succeed for authenticated requests with custom getToken function', async () => {
+    const customGetToken = (headers: Record<string, unknown>) => (headers['custom-header'] as string).replace('Bearer ', '');
+    const jwt = await createJwt();
+    const baseUrl = await setup({ getToken: customGetToken });
+    const response = await got(baseUrl, {
+      headers: { 'custom-header': `Bearer ${jwt}` },
+      responseType: 'json',
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toHaveProperty(
+      'payload',
+      expect.objectContaining({
+        iss: 'https://issuer.example.com/',
+      })
+    );
+  });
+
   it('should succeed for authenticated requests signed with symmetric keys', async () => {
     const secret = randomBytes(32).toString('hex');
     const jwt = await createJwt({ secret });

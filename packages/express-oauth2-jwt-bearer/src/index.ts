@@ -22,6 +22,11 @@ export interface AuthOptions extends JwtVerifierOptions {
    * Defaults to true.
    */
   authRequired?: boolean;
+  /**
+   * Function to get token from request.
+   * Defaults to getToken from 'oauth2-bearer'.
+   */
+  getToken?: typeof getToken;
 }
 
 declare global {
@@ -84,7 +89,7 @@ export const auth = (opts: AuthOptions = {}): Handler => {
 
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const jwt = getToken(
+      const jwt = (opts.getToken ?? getToken)(
         req.headers,
         req.query,
         req.body,
