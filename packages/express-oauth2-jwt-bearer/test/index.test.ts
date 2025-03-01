@@ -166,6 +166,42 @@ describe('index', () => {
     );
   });
 
+  it('should succeed for authenticated requests with custom header token location', async () => {
+    const jwt = await createJwt();
+    const baseUrl = await setup({ tokenLocation: 'custom-header' });
+    const response = await got(baseUrl, {
+      headers: { 'custom-header': `Bearer ${jwt}` },
+      responseType: 'json',
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toHaveProperty(
+      'payload',
+      expect.objectContaining({
+        iss: 'https://issuer.example.com/',
+      })
+    );
+  });
+
+  it('should succeed for authenticated requests with custom body token location', async () => {
+    const jwt = await createJwt();
+    const baseUrl = await setup({ tokenLocation: 'custom-body-location' });
+    const response = await got(baseUrl, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+      },
+      form: { ['custom-body-location']: jwt },
+      responseType: 'json',
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toHaveProperty(
+      'payload',
+      expect.objectContaining({
+        iss: 'https://issuer.example.com/',
+      })
+    );
+  });
+
   it('should succeed for authenticated requests signed with symmetric keys', async () => {
     const secret = randomBytes(32).toString('hex');
     const jwt = await createJwt({ secret });

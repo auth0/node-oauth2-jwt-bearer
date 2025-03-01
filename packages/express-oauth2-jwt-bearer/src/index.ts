@@ -22,6 +22,11 @@ export interface AuthOptions extends JwtVerifierOptions {
    * Defaults to true.
    */
   authRequired?: boolean;
+  /**
+   * Header, Body, or Query Parameter location to retrieve the JWT from.
+   * Defaults to "authorization" header and "access_token" body and query parameter.
+   */
+  tokenLocation?: string;
 }
 
 declare global {
@@ -88,7 +93,8 @@ export const auth = (opts: AuthOptions = {}): Handler => {
         req.headers,
         req.query,
         req.body,
-        !!req.is('urlencoded')
+        !!req.is('urlencoded'),
+        opts.tokenLocation
       );
       req.auth = await verifyJwt(jwt);
       next();
