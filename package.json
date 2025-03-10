@@ -3,7 +3,7 @@
   "private": true,
   "license": "MIT",
   "author": "Auth0 <support@auth0.com>",
-  "version": "0.0.1",
+  "version": "1.6.1",
   "workspaces": [
     "packages/oauth2-bearer",
     "packages/access-token-jwt",
