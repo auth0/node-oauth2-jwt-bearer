@@ -12,26 +12,26 @@ type HeadersLike = Record<string, unknown> & {
 
 const TOKEN_RE = /^Bearer (.+)$/i;
 
-const getTokenFromHeader = (headers: HeadersLike) => {
-  if (typeof headers.authorization !== 'string') {
+const getTokenFromHeader = (tokenLocation: string, headers: HeadersLike) => {
+  if (typeof headers[tokenLocation] !== 'string') {
     return;
   }
-  const match = headers.authorization.match(TOKEN_RE);
+  const match = (headers[tokenLocation] as string).match(TOKEN_RE);
   if (!match) {
     return;
   }
   return match[1];
 };
 
-const getTokenFromQuery = (query?: QueryLike) => {
-  const accessToken = query?.access_token;
+const getTokenFromQuery = (tokenLocation: string, query?: QueryLike) => {
+  const accessToken = query?.[tokenLocation];
   if (typeof accessToken === 'string') {
     return accessToken;
   }
 };
 
-const getFromBody = (body?: BodyLike, urlEncoded?: boolean) => {
-  const accessToken = body?.access_token;
+const getFromBody = (tokenLocation: string, body?: BodyLike, urlEncoded?: boolean) => {
+  const accessToken = body?.[tokenLocation];
   if (typeof accessToken === 'string' && urlEncoded) {
     return accessToken;
   }
@@ -44,16 +44,21 @@ const getFromBody = (body?: BodyLike, urlEncoded?: boolean) => {
  * @param query An object containing the request query parameters, usually `req.query`.
  * @param body An object containing the request payload, usually `req.body` or `req.payload`.
  * @param urlEncoded true if the request's Content-Type is `application/x-www-form-urlencoded`.
+ * @param tokenLocation The name of header or body / query parameter to extract the JWT from.
  */
 export default function getToken(
   headers: HeadersLike,
   query?: QueryLike,
   body?: BodyLike,
-  urlEncoded?: boolean
+  urlEncoded?: boolean,
+  tokenLocation?: string
 ): string {
-  const fromHeader = getTokenFromHeader(headers);
-  const fromQuery = getTokenFromQuery(query);
-  const fromBody = getFromBody(body, urlEncoded);
+  const headerLocation = tokenLocation ?? "authorization";
+  const queryOrBodyLocation = tokenLocation ?? "access_token";
+
+  const fromHeader = getTokenFromHeader(headerLocation, headers);
+  const fromQuery = getTokenFromQuery(queryOrBodyLocation, query);
+  const fromBody = getFromBody(queryOrBodyLocation, body, urlEncoded);
 
   if (!fromQuery && !fromHeader && !fromBody) {
     throw new UnauthorizedError();
