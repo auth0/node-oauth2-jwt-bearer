@@ -8,7 +8,7 @@ name: Return the version extracted from the branch name
 
 inputs:
   working-directory:
-    default: './'
+    default: './packages/express-oauth2-jwt-bearer'
 
 outputs:
   version:
