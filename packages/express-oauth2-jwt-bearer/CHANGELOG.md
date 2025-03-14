@@ -1,11 +1,5 @@
 # Change Log
 
-## [v1.6.1](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.6.1) (2025-03-14)
-[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.6.0...v1.6.1)
-
-**Added**
-- Add support for node 22.1.0 [\#167](https://github.com/auth0/node-oauth2-jwt-bearer/pull/167) ([nandan-bhat](https://github.com/nandan-bhat))
-
 ## [v1.6.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.6.0) (2023-10-09)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.5.0...v1.6.0)
 
