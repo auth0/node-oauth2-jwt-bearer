@@ -2,9 +2,6 @@ name: Create npm and GitHub Release
 
 on:
 
-  push:
-    branches:
-      - release/v1.6.1
   workflow_call:
     inputs:
       node-version:
@@ -14,7 +11,7 @@ on:
         default: true
         type: string
       release-directory:
-        default: './packages/express-oauth2-jwt-bearer'
+        default: './'
         type: string
     secrets:
       github-token:
@@ -37,6 +34,8 @@ jobs:
       # Get the version from the branch name
       - id: get_version
         uses: ./.github/actions/get-version
+        with:
+          working-directory: ${{ inputs.release-directory }}
         
 
       # Get the prerelease flag from the branch name
