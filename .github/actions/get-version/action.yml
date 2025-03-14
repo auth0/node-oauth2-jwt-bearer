@@ -8,7 +8,7 @@ name: Return the version extracted from the branch name
 
 inputs:
   working-directory:
-    default: './packages/express-oauth2-jwt-bearer'
+    default: './'
 
 outputs:
   version:
@@ -22,6 +22,5 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
-        ls
         VERSION=$(head -1 .version)
         echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
