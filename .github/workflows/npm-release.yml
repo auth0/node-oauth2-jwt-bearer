@@ -32,7 +32,7 @@ jobs:
 
       # Get the version from the branch name
       - id: get_version
-        uses: ./get-version
+        uses: ./.github/actions/get-version
         with:
           working-directory: ${{ inputs.release-directory }}
         
