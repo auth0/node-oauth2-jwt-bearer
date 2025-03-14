@@ -14,7 +14,7 @@ on:
         default: true
         type: string
       release-directory:
-        default: './packages/node-oauth2-jwt-bearer'
+        default: './packages/express-oauth2-jwt-bearer'
         type: string
     secrets:
       github-token:
