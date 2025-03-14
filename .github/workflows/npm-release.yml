@@ -37,8 +37,6 @@ jobs:
       # Get the version from the branch name
       - id: get_version
         uses: ./.github/actions/get-version
-        with:
-          working-directory: ${{ inputs.release-directory }}
         
 
       # Get the prerelease flag from the branch name
