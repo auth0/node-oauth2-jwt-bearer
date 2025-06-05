@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.7.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.7.0) (2025-06-05)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.6.1...v1.7.0)
+
+**Added**
+- Add support for configuring token extraction locations [\#147](https://github.com/auth0/node-oauth2-jwt-bearer/pull/147) ([arpit-jain](https://github.com/arpit-jain))
+
 ## [v1.6.1](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.6.1) (2025-03-14)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.6.0...v1.6.1)
 

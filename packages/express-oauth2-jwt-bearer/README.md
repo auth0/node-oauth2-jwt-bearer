@@ -58,6 +58,31 @@ app.use(
 );
 ```
 
+#### Configuring Token Locations
+
+By default, the middleware follows [RFC6750](https://tools.ietf.org/html/rfc6750#section-2) and looks for tokens in all three possible locations:
+1. Authorization header (`Authorization: Bearer <token>`)
+2. Request body (`access_token=<token>`) for form-encoded requests 
+3. Query parameter (`?access_token=<token>`)
+
+You can restrict which locations the middleware checks for tokens:
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+app.use(
+  auth({
+    issuerBaseURL: 'https://YOUR_ISSUER_DOMAIN',
+    audience: 'https://my-api.com',
+    // Only accept tokens from Authorization header
+    checkHeaderToken: true,
+    checkQueryToken: false,
+    checkBodyToken: false,
+  })
+);
+```
+
+This provides additional security by limiting where tokens can be provided according to your specific requirements.
+
 #### JWTs signed with symmetric algorithms (eg `HS256`)
 
 ```js

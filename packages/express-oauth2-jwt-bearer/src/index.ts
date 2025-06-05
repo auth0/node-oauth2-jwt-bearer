@@ -14,7 +14,7 @@ import {
   VerifyJwtResult as AuthResult,
 } from 'access-token-jwt';
 import type { JWTPayload } from 'access-token-jwt';
-import { getToken } from 'oauth2-bearer';
+import { getToken, TokenLocation, GetTokenOptions } from 'oauth2-bearer';
 
 export interface AuthOptions extends JwtVerifierOptions {
   /**
@@ -22,6 +22,31 @@ export interface AuthOptions extends JwtVerifierOptions {
    * Defaults to true.
    */
   authRequired?: boolean;
+
+  /**
+   * Whether to check for tokens in the Authorization header.
+   * Defaults to true.
+   */
+  checkHeaderToken?: boolean;
+
+  /**
+   * Whether to check for tokens in the query parameters.
+   * Defaults to true.
+   */
+  checkQueryToken?: boolean;
+
+  /**
+   * Whether to check for tokens in the request body.
+   * Defaults to true.
+   */
+  checkBodyToken?: boolean;
+
+  /**
+   * Specify which locations to check for tokens. Takes precedence over individual check*Token options.
+   * Can be a single TokenLocation value or an array of TokenLocation values.
+   * Defaults to checking all locations if not specified.
+   */
+  tokenLocation?: TokenLocation | TokenLocation[];
 }
 
 declare global {
@@ -84,11 +109,33 @@ export const auth = (opts: AuthOptions = {}): Handler => {
 
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
+      // Configure token location options from auth options
+      const tokenOptions: GetTokenOptions = {};
+      
+      // If tokenLocation is specified, use it to determine which locations to check
+      if (opts.tokenLocation !== undefined) {
+        if (Array.isArray(opts.tokenLocation)) {
+          tokenOptions.checkHeader = opts.tokenLocation.includes(TokenLocation.HEADER);
+          tokenOptions.checkQuery = opts.tokenLocation.includes(TokenLocation.QUERY);
+          tokenOptions.checkBody = opts.tokenLocation.includes(TokenLocation.BODY);
+        } else {
+          tokenOptions.checkHeader = opts.tokenLocation === TokenLocation.HEADER;
+          tokenOptions.checkQuery = opts.tokenLocation === TokenLocation.QUERY;
+          tokenOptions.checkBody = opts.tokenLocation === TokenLocation.BODY;
+        }
+      } else {
+        // Fall back to individual check*Token options
+        tokenOptions.checkHeader = opts.checkHeaderToken !== false;
+        tokenOptions.checkQuery = opts.checkQueryToken !== false;
+        tokenOptions.checkBody = opts.checkBodyToken !== false;
+      }
+      
       const jwt = getToken(
         req.headers,
         req.query,
         req.body,
-        !!req.is('urlencoded')
+        !!req.is('urlencoded'),
+        tokenOptions
       );
       req.auth = await verifyJwt(jwt);
       next();
@@ -202,4 +249,5 @@ export {
   InvalidRequestError,
   InvalidTokenError,
   InsufficientScopeError,
+  TokenLocation,
 } from 'oauth2-bearer';

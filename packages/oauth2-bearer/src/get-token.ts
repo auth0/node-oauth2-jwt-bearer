@@ -10,6 +10,38 @@ type HeadersLike = Record<string, unknown> & {
   'content-type'?: string;
 };
 
+/**
+ * Enum for the different locations where a token can be found
+ */
+export enum TokenLocation {
+  HEADER = 'header',
+  QUERY = 'query',
+  BODY = 'body'
+}
+
+/**
+ * Options for the getToken function
+ */
+export interface GetTokenOptions {
+  /**
+   * Whether to check for the token in the Authorization header
+   * @default true
+   */
+  checkHeader?: boolean;
+
+  /**
+   * Whether to check for the token in the query parameters
+   * @default true
+   */
+  checkQuery?: boolean;
+
+  /**
+   * Whether to check for the token in the request body
+   * @default true
+   */
+  checkBody?: boolean;
+}
+
 const TOKEN_RE = /^Bearer (.+)$/i;
 
 const getTokenFromHeader = (headers: HeadersLike) => {
@@ -44,16 +76,25 @@ const getFromBody = (body?: BodyLike, urlEncoded?: boolean) => {
  * @param query An object containing the request query parameters, usually `req.query`.
  * @param body An object containing the request payload, usually `req.body` or `req.payload`.
  * @param urlEncoded true if the request's Content-Type is `application/x-www-form-urlencoded`.
+ * @param options Options to specify which locations to check for tokens.
  */
 export default function getToken(
   headers: HeadersLike,
   query?: QueryLike,
   body?: BodyLike,
-  urlEncoded?: boolean
+  urlEncoded?: boolean,
+  options?: GetTokenOptions
 ): string {
-  const fromHeader = getTokenFromHeader(headers);
-  const fromQuery = getTokenFromQuery(query);
-  const fromBody = getFromBody(body, urlEncoded);
+  const opts: GetTokenOptions = {
+    checkHeader: true,
+    checkQuery: true,
+    checkBody: true,
+    ...(options || {})
+  };
+  
+  const fromHeader = opts.checkHeader ? getTokenFromHeader(headers) : undefined;
+  const fromQuery = opts.checkQuery ? getTokenFromQuery(query) : undefined;
+  const fromBody = opts.checkBody ? getFromBody(body, urlEncoded) : undefined;
 
   if (!fromQuery && !fromHeader && !fromBody) {
     throw new UnauthorizedError();

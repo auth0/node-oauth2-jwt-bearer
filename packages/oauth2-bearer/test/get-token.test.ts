@@ -23,12 +23,27 @@ const handler = (req: IncomingMessage, res: ServerResponse) => {
   );
   anyBody(req, res, (err, body) => {
     try {
+      // Extract options from query params for testing
+      const options = {
+        checkHeader: query?.checkHeader !== 'false',
+        checkQuery: query?.checkQuery !== 'false',
+        checkBody: query?.checkBody !== 'false'
+      };
+      
+      // Remove the configuration params
+      if (query) {
+        delete query.checkHeader;
+        delete query.checkQuery;
+        delete query.checkBody;
+      }
+      
       res.end(
         getToken(
           req.headers,
           query,
           body as Record<string, string>,
-          !!typeis.is(req.headers['content-type'] as string, ['urlencoded'])
+          !!typeis.is(req.headers['content-type'] as string, ['urlencoded']),
+          options
         )
       );
     } catch (e) {
@@ -160,5 +175,67 @@ describe('get-token', () => {
     ).rejects.toThrowError(
       'Response code 400 (More than one method used for authentication)'
     );
+  });
+
+  // New tests for token location options
+  it('should not get token from header when disabled', async () => {
+    await expect(
+      got(url, {
+        searchParams: { checkHeader: 'false' },
+        headers: {
+          authorization: 'Bearer token',
+        },
+      })
+    ).rejects.toThrowError('Response code 401 (Unauthorized)');
+  });
+
+  it('should not get token from query when disabled', async () => {
+    await expect(
+      got(url, {
+        searchParams: { 
+          access_token: 'token',
+          checkQuery: 'false'
+        },
+      })
+    ).rejects.toThrowError('Response code 401 (Unauthorized)');
+  });
+
+  it('should not get token from body when disabled', async () => {
+    await expect(
+      got(url, {
+        resolveBodyOnly: true,
+        method: 'POST',
+        searchParams: { checkBody: 'false' },
+        form: { access_token: 'token' },
+      })
+    ).rejects.toThrowError('Response code 401 (Unauthorized)');
+  });
+
+  it('should allow configuring multiple token locations', async () => {
+    // Disable both query and body, keep header
+    await expect(
+      got(url, {
+        resolveBodyOnly: true,
+        searchParams: { 
+          checkQuery: 'false',
+          checkBody: 'false'
+        },
+        headers: {
+          authorization: 'Bearer token',
+        },
+      })
+    ).resolves.toEqual('token');
+
+    // Disable header, keep query
+    await expect(
+      got(url, {
+        resolveBodyOnly: true,
+        searchParams: { 
+          access_token: 'token',
+          checkHeader: 'false',
+          checkBody: 'false'
+        },
+      })
+    ).resolves.toEqual('token');
   });
 });
