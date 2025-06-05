@@ -1,5 +1,5 @@
 import { createSecretKey } from 'crypto';
-import { createRemoteJWKSet } from 'jose';
+import { createRemoteJWKSet, KeyLike } from 'jose';
 import { JwtVerifierOptions } from './jwt-verifier';
 
 type GetKeyFn = ReturnType<typeof createRemoteJWKSet>;
@@ -22,7 +22,16 @@ export default ({
   let getKeyFn: GetKeyFn;
   let prevjwksUri: string;
 
-  const secretKey = secret && createSecretKey(Buffer.from(secret));
+  // If secret is a KeyLike object (public key), use it directly
+  if (secret && typeof secret !== 'string') {
+    const publicKey = secret as KeyLike;
+    return () => () => publicKey;
+  }
+
+  // Otherwise, handle string secret as before
+  const secretKey = typeof secret === 'string' && secret 
+    ? createSecretKey(Buffer.from(secret)) 
+    : undefined;
 
   return (jwksUri: string) => {
     if (secretKey) return () => secretKey;

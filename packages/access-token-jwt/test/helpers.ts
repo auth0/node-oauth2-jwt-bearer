@@ -20,6 +20,7 @@ interface CreateJWTOptions {
   discoverSpy?: jest.Mock;
   delay?: number;
   secret?: string;
+  privateKey?: any; // Allow passing a specific private key
 }
 
 export const createJwt = async ({
@@ -35,26 +36,37 @@ export const createJwt = async ({
   jwksSpy = jest.fn(),
   discoverSpy = jest.fn(),
   secret,
+  privateKey: customPrivateKey,
 }: CreateJWTOptions = {}): Promise<string> => {
-  const { publicKey, privateKey } = await generateKeyPair('RS256');
-  const publicJwk = await exportJWK(publicKey);
-  nock(issuer)
-    .persist()
-    .get(jwksUri)
-    .reply(200, (...args) => {
-      jwksSpy(...args);
-      return { keys: [{ kid, ...publicJwk }] };
-    })
-    .get(discoveryUri)
-    .reply(200, (...args) => {
-      discoverSpy(...args);
-      return {
-        issuer,
-        jwks_uri: (issuer + jwksUri).replace('//.well-known', '/.well-known'),
-      };
-    });
+  // Generate key pair if not provided
+  const { publicKey, privateKey: generatedPrivateKey } = customPrivateKey 
+    ? { publicKey: null, privateKey: customPrivateKey } 
+    : await generateKeyPair('RS256');
+    
+  const finalPrivateKey = customPrivateKey || generatedPrivateKey;
+  
+  // Only set up mocks if not using custom keys
+  if (!customPrivateKey) {
+    const publicJwk = await exportJWK(publicKey);
+    nock(issuer)
+      .persist()
+      .get(jwksUri)
+      .reply(200, (...args) => {
+        jwksSpy(...args);
+        return { keys: [{ kid, ...publicJwk }] };
+      })
+      .get(discoveryUri)
+      .reply(200, (...args) => {
+        discoverSpy(...args);
+        return {
+          issuer,
+          jwks_uri: (issuer + jwksUri).replace('//.well-known', '/.well-known'),
+        };
+      });
+  }
 
   const secretKey = secret && createSecretKey(Buffer.from(secret));
+  const signingKey = secretKey || finalPrivateKey;
 
   return new SignJWT(payload)
     .setProtectedHeader({
@@ -67,5 +79,5 @@ export const createJwt = async ({
     .setAudience(audience)
     .setIssuedAt(iat)
     .setExpirationTime(exp)
-    .sign(secretKey || privateKey);
+    .sign(signingKey);
 };
