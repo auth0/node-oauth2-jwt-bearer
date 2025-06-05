@@ -207,6 +207,26 @@ describe('validate', () => {
       )
     ).resolves.not.toThrow();
   });
+  
+  it('should accept missing aud claim when no audience is configured', async () => {
+    await expect(
+      validate(
+        { ...payload, aud: undefined },
+        header,
+        validators({ audience: undefined })
+      )
+    ).resolves.not.toThrow();
+  });
+  
+  it('should reject missing aud claim when audience is configured', async () => {
+    await expect(
+      validate(
+        { ...payload, aud: undefined },
+        header,
+        validators({ audience: 'foo' })
+      )
+    ).rejects.toThrow(`Unexpected 'aud' value`);
+  });
   it('should throw for invalid exp claim', async () => {
     const clock = sinon.useFakeTimers(100 * 1000);
     await expect(

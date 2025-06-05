@@ -126,9 +126,8 @@ describe('index', () => {
     process.env = Object.assign({}, env, {
       ISSUER_BASE_URL: 'foo',
     });
-    expect(auth).toThrow(
-      "An 'audience' is required to validate the 'aud' claim"
-    );
+    // No longer requiring audience since we made it optional
+    expect(auth).not.toThrow();
     process.env = Object.assign({}, env, {
       ISSUER_BASE_URL: 'foo',
       AUDIENCE: 'baz',

@@ -18,13 +18,13 @@ describe('jwt-verifier', () => {
     );
   });
 
-  it('should throw when configured with no audience', async () => {
+  it('should NOT throw when configured with no audience (since audience is optional)', async () => {
     expect(() =>
       jwtVerifier({
         jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
         issuer: 'https://issuer.example.com/',
       })
-    ).toThrowError("An 'audience' is required to validate the 'aud' claim");
+    ).not.toThrow();
   });
 
   it('should throw when configured with secret and no token signing alg', async () => {
@@ -105,6 +105,65 @@ describe('jwt-verifier', () => {
       issuer: 'https://issuer.example.com/',
       audience: 'https://api2/',
     });
+    await expect(verify(jwt)).rejects.toThrowError(`Unexpected 'aud' value`);
+  });
+
+  it('should accept jwt with no audience when audience is not specified', async () => {
+    // Create JWT with no audience claim
+    const jwt = await createJwt({
+      audience: undefined, // This will omit the audience claim from the JWT
+    });
+
+    const verify = jwtVerifier({
+      jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
+      issuer: 'https://issuer.example.com/',
+      // No audience specified
+    });
+    await expect(verify(jwt)).resolves.toHaveProperty('payload', {
+      iss: 'https://issuer.example.com/',
+      sub: 'me',
+      // No aud claim
+      iat: expect.any(Number),
+      exp: expect.any(Number),
+    });
+  });
+  
+  it('should reject jwt with no audience when audience is specified', async () => {
+    // Create JWT with no audience claim
+    const jwt = await createJwt({
+      audience: undefined, // This will omit the audience claim from the JWT
+    });
+
+    const verify = jwtVerifier({
+      jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
+      issuer: 'https://issuer.example.com/',
+      audience: 'https://api/', // Audience is specified
+    });
+    await expect(verify(jwt)).rejects.toThrowError(`Unexpected 'aud' value`);
+  });
+
+    const verify = jwtVerifier({
+      jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
+      issuer: 'https://issuer.example.com/',
+      // No audience parameter here
+    });
+    
+    await expect(verify(jwt)).resolves.toBeTruthy();
+  });
+  
+  it('should reject jwt with no audience when audience is specified', async () => {
+    // Create JWT with no audience claim
+    const jwt = await createJwt({
+      audience: undefined, // This will omit the audience claim from the JWT
+    });
+
+    const verify = jwtVerifier({
+      jwksUri: 'https://issuer.example.com/.well-known/jwks.json',
+      issuer: 'https://issuer.example.com/',
+      audience: 'https://api/',
+    });
+    
+    // This should fail since the JWT has no audience but config requires one
     await expect(verify(jwt)).rejects.toThrowError(`Unexpected 'aud' value`);
   });
 

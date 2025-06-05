@@ -73,6 +73,16 @@ export const defaultValidators = (
       typ.toLowerCase().replace(/^application\//, '') === 'at+jwt'),
   iss: (iss) => iss === issuer,
   aud: (aud) => {
+    // If no audience is specified in configuration, skip validation (as per RFC7519 section 4.1.3)
+    if (!audience) {
+      return true;
+    }
+    
+    // If audience is specified but not present in token, fail validation
+    if (aud === undefined) {
+      return false;
+    }
+    
     audience = typeof audience === 'string' ? [audience] : audience;
     if (typeof aud === 'string') {
       return audience.includes(aud);

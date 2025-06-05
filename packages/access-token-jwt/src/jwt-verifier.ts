@@ -22,7 +22,9 @@ export interface JwtVerifierOptions {
 
   /**
    * Expected JWT "aud" (Audience) Claim value(s).
-   * REQUIRED: You can also provide the `AUDIENCE` environment variable.
+   * Optional: You can also provide the `AUDIENCE` environment variable.
+   * If not provided, no audience validation will be performed, which aligns with RFC7519 section 4.1.3 
+   * where the "aud" claim is optional.
    */
   audience?: string | string[];
 
@@ -186,7 +188,6 @@ const jwtVerifier = ({
     !(secret && jwksUri),
     "You must not provide both a 'secret' and 'jwksUri'"
   );
-  assert(audience, "An 'audience' is required to validate the 'aud' claim");
   assert(
     !secret || (secret && tokenSigningAlg),
     "You must provide a 'tokenSigningAlg' for validating symmetric algorithms"

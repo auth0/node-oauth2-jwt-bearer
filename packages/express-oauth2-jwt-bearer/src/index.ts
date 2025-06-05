@@ -64,8 +64,9 @@ declare global {
  * }));
  * ```
  *
- * You must provide the `audience` argument (or `AUDIENCE` environment variable)
- * used to match against the Access Token's `aud` claim.
+ * You can optionally provide the `audience` argument (or `AUDIENCE` environment variable)
+ * used to match against the Access Token's `aud` claim. If not provided, audience validation
+ * will be skipped which aligns with RFC7519 section 4.1.3 where the "aud" claim is optional.
  *
  * Successful requests will have the following properties added to them:
  *
