@@ -36,11 +36,8 @@ const expectFailsWith = async (
       ? `, error_description="${description}"`
       : '';
     expect(e.response.statusCode).toBe(status);
-    expect(e.response.headers['www-authenticate']).toBe(
-      `Bearer realm="api"${error}${errorDescription}${
-        (scopes && ', scope="' + scopes + '"') || ''
-      }`
-    );
+    const expectedChallenge = `Bearer realm="api"${error}${errorDescription}${(scopes && ', scope="' + scopes + '"') || ''}`;
+    expect(e.response.headers['www-authenticate']).toContain(expectedChallenge);
   }
 };
 
@@ -489,4 +486,46 @@ describe('index', () => {
       })
     );
   });
+
+  it('for full coverage: should use req.url when req.originalUrl is undefined', async () => {
+    const jwt = await createJwt();
+    const app = express();
+  
+    // Simulate a broken originalUrl (force it to be undefined)
+    app.use((req, res, next) => {
+      // @ts-ignore
+      delete req.originalUrl;
+      next();
+    });
+  
+    app.use(
+      auth({
+        issuerBaseURL: 'https://issuer.example.com/',
+        audience: 'https://api/',
+      })
+    );
+  
+    app.get('/test-url', (req, res) => {
+      res.json({ success: true });
+    });
+  
+    const server = await new Promise<Server>((resolve) => {
+      const s = app.listen(0, () => resolve(s));
+    });
+  
+    const address = server.address() as AddressInfo;
+    const url = `http://localhost:${address.port}/test-url`;
+  
+    const response = await got(url, {
+      headers: { authorization: `Bearer ${jwt}` },
+      responseType: 'json',
+    });
+  
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toEqual({ success: true });
+  
+    server.close();
+  });
+  
+  
 });

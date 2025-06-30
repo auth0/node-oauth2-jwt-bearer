@@ -85,6 +85,21 @@ app.get('/api/messages', (req, res, next) => {
 });
 ```
 
+#### DPoP Authentication (Early Access)
+
+> **Note:** DPoP support is currently in **Early Access**. Contact [Auth0 Support](https://support.auth0.com/) to have it enabled for your tenant.
+
+This SDK supports [DPoP (Demonstration of Proof-of-Possession)](https://datatracker.ietf.org/doc/html/rfc9449), which enhances access token security by requiring clients to prove possession of a private key associated with each request.
+
+To learn how to:
+- Enforce DPoP-only authentication
+- Accept both DPoP and Bearer tokens (default)
+- Disable DPoP entirely
+- Configure proof timing with `iatOffset` and `iatLeeway`
+
+**See [DPoP examples in `EXAMPLES.md`](./EXAMPLES.md#authenticate-using-dpop-bound-access-tokens)**
+
+
 ### Security Headers
 
 Along with the other [security best practices](https://expressjs.com/en/advanced/best-practice-security.html) in the Express.js documentation, we recommend you use [helmet](https://www.npmjs.com/package/helmet) in addition to this middleware which can help protect your app from some well-known web vulnerabilities by setting default security HTTP headers.

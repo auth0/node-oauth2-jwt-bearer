@@ -1,9 +1,10 @@
 import { randomBytes } from 'crypto';
 import { Agent } from 'http';
-import nock = require('nock');
-import sinon = require('sinon');
+import * as nock from 'nock';
+import * as sinon from 'sinon';
 import { createJwt } from './helpers';
 import { jwtVerifier } from '../src';
+import { tokenVerifier } from '../src';
 
 describe('index', () => {
   afterEach(nock.cleanAll);
@@ -165,4 +166,23 @@ describe('index', () => {
     const promise = verify(jwt);
     await expect(promise).rejects.toThrow(`Unexpected 'foo' value`);
   });
+
+  it('covers default tokenVerifier export', async () => {
+    const verifier = tokenVerifier(
+      () => Promise.resolve({
+        token: 'abc.def.ghi',
+        header: { alg: 'RS256' },
+        payload: { sub: 'me' }
+      }),
+      {},
+      {
+        headers: { authorization: 'Bearer abc' },
+        url: 'https://api.example.com',
+        method: 'GET'
+      }
+    );
+
+    await expect(verifier.verify()).resolves.toBeDefined();
+  });
+
 });

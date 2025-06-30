@@ -3,6 +3,7 @@ import {
   InvalidRequestError,
   InvalidTokenError,
   InsufficientScopeError,
+  InvalidProofError,
 } from '../src';
 
 describe('errors', () => {
@@ -86,4 +87,33 @@ describe('errors', () => {
       statusCode: 403,
     });
   });
+
+  it('should raise an Invalid Proof error', () => {
+    expect(new InvalidProofError()).toMatchObject({
+      code: 'invalid_dpop_proof',
+      headers: {
+        'WWW-Authenticate':
+          'Bearer realm="api", error="invalid_dpop_proof", error_description="Invalid DPoP Proof"',
+      },
+      message: 'Invalid DPoP Proof',
+      name: 'InvalidProofError',
+      status: 400,
+      statusCode: 400,
+    });
+  });
+
+  it('should raise an Invalid Proof error with a custom message', () => {
+    expect(new InvalidProofError('Proof rejected')).toMatchObject({
+      code: 'invalid_dpop_proof',
+      headers: {
+        'WWW-Authenticate':
+          'Bearer realm="api", error="invalid_dpop_proof", error_description="Proof rejected"',
+      },
+      message: 'Proof rejected',
+      name: 'InvalidProofError',
+      status: 400,
+      statusCode: 400,
+    });
+  });
+
 });

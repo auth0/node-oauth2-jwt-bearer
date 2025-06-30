@@ -1,7 +1,7 @@
 import { Handler, NextFunction, Request, Response } from 'express';
 import {
   jwtVerifier,
-  JwtVerifierOptions,
+  tokenVerifier,
   claimCheck as _claimCheck,
   ClaimCheck,
   claimEquals as _claimEquals,
@@ -12,17 +12,11 @@ import {
   RequiredScopes,
   scopeIncludesAny as _scopeIncludesAny,
   VerifyJwtResult as AuthResult,
+  type JWTPayload,
+  type RequestLike,
+  type AuthOptions,
+  type DPoPOptions
 } from 'access-token-jwt';
-import type { JWTPayload } from 'access-token-jwt';
-import { getToken } from 'oauth2-bearer';
-
-export interface AuthOptions extends JwtVerifierOptions {
-  /**
-   * True if a valid Access Token JWT should be required for all routes.
-   * Defaults to true.
-   */
-  authRequired?: boolean;
-}
 
 declare global {
   namespace Express {
@@ -83,20 +77,34 @@ export const auth = (opts: AuthOptions = {}): Handler => {
   const verifyJwt = jwtVerifier(opts);
 
   return async (req: Request, res: Response, next: NextFunction) => {
+    
+    const { headers, query, body, method } = req;
+
+    // Construct the URL from the request object.
+    const url = `${req.protocol}://${req.host}${req.originalUrl ?? req.url}`;
+
+    // Get DPoP verifier instance with the provided options.
+    const requestOptions: RequestLike = {
+      headers,
+      url,
+      method,
+      query,
+      body,
+      isUrlEncoded: !!req.is('urlencoded'),
+    };
+
+    // Verify both JWT and DPoP token claims.
+    const verifier = tokenVerifier(verifyJwt, opts, requestOptions);
+
     try {
-      const jwt = getToken(
-        req.headers,
-        req.query,
-        req.body,
-        !!req.is('urlencoded')
-      );
-      req.auth = await verifyJwt(jwt);
+      req.auth = await verifier.verify();
       next();
     } catch (e) {
       if (opts.authRequired === false) {
         next();
       } else {
-        next(e);
+        // Apply authentication challenges to the response if the request is a DPoP request.
+        next(verifier.applyAuthChallenges(e));
       }
     }
   };
@@ -189,7 +197,7 @@ export const requiredScopes: RequiredScopes<Handler> = (...args) =>
 export const scopeIncludesAny: RequiredScopes<Handler> = (...args) =>
   toHandler(_scopeIncludesAny(...args));
 
-export { AuthResult, JWTPayload };
+export { AuthResult, JWTPayload, AuthOptions, DPoPOptions };
 export {
   FunctionValidator,
   Validator,
