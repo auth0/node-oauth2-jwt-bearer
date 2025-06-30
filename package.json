@@ -19,5 +19,9 @@
   "devDependencies": {
     "typedoc": "^0.24.6",
     "typescript": "^5.0.2"
+  },
+  "dependencies": {
+    "jose": "^5.10.0",
+    "lru-cache": "^11.1.0"
   }
 }

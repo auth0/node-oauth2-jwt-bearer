@@ -15,6 +15,7 @@ import {
 } from 'access-token-jwt';
 import type { JWTPayload } from 'access-token-jwt';
 import { getToken } from 'oauth2-bearer';
+import { authDPoP } from './middleware/auth-dpop'; 
 
 export interface AuthOptions extends JwtVerifierOptions {
   /**
@@ -22,6 +23,11 @@ export interface AuthOptions extends JwtVerifierOptions {
    * Defaults to true.
    */
   authRequired?: boolean;
+  /**
+   * Enforces DPoP mode. If true, only DPoP-bound access tokens will be accepted.
+   * Defaults to false (Bearer tokens allowed).
+   */
+  dpopRequired?: boolean;
 }
 
 declare global {
@@ -80,6 +86,18 @@ declare global {
  *
  */
 export const auth = (opts: AuthOptions = {}): Handler => {
+  if (opts.dpopRequired) {
+    return authDPoP({
+      issuerBaseURL: opts.issuer || process.env.ISSUER!,
+      audience:
+        Array.isArray(opts.audience)
+          ? opts.audience[0]
+          : opts.audience || (Array.isArray(process.env.AUDIENCE)
+            ? process.env.AUDIENCE[0]
+            : process.env.AUDIENCE!)
+    });
+  }
+
   const verifyJwt = jwtVerifier(opts);
 
   return async (req: Request, res: Response, next: NextFunction) => {
