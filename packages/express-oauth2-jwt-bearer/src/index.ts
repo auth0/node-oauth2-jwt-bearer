@@ -15,7 +15,15 @@ import {
 } from 'access-token-jwt';
 import type { JWTPayload } from 'access-token-jwt';
 import { getToken } from 'oauth2-bearer';
-import { authDPoP } from './middleware/auth-dpop'; 
+import { getAuthChallenges } from './dpop/dpop-challenge';
+import { validateDPoP, isDPoPRequired, type DPoPJWTPayload } from './dpop/dpop-client';
+
+export interface DPoPOptions {
+  enabled?: boolean;
+  required?: boolean;
+  iatOffset?: number;
+  iatLeeway?: number;
+}
 
 export interface AuthOptions extends JwtVerifierOptions {
   /**
@@ -23,11 +31,18 @@ export interface AuthOptions extends JwtVerifierOptions {
    * Defaults to true.
    */
   authRequired?: boolean;
+
   /**
-   * Enforces DPoP mode. If true, only DPoP-bound access tokens will be accepted.
-   * Defaults to false (Bearer tokens allowed).
+   * Options to configure DPoP (Demonstration of Proof of Possession) validation.
+   * If not provided or set to `undefined`, the following default values will be used:
+   * {
+   *   enabled: true,
+   *   required: false,
+   *   iatOffset: 300, // 5 minutes
+   *   iatLeeway: 30, // 30 seconds
+   * }
    */
-  dpopRequired?: boolean;
+  dpop?: DPoPOptions;
 }
 
 declare global {
@@ -86,17 +101,6 @@ declare global {
  *
  */
 export const auth = (opts: AuthOptions = {}): Handler => {
-  if (opts.dpopRequired) {
-    return authDPoP({
-      issuerBaseURL: opts.issuer || process.env.ISSUER!,
-      audience:
-        Array.isArray(opts.audience)
-          ? opts.audience[0]
-          : opts.audience || (Array.isArray(process.env.AUDIENCE)
-            ? process.env.AUDIENCE[0]
-            : process.env.AUDIENCE!)
-    });
-  }
 
   const verifyJwt = jwtVerifier(opts);
 
@@ -108,12 +112,30 @@ export const auth = (opts: AuthOptions = {}): Handler => {
         req.body,
         !!req.is('urlencoded')
       );
-      req.auth = await verifyJwt(jwt);
+
+      const verifiedJwt = await verifyJwt(jwt);
+      const claims: DPoPJWTPayload = verifiedJwt.payload;
+
+      if (isDPoPRequired(req, claims, opts.dpop)) {
+        await validateDPoP(req, jwt, claims, opts.dpop);
+      }
+
+      req.auth = verifiedJwt;
       next();
     } catch (e) {
       if (opts.authRequired === false) {
         next();
       } else {
+        // Get the www-authenticate challenges to set in the response
+        const challenges = getAuthChallenges(req, e, opts.dpop)
+
+        // TODO: Standardize the error codes and descriptions.
+        // TODO: This isn't the best way (and place) to set the headers. Revisit this.
+        if (e instanceof Error) {
+          (e as any).headers = {
+            'WWW-Authenticate': challenges.join(', ')
+          };
+        }
         next(e);
       }
     }
