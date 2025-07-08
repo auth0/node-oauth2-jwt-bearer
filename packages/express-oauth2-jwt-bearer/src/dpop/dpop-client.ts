@@ -205,6 +205,10 @@ export function isDPoPRequired(
   const dpopEnabled = options?.enabled ?? true;
   const dpopHeader = request.header('dpop');
 
+  if (!dpopEnabled && scheme !== 'bearer') {
+    throw new InvalidRequestError('Invalid scheme. Only Bearer tokens are supported.');
+  }
+
   return (
     dpopEnabled &&
     (dpopRequired ||

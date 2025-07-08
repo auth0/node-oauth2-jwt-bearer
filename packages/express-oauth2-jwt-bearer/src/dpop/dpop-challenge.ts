@@ -40,6 +40,8 @@ export function getAuthChallenges(
     If DPoP is enabled in required mode, then only DPoP challenges SHOULD be used to deliver error information.
   */
 
+    console.log(isDPoPEnabled, isDPoPRequired, hasBearer, hasDpop);
+
   if (isDPoPEnabled) {
     if (!hasBearer && !hasDpop) {
       if (isDPoPRequired) {
@@ -67,6 +69,9 @@ export function getAuthChallenges(
       }
     } else if (hasDpop && !hasBearer) {
       challenges.push(
+        `Bearer realm="api"`
+      );
+      challenges.push(
         `DPoP error="${errorCode}", error_description="${safeDescription}", algs="${supportedAlgs.join(
           ' '
         )}"`
@@ -82,6 +87,10 @@ export function getAuthChallenges(
         `Bearer error="${errorCode}", error_description="${safeDescription}"`
       );
     }
+  } else {
+    challenges.push(
+      `Bearer error="${errorCode}", error_description="${safeDescription}"`
+    );
   }
 
   return challenges;
