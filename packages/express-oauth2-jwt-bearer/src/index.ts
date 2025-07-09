@@ -16,7 +16,7 @@ import {
 import type { JWTPayload } from 'access-token-jwt';
 import { getToken } from 'oauth2-bearer';
 import { getAuthChallenges } from './dpop/dpop-challenge';
-import { validateDPoP, isDPoPRequired, type DPoPJWTPayload } from './dpop/dpop-client';
+import { validateDPoP, isDPoPRequired, checkInvalidScheme, type DPoPJWTPayload } from './dpop/dpop-client';
 
 export interface DPoPOptions {
   enabled?: boolean;
@@ -106,6 +106,9 @@ export const auth = (opts: AuthOptions = {}): Handler => {
 
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
+      // We need to check the scheme before we verify the JWT
+      checkInvalidScheme(req, opts.dpop);
+
       const jwt = getToken(
         req.headers,
         req.query,
@@ -131,7 +134,7 @@ export const auth = (opts: AuthOptions = {}): Handler => {
 
         // TODO: Standardize the error codes and descriptions.
         // TODO: This isn't the best way (and place) to set the headers. Revisit this.
-        if (e instanceof Error) {
+        if (e instanceof Error && challenges.length > 0) {
           (e as any).headers = {
             'WWW-Authenticate': challenges.join(', ')
           };
