@@ -49,6 +49,8 @@ export function getAuthChallenges(
           )}"`
         );
       } else {
+        // @see https://www.rfc-editor.org/rfc/rfc9449.html#section-7.2-6
+        // @see https://www.rfc-editor.org/rfc/rfc6750#section-3.1
         challenges.push(`Bearer realm="api"`);
         challenges.push(`DPoP algs="${supportedAlgs.join(' ')}"`);
       }

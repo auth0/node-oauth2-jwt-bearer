@@ -9,7 +9,7 @@ import {
   JWTHeaderParameters
 } from 'jose';
 import { createHash } from 'crypto';
-import { InvalidRequestError } from 'oauth2-bearer';
+import { InvalidRequestError, UnauthorizedError } from 'oauth2-bearer';
 
 const DEFAULT_IAT_OFFSET = 300; // 5 minutes
 const DEFAULT_IAT_LEEWAY = 30; // 30 seconds
@@ -238,7 +238,7 @@ export function checkInvalidScheme(request: Request, options?: DPoPOptions): voi
   if (dpopEnabled) {
     if (dpopRequired) {
       if (!scheme) {
-        throw new InvalidRequestError('Expecting Authorization header with DPoP scheme.');
+        throw new InvalidRequestError('Expecting Authorization header with DPoP scheme');
       }
   
       if (scheme !== 'dpop') {
@@ -246,7 +246,8 @@ export function checkInvalidScheme(request: Request, options?: DPoPOptions): voi
       }
     } else {
       if (scheme && !['dpop', 'bearer'].includes(scheme.toLowerCase())) {
-        throw new InvalidRequestError('Expecting Authorization header with DPoP or Bearer scheme.');
+        // @see https://www.rfc-editor.org/rfc/rfc9449.html#section-7.2-6
+        throw new UnauthorizedError();
       }
     }
   }
