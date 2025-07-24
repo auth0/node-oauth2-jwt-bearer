@@ -47,18 +47,49 @@ class InvalidProofError extends InvalidRequestError {
 }
 
 // Normalize the htu claim to a canonical form
-function normalizeHtu(uri: string): string {
-  const u = new URL(uri);
-  u.hash = '';
-  u.search = '';
-  // TODO: Should we normalize protocols and ports ?
+function normalizeHtu(uri: string, fromRequest = false): string {
+  let u: URL;
+  try {
+    u = new URL(uri);
+  } catch {
+    if (fromRequest) {
+      throw new InvalidRequestError('Malformed request URL');
+    }
+
+    throw new InvalidProofError('Malformed htu claim url');
+  }
+
+  // Normalize hostname and protocol
+  u.protocol = u.protocol.toLowerCase();
+  u.hostname = u.hostname.toLowerCase();
+
+  // Remove default ports
   if (
     (u.protocol === 'https:' && u.port === '443') ||
     (u.protocol === 'http:' && u.port === '80')
   ) {
     u.port = '';
   }
-  u.hostname = u.hostname.toLowerCase();
+
+  // Normalize pathname (handle invalid % encodings)
+  try {
+    u.pathname = encodeURI(decodeURI(u.pathname));
+  } catch {
+    if (fromRequest) {
+      throw new InvalidRequestError('Invalid pathname in request URL');
+    }
+
+    throw new InvalidProofError('Invalid pathname in htu claim url');
+  }
+
+  // Normalize missing pathname to "/"
+  if (!u.pathname) {
+    u.pathname = '/';
+  }
+
+  u.search = '';
+  u.hash = '';
+
   return u.toString();
 }
 
@@ -109,45 +140,51 @@ export async function validateDPoP(
   }
 
   // Verify the DPoP proof JWT
-let proofClaims: JWTPayload;
-let proofHeader: JWTHeaderParameters;
+  let proofClaims: JWTPayload;
+  let proofHeader: JWTHeaderParameters;
 
-try {
-  const verified = await jwtVerify(
-    headers.dpop as string,
-    async (header) => {
-      // Validate presence of `jwk`
-      if (!header.jwk) {
-        throw new InvalidProofError('Missing "jwk" in DPoP header');
+  try {
+    const verified = await jwtVerify(
+      headers.dpop as string,
+      async (header) => {
+        // Validate presence of `jwk`
+        if (!header.jwk) {
+          throw new InvalidProofError('Missing "jwk" in DPoP header');
+        }
+
+        // Validate presence of `alg`
+        if (!header.alg) {
+          throw new InvalidProofError('Missing "alg" in DPoP header');
+        }
+
+        // Validate the algorithm `alg`
+        if (typeof header.alg !== 'string' || header.alg.trim() !== 'ES256') {
+          throw new InvalidProofError('Unsupported algorithm');
+        }
+
+        // Prevent private key exposure
+        if ('d' in header.jwk) {
+          throw new InvalidProofError('DPoP proof must not contain private key material');
+        }
+
+        return await importJWK(header.jwk as JWK, header.alg);
+      },
+      {
+        typ: 'dpop+jwt', // optional but stricter
+        algorithms: ['ES256'], // only allow ES256
       }
+    );
 
-      // Validate presence of `alg`
-      if (!header.alg) {
-        throw new InvalidProofError('Missing "alg" in DPoP header');
-      }
-
-      // Prevent private key exposure
-      if ('d' in header.jwk) {
-        throw new InvalidProofError('DPoP proof must not contain private key material');
-      }
-
-      return await importJWK(header.jwk as JWK, header.alg);
-    },
-    {
-      typ: 'dpop+jwt', // optional but stricter
-    }
-  );
-
-  proofClaims = verified.payload;
-  proofHeader = verified.protectedHeader;
-} catch (err) {
+    proofClaims = verified.payload;
+    proofHeader = verified.protectedHeader;
+  } catch (err) {
     if (err instanceof Error) {
-    throw new InvalidProofError(err.message);
-  }
+      throw new InvalidProofError(err.message);
+    }
 
-  // Fallback for unexpected errors
-  throw new InvalidProofError('Failed to verify DPoP proof');
-}
+    // Fallback for unexpected errors
+    throw new InvalidProofError('Failed to verify DPoP proof');
+  }
 
   // Validate protected header
   if (typeof proofHeader.typ !== 'string' || proofHeader.typ.trim().toLowerCase() !== 'dpop+jwt') {
@@ -173,7 +210,7 @@ try {
   // Validate htu
   if (!htu) throw new InvalidProofError('Missing "htu" in DPoP proof');
   if (typeof htu !== 'string') throw new InvalidProofError('Invalid "htu" claim');
-  if (typeof htu !== 'string' || normalizeHtu(htu) !== normalizeHtu(url)) {
+  if (typeof htu !== 'string' || normalizeHtu(htu) !== normalizeHtu(url, true)) {
     throw new InvalidProofError('DPoP Proof htu mismatch');
   }
 
@@ -240,7 +277,7 @@ export function checkInvalidScheme(request: Request, options?: DPoPOptions): voi
       if (!scheme) {
         throw new InvalidRequestError('Expecting Authorization header with DPoP scheme');
       }
-  
+
       if (scheme !== 'dpop') {
         throw new InvalidRequestError(`Invalid scheme. Expected 'DPoP', but got '${scheme}'.`);
       }
@@ -253,7 +290,7 @@ export function checkInvalidScheme(request: Request, options?: DPoPOptions): voi
   }
 
   if (!dpopEnabled && scheme) {
-    if(scheme === 'dpop') {
+    if (scheme === 'dpop') {
       throw new InvalidRequestError('Invalid scheme. Can not use DPoP when it is not enabled.');
     }
 
