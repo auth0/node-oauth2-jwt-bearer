@@ -46,52 +46,21 @@ class InvalidProofError extends InvalidRequestError {
   }
 }
 
-// Normalize the htu claim to a canonical form
-function normalizeHtu(uri: string, fromRequest = false): string {
-  let u: URL;
+// Normalize the htu claim to a canonical form, throwing if the URL is invalid
+export function normalizeHtu(htu: string, source: 'request' | 'proof'): string {
   try {
-    u = new URL(uri);
+    const url = new URL(htu);
+    url.search = '';
+    url.hash = '';
+    return url.href;
   } catch {
-    if (fromRequest) {
-      throw new InvalidRequestError('Malformed request URL');
-    }
-
-    throw new InvalidProofError('Malformed htu claim url');
+    if (source === 'request') {
+      throw new InvalidRequestError(`Invalid request URL`);
+    } 
+    throw new InvalidProofError(`Invalid htu claim URL`);
   }
-
-  // Normalize hostname and protocol
-  u.protocol = u.protocol.toLowerCase();
-  u.hostname = u.hostname.toLowerCase();
-
-  // Remove default ports
-  if (
-    (u.protocol === 'https:' && u.port === '443') ||
-    (u.protocol === 'http:' && u.port === '80')
-  ) {
-    u.port = '';
-  }
-
-  // Normalize pathname (handle invalid % encodings)
-  try {
-    u.pathname = encodeURI(decodeURI(u.pathname));
-  } catch {
-    if (fromRequest) {
-      throw new InvalidRequestError('Invalid pathname in request URL');
-    }
-
-    throw new InvalidProofError('Invalid pathname in htu claim url');
-  }
-
-  // Normalize missing pathname to "/"
-  if (!u.pathname) {
-    u.pathname = '/';
-  }
-
-  u.search = '';
-  u.hash = '';
-
-  return u.toString();
 }
+
 
 /**
  * Validates a DPoP proof against the request and JWT claims.
@@ -111,7 +80,7 @@ export async function validateDPoP(
   const iatLeeway = options?.iatLeeway ?? DEFAULT_IAT_LEEWAY;
 
   const headers = request.headers as Record<string, string | string[] | undefined>;
-  const url = `${request.protocol}://${request.get('host')}${request.originalUrl}`;
+  const url = `${request.protocol}://${request.host}${request.originalUrl ?? request.url}`;
 
   // Check for correct Authorization scheme
   if (
@@ -210,7 +179,9 @@ export async function validateDPoP(
   // Validate htu
   if (!htu) throw new InvalidProofError('Missing "htu" in DPoP proof');
   if (typeof htu !== 'string') throw new InvalidProofError('Invalid "htu" claim');
-  if (typeof htu !== 'string' || normalizeHtu(htu) !== normalizeHtu(url, true)) {
+
+  // Normalize and compare htu with the request URL
+  if (normalizeHtu(htu, 'proof') !== normalizeHtu(url, 'request')) {
     throw new InvalidProofError('DPoP Proof htu mismatch');
   }
 
