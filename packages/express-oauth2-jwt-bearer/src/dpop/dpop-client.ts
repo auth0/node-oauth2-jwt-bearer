@@ -2,7 +2,7 @@ import { Request } from 'express';
 import {
   JWTPayload,
   jwtVerify,
-  importJWK,
+  EmbeddedJWK,
   JWK,
   base64url,
   calculateJwkThumbprint,
@@ -115,29 +115,7 @@ export async function validateDPoP(
   try {
     const verified = await jwtVerify(
       headers.dpop as string,
-      async (header) => {
-        // Validate presence of `jwk`
-        if (!header.jwk) {
-          throw new InvalidProofError('Missing "jwk" in DPoP header');
-        }
-
-        // Validate presence of `alg`
-        if (!header.alg) {
-          throw new InvalidProofError('Missing "alg" in DPoP header');
-        }
-
-        // Validate the algorithm `alg`
-        if (typeof header.alg !== 'string' || header.alg.trim() !== 'ES256') {
-          throw new InvalidProofError('Unsupported algorithm');
-        }
-
-        // Prevent private key exposure
-        if ('d' in header.jwk) {
-          throw new InvalidProofError('DPoP proof must not contain private key material');
-        }
-
-        return await importJWK(header.jwk as JWK, header.alg);
-      },
+      EmbeddedJWK,
       {
         typ: 'dpop+jwt', // optional but stricter
         algorithms: ['ES256'], // only allow ES256
