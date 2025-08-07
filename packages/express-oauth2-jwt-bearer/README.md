@@ -97,7 +97,7 @@ To learn how to:
 - Disable DPoP entirely
 - Configure proof timing with `iatOffset` and `iatLeeway`
 
-**See [DPoP examples in `EXAMPLES.md`](./EXAMPLES.md#authenticate-using-dpop-bound-access-tokens)**
+**See [DPoP examples in `EXAMPLES.md`](./EXAMPLES.md#dpop-authentication-early-access)**
 
 
 ### Security Headers

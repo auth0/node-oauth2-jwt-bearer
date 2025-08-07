@@ -38,18 +38,34 @@ export type DPoPVerifierOptions = {
   supportedAlgorithms: string[];
 };
 
+const UNRESERVED = /[A-Za-z0-9\-._~]/;
+
+function normalizePercentEncodings(s: string): string {
+  // Replace each %xx byte:
+  // - If it decodes to an unreserved ASCII char, decode it to that char.
+  // - Otherwise keep it encoded, but normalize hex to uppercase.
+  return s.replace(/%[0-9a-fA-F]{2}/g, (m) => {
+    const byte = parseInt(m.slice(1), 16);
+    const ch = String.fromCharCode(byte);
+    return UNRESERVED.test(ch) ? ch : `%${m.slice(1).toUpperCase()}`;
+  });
+}
+
 // Normalize the htu claim to a canonical form, throwing if the URL is invalid
-function normalizeHtu(htu: string, source: 'request' | 'proof'): string {
+function normalizeUrl(htu: string, source: 'request' | 'proof'): string {
   try {
     const url = new URL(htu);
     url.search = '';
     url.hash = '';
+
+    url.pathname = normalizePercentEncodings(url.pathname);
+
     return url.href;
   } catch {
     if (source === 'request') {
-      throw new InvalidRequestError(`Invalid request URL`);
+      throw new InvalidRequestError('Invalid request URL');
     }
-    throw new InvalidProofError(`Invalid htu claim URL`);
+    throw new InvalidProofError('Invalid htu claim URL');
   }
 }
 
@@ -57,9 +73,21 @@ function assertDPoPRequest(
   headers: HeadersLike,
   accessTokenClaims?: DPoPJWTPayload
 ): void {
+  // Check if the request has an Authorization HTTP Header
+  if (headers.authorization === undefined || headers.authorization === null || !('authorization' in headers)) {
+    throw new InvalidRequestError(
+      'Operation indicated DPoP use but the request is missing an Authorization HTTP Header'
+    );
+  }
+
+  if (typeof headers.authorization !== 'string') {
+    throw new InvalidRequestError(
+      "Operation indicated DPoP use but the request's Authorization HTTP Header is malformed"
+    );
+  }
+
   // Check for correct Authorization scheme
   if (
-    typeof headers?.authorization !== 'string' ||
     !headers.authorization.toLowerCase().startsWith('dpop ')
   ) {
     throw new InvalidRequestError(
@@ -93,7 +121,13 @@ function assertDPoPRequest(
   if (accessTokenClaims) {
     const { cnf } = accessTokenClaims;
 
-    if (!cnf || typeof cnf !== 'object' || Array.isArray(cnf)) {
+    if (!cnf) {
+      throw new InvalidRequestError(
+        'Operation indicated DPoP use but the JWT Access Token has no confirmation claim'
+      );
+    }
+
+    if (typeof cnf !== 'object' || Array.isArray(cnf)) {
       throw new InvalidRequestError(
         'Invalid "cnf" confirmation claim structure'
       );
@@ -105,9 +139,15 @@ function assertDPoPRequest(
       );
     }
 
-    if (typeof cnf.jkt !== 'string') {
+    if (!('jkt' in cnf)) {
       throw new InvalidRequestError(
         'Operation indicated DPoP use but the JWT Access Token has no jkt confirmation claim'
+      );
+    }
+
+    if (typeof cnf.jkt !== 'string') {
+      throw new InvalidRequestError(
+        'Malformed "jkt" confirmation claim'
       );
     }
 
@@ -165,6 +205,7 @@ async function verifyDPoP(options: DPoPVerifierOptions): Promise<void> {
   // Ensure the request is a DPoP request
   assertDPoPRequest(headers, accessTokenClaims);
 
+  // Ensure a valid JWT is provided
   if (!jwt || typeof jwt !== 'string') {
     throw new InvalidTokenError('Missing access token for DPoP verification');
   }
@@ -177,8 +218,11 @@ async function verifyDPoP(options: DPoPVerifierOptions): Promise<void> {
 
   const { htm, htu, iat, jti, ath } = proofClaims;
 
-  // Validate iat
-  if (!iat) throw new InvalidProofError('Missing "iat" claim in DPoP proof');
+  // Ensure iat exists and is a number
+  if (!iat) {
+    throw new InvalidProofError('Missing "iat" claim in DPoP proof');
+  }
+
   const now = Math.floor(Date.now() / 1000);
   const min = now - iatOffset;
   const max = now + iatLeeway;
@@ -190,30 +234,50 @@ async function verifyDPoP(options: DPoPVerifierOptions): Promise<void> {
     );
   }
 
-  // Validate htm
-  if (!htm) throw new InvalidProofError('Missing "htm" in DPoP proof');
-  if (typeof htm !== 'string' || typeof method !== 'string')
-    throw new InvalidProofError('Invalid "htm" claim');
+  // Ensure htm exists
+  if (!htm) {
+    throw new InvalidProofError('Missing "htm" in DPoP proof');
+  }
 
+  // Ensure htm is a string
+  if (typeof htm !== 'string') {
+    throw new InvalidProofError('Invalid "htm" claim');
+  }
+
+  // Validate htm against the request method
   if (htm.toUpperCase() !== method.toUpperCase()) {
     throw new InvalidProofError('DPoP Proof htm mismatch');
   }
 
-  // Validate htu
-  if (!htu) throw new InvalidProofError('Missing "htu" in DPoP proof');
-  if (typeof htu !== 'string')
+  // Ensure htu exists
+  if (!htu) {
+    throw new InvalidProofError('Missing "htu" in DPoP proof');
+  }
+
+  // Ensure htu is a string
+  if (typeof htu !== 'string') {
     throw new InvalidProofError('Invalid "htu" claim');
-  if (normalizeHtu(htu, 'proof') !== normalizeHtu(url, 'request')) {
+  }
+
+  // Normalize the htu claim to a canonical form and compare it with the request URL
+  if (url !== normalizeUrl(htu, 'proof')) {
     throw new InvalidProofError('DPoP Proof htu mismatch');
   }
 
   // Validate jti
-  if (!jti) throw new InvalidProofError('Missing "jti" in DPoP proof');
+  if (!jti) {
+    throw new InvalidProofError('Missing "jti" in DPoP proof');
+  }
 
   // Validate ath hash of access token
-  if (!ath) throw new InvalidProofError('Missing "ath" claim in DPoP proof');
-  if (typeof ath !== 'string')
+  if (!ath) {
+    throw new InvalidProofError('Missing "ath" claim in DPoP proof');
+  }
+
+  // Ensure ath is a string
+  if (typeof ath !== 'string') {
     throw new InvalidProofError('Invalid "ath" claim');
+  }
 
   // Calculate the hash of the JWT access token and encode it.
   const hash = createHash('sha256').update(jwt).digest();
@@ -230,5 +294,5 @@ async function verifyDPoP(options: DPoPVerifierOptions): Promise<void> {
   }
 }
 
-export { verifyDPoP, assertDPoPRequest };
+export { normalizeUrl, assertDPoPRequest, verifyProof, verifyDPoP };
 export type { DPoPJWTPayload };

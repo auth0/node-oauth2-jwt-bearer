@@ -4,7 +4,7 @@ import * as nock from 'nock';
 import * as sinon from 'sinon';
 import { createJwt } from './helpers';
 import { jwtVerifier } from '../src';
-import { tokenVerifier } from '../src';
+import { tokenVerifier, assertValidDPoPOptions } from '../src';
 
 describe('index', () => {
   afterEach(nock.cleanAll);
@@ -169,20 +169,73 @@ describe('index', () => {
 
   it('covers default tokenVerifier export', async () => {
     const verifier = tokenVerifier(
-      () => Promise.resolve({
-        token: 'abc.def.ghi',
-        header: { alg: 'RS256' },
-        payload: { sub: 'me' }
-      }),
+      () =>
+        Promise.resolve({
+          token: 'abc.def.ghi',
+          header: { alg: 'RS256' },
+          payload: { sub: 'me' },
+        }),
       {},
       {
         headers: { authorization: 'Bearer abc' },
         url: 'https://api.example.com',
-        method: 'GET'
+        method: 'GET',
       }
     );
 
     await expect(verifier.verify()).resolves.toBeDefined();
   });
 
+  it('covers assertValidDPoPOptions export', () => {
+    // export exists
+    expect(typeof assertValidDPoPOptions).toBe('function');
+
+    // no options / empty options are allowed (use defaults)
+    expect(() => assertValidDPoPOptions()).not.toThrow();
+    expect(() => assertValidDPoPOptions({} as any)).not.toThrow();
+
+    // valid combos
+    expect(() =>
+      assertValidDPoPOptions({
+        enabled: true,
+        required: false,
+        iatOffset: 300,
+        iatLeeway: 30,
+      } as any)
+    ).not.toThrow();
+    expect(() =>
+      assertValidDPoPOptions({
+        enabled: true,
+        required: true,
+        iatOffset: 120,
+        iatLeeway: 60,
+      } as any)
+    ).not.toThrow();
+
+    // misconfiguration: required=true while enabled=false
+    expect(() =>
+      assertValidDPoPOptions({ enabled: false, required: true } as any)
+    ).toThrow();
+
+    // invalid types / values
+    expect(() =>
+      assertValidDPoPOptions({ enabled: true, required: 'yes' as any } as any)
+    ).toThrow();
+
+    expect(() =>
+      assertValidDPoPOptions({
+        enabled: true,
+        required: true,
+        iatOffset: -1,
+      } as any)
+    ).toThrow();
+
+    expect(() =>
+      assertValidDPoPOptions({
+        enabled: true,
+        required: true,
+        iatLeeway: -5,
+      } as any)
+    ).toThrow();
+  });
 });

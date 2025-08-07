@@ -1,5 +1,6 @@
 export {
   default as tokenVerifier,
+  assertValidDPoPOptions,
   type DPoPJWTPayload,
   type RequestLike,
   type HeadersLike,

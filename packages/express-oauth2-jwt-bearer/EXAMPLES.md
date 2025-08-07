@@ -5,6 +5,7 @@
   - [Require only DPoP tokens](#require-only-dpop-tokens)
   - [Require only Bearer tokens](#require-only-bearer-tokens)
   - [Customize DPoP validation behavior](#customize-dpop-validation-behavior)
+  - [Hostname Resolution (`req.host` and `req.protocol`)](#hostname-resolution-reqhost-and-reqprotocol)
   
 - [Restrict access with scopes](#restrict-access-with-scopes)
 - [Restrict access with claims](#restrict-access-with-claims)
@@ -14,10 +15,13 @@
 
 
 ## DPoP Authentication (Early Access) 
->**Note:** DPoP (Demonstration of Proof-of-Possession) support is currently in [**Early Access**](https://auth0.com/docs/troubleshoot/product-lifecycle/product-release-stages#early-access). Contact Auth0 support to enable it for your tenant.
+> [!NOTE]  
+> DPoP (Demonstration of Proof-of-Possession) support is currently in [**Early Access**](https://auth0.com/docs/troubleshoot/product-lifecycle/product-release-stages#early-access). Contact Auth0 support to enable it for your tenant.
+>
 > If DPoP is disabled (`dpop: { enabled: false }`), only standard Bearer tokens will be accepted.
 
-By default, DPoP is supported but optional, meaning the middleware can accept both Bearer and DPoP tokens. See the examples below to configure strict or relaxed behavior.
+[DPoP](https://www.rfc-editor.org/rfc/rfc9449.html) (Demonstrating Proof of Posession) is an application-level mechanism for sender-constraining OAuth 2.0 access and refresh tokens by proving that the client application is in possession of a certain private key.
+By default, DPoP is enabled but not required. This means that the middleware will accept both Bearer and DPoP tokens.
 ### Accept both Bearer and DPoP tokens (default)
 ```js
 const { auth } = require('express-oauth2-jwt-bearer');
@@ -37,7 +41,7 @@ app.get('/api/resource', (req, res) => {
   res.send('Access granted');
 });
 ```
-Requests using DPoP must include both headers:
+Requests using DPoP must include both `Authorization` and `DPoP` headers:
 ```http
 Authorization: DPoP eyJhbGciOiJFUzI1NiIsInR5cCI6...
 DPoP: eyJhbGciOiJkcG9wIiwidHlwIjoi...
@@ -65,7 +69,7 @@ app.get('/api/secure-resource', (req, res) => {
 ```
 
 ### Require only Bearer tokens
-If you want to reject all DPoP-bound tokens and only accept standard Bearer access tokens, you can disable DPoP support explicitly:
+If you want to reject all DPoP tokens and only accept standard Bearer access tokens, you can disable DPoP support explicitly:
 
 ```js
 const { auth } = require('express-oauth2-jwt-bearer');
@@ -106,10 +110,10 @@ app.use(
 
 | `enabled` | `required` | Behavior                                                                                             |
 | --------- | ---------- | -----------------------------------------------------------------------------------------------------|
-| `true`    | `false`    | **Default behavior**.Both Bearer and DPoP tokens are accepted. Proofs are validated if present.      |
-| `false`   | `false`    | Only Bearer tokens are accepted. DPoP headers are ignored.                                           |
+| `true`    | `false`    | **Default behavior**. Both Bearer and DPoP tokens are accepted. Proofs are validated if present.     |
+| `false`   | `false`    | Only Bearer tokens are accepted. DPoP tokens are rejected.                                           |
 | `false`   | `true`     | Invalid configuration. DPoP is ignored, so `required: true` has no effect. DPoP is ignored entirely. |
-| `true`    | `true`     | Only DPoP-bound tokens are accepted. Bearer tokens are rejected.                                     |
+| `true`    | `true`     | Only DPoP tokens are accepted. Bearer tokens are rejected.                                     |
 
 
 #### Proof Timing Options
@@ -119,11 +123,11 @@ When DPoP is enabled, you can control the accepted timing of DPoP proofs using t
   - `iatOffset`: The maximum age (in seconds) of a DPoP proof. Proofs with `iat` older than this offset (relative to now) will be rejected.
     Default: `300 seconds`(5 minutes)
 
-  - `iatLeeway`: Clock skew tolerance (in seconds) when comparing proof `iat` with the current server time.
+  - `iatLeeway`: Clock skew tolerance (in seconds) when comparing a proof's `iat` with the current server time.
     Default: `30 seconds`
 
 ### Hostname Resolution (`req.host` and `req.protocol`)
-This SDK uses `req.protocol` and `req.host` to construct the htu (HTTP URI) claim for validating DPoP proofs.
+This SDK uses `req.protocol` and `req.host` to construct the `htu` (HTTP URI) claim for validating DPoP proofs.
   - The values of `req.host` and `req.protocol` are determined by Express.
   - If your application is behind a reverse proxy (e.g., Nginx, Cloudflare), you must enable proxy trust:
 

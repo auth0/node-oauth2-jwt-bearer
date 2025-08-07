@@ -2,6 +2,7 @@ import { Handler, NextFunction, Request, Response } from 'express';
 import {
   jwtVerifier,
   tokenVerifier,
+  assertValidDPoPOptions,
   claimCheck as _claimCheck,
   ClaimCheck,
   claimEquals as _claimEquals,
@@ -75,9 +76,9 @@ declare global {
  */
 export const auth = (opts: AuthOptions = {}): Handler => {
   const verifyJwt = jwtVerifier(opts);
+  assertValidDPoPOptions(opts.dpop);
 
   return async (req: Request, res: Response, next: NextFunction) => {
-    
     const { headers, query, body, method } = req;
 
     // Construct the URL from the request object.
