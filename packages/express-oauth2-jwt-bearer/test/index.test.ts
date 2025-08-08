@@ -17,7 +17,12 @@ import {
   UnauthorizedError,
   InvalidRequestError,
   InvalidTokenError,
-  InsufficientScopeError,
+  Insufficie  it('should succeed when token is in query', async () => {
+    const jwt = await createJwt();
+    const baseUrl = await setup({
+      tokenLocation: TokenLocation.QUERY,
+    });peError,
+  TokenLocation,
 } from '../src';
 
 const expectFailsWith = async (
@@ -486,6 +491,141 @@ describe('index', () => {
       'payload',
       expect.objectContaining({
         scope: ['foo', 'bar', 'baz'],
+      })
+    );
+  });
+
+  it('should succeed when token is in query string', async () => {
+    const jwt = await createJwt();
+    const baseUrl = await setup({
+      tokenLocation: TokenLocation.QUERY,
+    });
+    const response = await got(`${baseUrl}?access_token=${jwt}`, {
+      responseType: 'json',
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toHaveProperty(
+      'payload',
+      expect.objectContaining({
+        iss: 'https://issuer.example.com/',
+      })
+    );
+  });
+
+  it('should fail when token is in query but only header is allowed', async () => {
+    const jwt = await createJwt();
+    const baseUrl = await setup({
+      tokenLocation: TokenLocation.HEADER,
+    });
+    await expectFailsWith(
+      got(`${baseUrl}?access_token=${jwt}`, {
+        responseType: 'json',
+      }),
+      401,
+      'invalid_token',
+      'No token found'
+    );
+  });
+
+  it('should succeed when token is in either location specified in token location array', async () => {
+    const jwt = await createJwt();
+    const baseUrl = await setup({
+      tokenLocation: [TokenLocation.HEADER, TokenLocation.QUERY],
+    });
+    
+    // Test with token in header
+    const headerResponse = await got(baseUrl, {
+      headers: {
+        authorization: `Bearer ${jwt}`,
+      },
+      responseType: 'json',
+    });
+    expect(headerResponse.statusCode).toBe(200);
+    
+    // Test with token in query
+    const queryResponse = await got(`${baseUrl}?access_token=${jwt}`, {
+      responseType: 'json',
+    });
+    expect(queryResponse.statusCode).toBe(200);
+    
+    // Test that body token is rejected
+    const formData = new FormData();
+    formData.append('access_token', jwt);
+    await expectFailsWith(
+      got.post(baseUrl, {
+        body: formData,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+      }),
+      401,
+      'invalid_token',
+      'No token found'
+    );
+  });
+
+  it('should not get token from query when checkQueryToken is false', async () => {
+    const jwt = await createJwt();
+    const baseUrl = await setup({
+      checkQueryToken: false,
+    });
+
+    await expectFailsWith(
+      got(baseUrl, {
+        searchParams: { access_token: jwt },
+      }),
+      401
+    );
+  });
+
+  it('should not get token from header when checkHeaderToken is false', async () => {
+    const jwt = await createJwt();
+    const baseUrl = await setup({
+      checkHeaderToken: false,
+    });
+
+    await expectFailsWith(
+      got(baseUrl, {
+        headers: {
+          authorization: `Bearer ${jwt}`,
+        },
+      }),
+      401
+    );
+  });
+
+  it('should not get token from body when checkBodyToken is false', async () => {
+    const jwt = await createJwt();
+    const baseUrl = await setup({
+      checkBodyToken: false,
+    });
+
+    await expectFailsWith(
+      got(baseUrl, {
+        method: 'POST',
+        form: { access_token: jwt },
+      }),
+      401
+    );
+  });
+
+  it('should accept token when correct location is enabled', async () => {
+    const jwt = await createJwt();
+    const baseUrl = await setup({
+      // Only enable header checks
+      checkQueryToken: false,
+      checkBodyToken: false,
+    });
+
+    const response = await got(baseUrl, {
+      headers: { authorization: `Bearer ${jwt}` },
+      responseType: 'json',
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toHaveProperty(
+      'payload',
+      expect.objectContaining({
+        iss: 'https://issuer.example.com/',
       })
     );
   });

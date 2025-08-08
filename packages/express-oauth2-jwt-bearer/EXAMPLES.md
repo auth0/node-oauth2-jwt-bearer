@@ -5,6 +5,7 @@
   - [Matching a specific value](#matching-a-specific-value)
   - [Matching multiple values](#matching-multiple-values)
   - [Matching custom logic](#matching-custom-logic)
+- [Configuring Token Locations](#configuring-token-locations)
 
 
 ## Restrict access with scopes
@@ -96,4 +97,61 @@ app.get('/api/admin/edit',
       // ...
    }
 );
+```
+
+## Configuring Token Locations
+
+By default, the middleware will check for JWT tokens in the Authorization header, query parameters, and request body as per RFC6750. You can configure which locations are checked for security reasons or to meet specific requirements.
+
+### Restricting token extraction to specific locations
+
+To only accept tokens from specific locations, you can use the token location options when initializing the auth middleware:
+
+```js
+const {
+  auth,
+  TokenLocation
+} = require('express-oauth2-jwt-bearer');
+
+// Only accept tokens from the Authorization header
+app.use(auth({
+  checkHeaderToken: true,
+  checkQueryToken: false,
+  checkBodyToken: false
+}));
+```
+
+### Using predefined token locations
+
+You can use the `TokenLocation` enum for more readable configuration:
+
+```js
+const {
+  auth,
+  TokenLocation
+} = require('express-oauth2-jwt-bearer');
+
+// Only accept tokens from the Authorization header and request body
+app.use(auth({
+  tokenLocation: [TokenLocation.HEADER, TokenLocation.BODY]
+}));
+```
+
+### Security considerations
+
+For enhanced security in production environments, consider restricting token extraction to just the Authorization header:
+
+```js
+const {
+  auth,
+  TokenLocation
+} = require('express-oauth2-jwt-bearer');
+
+// Most secure configuration - only accept tokens from the Authorization header
+app.use(auth({
+  tokenLocation: TokenLocation.HEADER,
+  // Other options...
+  issuerBaseURL: 'https://your-domain.auth0.com',
+  audience: 'https://api.example.com'
+}));
 ```

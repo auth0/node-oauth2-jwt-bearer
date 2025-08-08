@@ -1,7 +1,7 @@
 {
   "name": "express-oauth2-jwt-bearer",
   "description": "Authentication middleware for Express.js that validates JWT bearer access tokens.",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": "auth0/node-oauth2-jwt-bearer",
