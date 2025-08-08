@@ -700,9 +700,9 @@ describe('tokenVerifier / applyAuthChallenges', () => {
 
     const e = verifier.applyAuthChallenges(error) as UnauthorizedError;
     expect(e.headers?.['WWW-Authenticate']).toBe(
-      `Bearer realm="api", DPoP error="invalid_request", error_description="Invalid DPoP", algs="${SUPPORTED_ALGS.join(
+      `DPoP error="invalid_request", error_description="Invalid DPoP", algs="${SUPPORTED_ALGS.join(
         ' '
-      )}"`
+      )}", Bearer realm="api"`
     );
   });
 
@@ -845,9 +845,9 @@ describe('tokenVerifier / verify', () => {
       expect(typeof challenge).toBe('string');
 
       if (expectedChallengeIncludes?.length) {
-        for (const part of expectedChallengeIncludes) {
-          expect(challenge).toContain(part);
-        }
+        expect(challenge).toBe(expectedChallengeIncludes.join(', '));
+      } else {
+        expect(challenge).toBeUndefined();
       }
     }
   }
@@ -1086,10 +1086,10 @@ describe('tokenVerifier / verify', () => {
         'Operation indicated DPoP use but the request has no DPoP HTTP Header',
       expectedCode: 'invalid_request',
       expectedChallengeIncludes: [
-        `Bearer realm="api"`,
         `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request has no DPoP HTTP Header", algs="${SUPPORTED_ALGS.join(
           ' '
         )}"`,
+        `Bearer realm="api"`,
       ],
     });
   });
@@ -1121,10 +1121,10 @@ describe('tokenVerifier / verify', () => {
         'Operation indicated DPoP use but the JWT Access Token has no confirmation claim',
       expectedCode: 'invalid_request',
       expectedChallengeIncludes: [
-        `Bearer realm="api"`,
         `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the JWT Access Token has no confirmation claim", algs="${SUPPORTED_ALGS.join(
           ' '
         )}"`,
+        `Bearer realm="api"`,
       ],
     });
   });
@@ -1217,7 +1217,7 @@ describe('tokenVerifier / verify', () => {
     });
   });
 
-  it('"allowed" mode | throws if DPoP scheme is present but header is missing', async () => {
+  it('"allowed" mode | throws if DPoP scheme is present but DPoP proof header is missing', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
     const { verifier } = createVerifier(
       jwtResult,

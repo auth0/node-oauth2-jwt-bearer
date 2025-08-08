@@ -507,8 +507,8 @@ function tokenVerifier(
           challenges.push(buildChallenge('dpop', false));
           break;
         case 'dpop':
-          challenges.push(buildChallenge('bearer', false));
           challenges.push(buildChallenge('dpop', hasErrorCode));
+          challenges.push(buildChallenge('bearer', false));
           break;
       }
     }

@@ -131,20 +131,14 @@ describe('normalizeUrl', () => {
 
   it('throws InvalidRequestError if request URL is invalid', () => {
     const malformed = 'ht!tp:/broken-url';
-    expect(() => normalizeUrl(malformed, 'request')).toThrow(
-      InvalidRequestError
-    );
-    expect(() => normalizeUrl(malformed, 'request')).toThrow(
-      'Invalid request URL'
-    );
+    expect(() => normalizeUrl(malformed, 'request')).toThrow(InvalidRequestError);
+    expect(() => normalizeUrl(malformed, 'request')).toThrow('Invalid request URL');
   });
 
   it('throws InvalidProofError if proof htu is invalid', () => {
     const malformed = ':://foo.bar?x=1';
     expect(() => normalizeUrl(malformed, 'proof')).toThrow(InvalidProofError);
-    expect(() => normalizeUrl(malformed, 'proof')).toThrow(
-      'Invalid htu claim URL'
-    );
+    expect(() => normalizeUrl(malformed, 'proof')).toThrow('Invalid htu claim URL');
   });
 
   it('should return the same URL when already normalized', () => {
@@ -205,6 +199,7 @@ describe('normalizeUrl', () => {
   });
 });
 
+
 describe('assertDPoPRequest', () => {
   const baseHeaders = (): HeadersLike => ({
     authorization: `DPoP ${jwt}`,
@@ -251,7 +246,7 @@ describe('assertDPoPRequest', () => {
     expectPass(headers, validClaims());
   });
 
-  it('fails when Authorization is missing (undefined)', () => {
+  it('fails when Authorization is missing', () => {
     const headers = baseHeaders();
     delete headers.authorization;
     expectFail(
