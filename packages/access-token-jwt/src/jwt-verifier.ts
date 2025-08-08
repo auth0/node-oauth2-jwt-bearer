@@ -144,7 +144,7 @@ export interface VerifyJwtResult {
 
 export type VerifyJwt = (jwt: string) => Promise<VerifyJwtResult>;
 
-const ASYMMETRIC_ALGS = [
+export const ASYMMETRIC_ALGS = [
   'RS256',
   'RS384',
   'RS512',
