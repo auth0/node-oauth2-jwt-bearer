@@ -2,7 +2,7 @@ import { strict as assert } from 'assert';
 import { Agent as HttpAgent } from 'http';
 import { Agent as HttpsAgent } from 'https';
 import { jwtVerify } from 'jose';
-import type { JWTPayload, JWSHeaderParameters } from 'jose';
+import type { JWTPayload, JWSHeaderParameters, KeyLike } from 'jose';
 import { InvalidTokenError } from 'oauth2-bearer';
 import discovery from './discovery';
 import getKeyFn from './get-key-fn';
@@ -115,7 +115,7 @@ export interface JwtVerifierOptions {
    * Secret to verify an Access Token JWT signed with a symmetric algorithm.
    * By default this SDK validates tokens signed with asymmetric algorithms.
    */
-  secret?: string;
+  secret?: string | KeyLike;
 
   /**
    * You must provide this if your tokens are signed with symmetric algorithms
@@ -187,8 +187,9 @@ const jwtVerifier = ({
     "You must not provide both a 'secret' and 'jwksUri'"
   );
   assert(audience, "An 'audience' is required to validate the 'aud' claim");
+  // Only require tokenSigningAlg for string secrets (symmetric keys)
   assert(
-    !secret || (secret && tokenSigningAlg),
+    !secret || typeof secret !== 'string' || (typeof secret === 'string' && tokenSigningAlg),
     "You must provide a 'tokenSigningAlg' for validating symmetric algorithms"
   );
   assert(
@@ -198,7 +199,7 @@ const jwtVerifier = ({
     )} for 'tokenSigningAlg' to validate asymmetrically signed tokens`
   );
   assert(
-    !secret || (tokenSigningAlg && SYMMETRIC_ALGS.includes(tokenSigningAlg)),
+    !secret || typeof secret !== 'string' || (tokenSigningAlg && SYMMETRIC_ALGS.includes(tokenSigningAlg)),
     `You must supply one of ${SYMMETRIC_ALGS.join(
       ', '
     )} for 'tokenSigningAlg' to validate symmetrically signed tokens`
