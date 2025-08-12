@@ -51,30 +51,108 @@ function normalizePercentEncodings(s: string): string {
   });
 }
 
-// Normalize the htu claim to a canonical form, throwing if the URL is invalid
-function normalizeUrl(htu: string, source: 'request' | 'proof'): string {
+/**
+ * Normalize a URL for DPoP `htu` comparison.
+ *
+ * Behavior:
+ * - Parses with WHATWG `URL`; rejects invalid input.
+ * - Host must be a valid hostname with optional `:port`; no schemes, slashes, queries, or fragments allowed.
+ * - For `source === 'request'`: path must start with `/` and not look like a protocol.
+ * - Removes query and fragment.
+ * - Normalizes percent-encodings in the path.
+ * - Returns `origin + pathname` for reliable comparison.
+ *
+ * @param input - The URL to normalize (either the inbound request URL or the `htu` claim).
+ * @param source - Indicates whether `input` is from the HTTP request (`'request'`) or the DPoP proof (`'proof'`).
+ * @returns The normalized URL string in the form `origin + pathname` (no query or fragment).
+ * @throws {InvalidRequestError} When `source === 'request'` and parsing/validation fails.
+ * @throws {InvalidProofError}   When `source === 'proof'` and parsing/validation fails.
+ */
+function normalizeUrl(input: string, source: 'request' | 'proof'): string {
+  const HOST_RE = /^(?:[A-Za-z0-9.-]+|\[[0-9A-Fa-f:.]+\])(?::\d{1,5})?$/;
+  const PROTOCOL_IN_PATH_RE = /^\/[a-z][a-z0-9+.-]*:\/\//i;
+
   try {
-    const url = new URL(htu);
+    const url = new URL(input);
+    // Host validation (extra safety if Host header is abused)
+    const host = url.host;
+
+    if (
+      typeof host !== 'string' ||
+      host.length === 0 ||
+      host.includes('://') ||
+      host.includes('/') ||
+      host.includes('?') ||
+      host.includes('#') ||
+      !HOST_RE.test(host)
+    ) {
+      if (source === 'request') {
+        throw new InvalidRequestError(
+          'Invalid request URL: Host contains illegal characters or format'
+        );
+      } else {
+        throw new InvalidProofError(
+          'Invalid htu claim URL: Host contains illegal characters or format'
+        );
+      }
+    }
+
+    // Path checks for request URLs only
+    if (source === 'request') {
+      const path = url.pathname;
+
+      // Reject protocol-relative paths (e.g., "//host/...")
+      if (path.startsWith('//')) {
+        throw new InvalidRequestError(
+          `Invalid request URL: Path must not start with "//"`
+        );
+      }
+
+      // Reject protocol-looking substrings inside the path (e.g., "/https://…")
+      if (PROTOCOL_IN_PATH_RE.test(path)) {
+        throw new InvalidRequestError(
+          `Invalid request URL: Path must not contain an absolute URL`
+        );
+      }
+    }
+
+    // Canonicalize for htu comparison
     url.search = '';
     url.hash = '';
-
     url.pathname = normalizePercentEncodings(url.pathname);
 
-    return url.href;
-  } catch {
+    return url.origin + url.pathname;
+  } catch (err) {
+    // Preserve descriptive errors thrown above; only map unexpected ones.
     if (source === 'request') {
+      if (err instanceof InvalidRequestError) throw err;
       throw new InvalidRequestError('Invalid request URL');
+    } else {
+      if (err instanceof InvalidProofError) throw err;
+      throw new InvalidProofError('Invalid htu claim URL');
     }
-    throw new InvalidProofError('Invalid htu claim URL');
   }
 }
 
+/*
+ * Asserts that the request is a valid DPoP request.
+ * Throws InvalidRequestError if the request is not a valid DPoP request.
+ *
+ * @method assertDPoPRequest
+ * @param headers - The request headers containing the DPoP proof
+ * @param accessTokenClaims - The JWT Access Token claims (optional)
+ * @throws {InvalidRequestError} If the request is not a valid DPoP request
+ */
 function assertDPoPRequest(
   headers: HeadersLike,
   accessTokenClaims?: DPoPJWTPayload
 ): void {
   // Check if the request has an Authorization HTTP Header
-  if (headers.authorization === undefined || headers.authorization === null || !('authorization' in headers)) {
+  if (
+    headers.authorization === undefined ||
+    headers.authorization === null ||
+    !('authorization' in headers)
+  ) {
     throw new InvalidRequestError(
       'Operation indicated DPoP use but the request is missing an Authorization HTTP Header'
     );
@@ -87,9 +165,7 @@ function assertDPoPRequest(
   }
 
   // Check for correct Authorization scheme
-  if (
-    !headers.authorization.toLowerCase().startsWith('dpop ')
-  ) {
+  if (!headers.authorization.toLowerCase().startsWith('dpop ')) {
     throw new InvalidRequestError(
       "Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP"
     );
@@ -146,9 +222,7 @@ function assertDPoPRequest(
     }
 
     if (typeof cnf.jkt !== 'string') {
-      throw new InvalidRequestError(
-        'Malformed "jkt" confirmation claim'
-      );
+      throw new InvalidRequestError('Malformed "jkt" confirmation claim');
     }
 
     if (!cnf.jkt.length) {
@@ -221,6 +295,12 @@ async function verifyDPoP(options: DPoPVerifierOptions): Promise<void> {
   // Ensure iat exists and is a number
   if (!iat) {
     throw new InvalidProofError('Missing "iat" claim in DPoP proof');
+  }
+
+  // Ensure iat is a number
+  /* istanbul ignore next: "jwtVerify" is already validating the type of "iat" claim.  */
+  if (typeof iat !== 'number') {
+    throw new InvalidProofError('"iat" claim must be a number');
   }
 
   const now = Math.floor(Date.now() / 1000);

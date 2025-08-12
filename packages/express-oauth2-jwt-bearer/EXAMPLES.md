@@ -111,9 +111,9 @@ app.use(
 | `enabled` | `required` | Behavior                                                                                             |
 | --------- | ---------- | -----------------------------------------------------------------------------------------------------|
 | `true`    | `false`    | **Default behavior**. Both Bearer and DPoP tokens are accepted. Proofs are validated if present.     |
-| `false`   | `false`    | Only Bearer tokens are accepted. DPoP tokens are rejected.                                           |
+| `false`   | `false`    | Only Bearer tokens are accepted. Rejects any non-Bearer scheme tokens (including DPoP). Accepts DPoP-bound tokens over Bearer (ignoring `cnf`) and ignores any DPoP proof headers if present. |
 | `false`   | `true`     | Invalid configuration. DPoP is ignored, so `required: true` has no effect. DPoP is ignored entirely. |
-| `true`    | `true`     | Only DPoP tokens are accepted. Bearer tokens are rejected.                                     |
+| `true`    | `true`     | Only DPoP tokens are accepted. Bearer tokens are rejected.                                           |
 
 
 #### Proof Timing Options

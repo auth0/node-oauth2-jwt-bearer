@@ -93,7 +93,7 @@ function createOptions(
 }
 
 describe('normalizeUrl', () => {
-  it('removes query and fragment from URL', () => {
+  it('removes query and fragment from URL (htu)', () => {
     const raw = 'https://api.example.com/resource?foo=bar#hash';
     const expected = 'https://api.example.com/resource';
     expect(normalizeUrl(raw, 'proof')).toBe(expected);
@@ -111,9 +111,9 @@ describe('normalizeUrl', () => {
     expect(normalizeUrl(raw, 'proof')).toBe(expected);
   });
 
-  it('preserves username and password in URL', () => {
+  it('should not preserve username and password in URL (htu)', () => {
     const raw = 'https://user:pass@api.example.com/resource?foo=bar';
-    const expected = 'https://user:pass@api.example.com/resource';
+    const expected = 'https://api.example.com/resource';
     expect(normalizeUrl(raw, 'proof')).toBe(expected);
   });
 
@@ -131,14 +131,20 @@ describe('normalizeUrl', () => {
 
   it('throws InvalidRequestError if request URL is invalid', () => {
     const malformed = 'ht!tp:/broken-url';
-    expect(() => normalizeUrl(malformed, 'request')).toThrow(InvalidRequestError);
-    expect(() => normalizeUrl(malformed, 'request')).toThrow('Invalid request URL');
+    expect(() => normalizeUrl(malformed, 'request')).toThrow(
+      InvalidRequestError
+    );
+    expect(() => normalizeUrl(malformed, 'request')).toThrow(
+      'Invalid request URL'
+    );
   });
 
   it('throws InvalidProofError if proof htu is invalid', () => {
     const malformed = ':://foo.bar?x=1';
     expect(() => normalizeUrl(malformed, 'proof')).toThrow(InvalidProofError);
-    expect(() => normalizeUrl(malformed, 'proof')).toThrow('Invalid htu claim URL');
+    expect(() => normalizeUrl(malformed, 'proof')).toThrow(
+      'Invalid htu claim URL'
+    );
   });
 
   it('should return the same URL when already normalized', () => {
@@ -183,7 +189,7 @@ describe('normalizeUrl', () => {
     expect(actual).toBe(expected);
   });
 
-  it('should strip query and fragment', () => {
+  it('should strip query and fragment (request)', () => {
     const input = 'https://api.example.com/path?query=value#fragment';
     const expected = 'https://api.example.com/path';
     const actual = normalizeUrl(input, 'request');
@@ -193,12 +199,160 @@ describe('normalizeUrl', () => {
   it('should normalize full complex URL with auth, port, dot segments, and fragment', () => {
     const input =
       'HTTPS://USER:PASS@API.EXAMPLE.COM:443/path/../RESOURCE/./file.txt?query=value#fragment';
-    const expected = 'https://USER:PASS@api.example.com/RESOURCE/file.txt';
+    const expected = 'https://api.example.com/RESOURCE/file.txt';
     const actual = normalizeUrl(input, 'request');
     expect(actual).toBe(expected);
   });
-});
 
+  it('host validation | rejects host with underscore (request)', () => {
+    const input = 'https://bad_host.example/path';
+    expect(() => normalizeUrl(input, 'request')).toThrow(InvalidRequestError);
+    expect(() => normalizeUrl(input, 'request')).toThrow(
+      'Invalid request URL: Host contains illegal characters or format'
+    );
+  });
+
+  it('host validation | rejects host with underscore (proof)', () => {
+    const input = 'https://bad_host.example/path';
+    expect(() => normalizeUrl(input, 'proof')).toThrow(InvalidProofError);
+    expect(() => normalizeUrl(input, 'proof')).toThrow(
+      'Invalid htu claim URL: Host contains illegal characters or format'
+    );
+  });
+
+  it('host validation | accepts IPv6 literal host [::1] (request)', () => {
+    const input = 'http://[::1]/path?x=1#y';
+    expect(normalizeUrl(input, 'request')).toBe('http://[::1]/path');
+  });
+
+  it('host validation | accepts IPv6 literal host [::1] (proof)', () => {
+    const input = 'http://[::1]/path?x=1#y';
+    expect(normalizeUrl(input, 'proof')).toBe('http://[::1]/path');
+  });
+
+  it('host validation | rejects overlong port (6+ digits)', () => {
+    const input = 'https://api.example.com:999999/path';
+    expect(() => normalizeUrl(input, 'request')).toThrow(InvalidRequestError);
+    expect(() => normalizeUrl(input, 'request')).toThrow('Invalid request URL');
+  });
+
+  it('host validation | accepts punycode hostnames', () => {
+    const input = 'https://xn--bcher-kva.de/path';
+    const expected = 'https://xn--bcher-kva.de/path';
+    expect(normalizeUrl(input, 'request')).toBe(expected);
+  });
+
+  it('host validation | accepts trailing dot in hostname', () => {
+    const input = 'https://example.com./x';
+    const expected = 'https://example.com./x';
+    expect(normalizeUrl(input, 'request')).toBe(expected);
+  });
+
+  it('host validation | accepts IPv6 literal with port (request)', () => {
+    const input = 'http://[2001:db8::1]:8080/alpha?x=1#y';
+    expect(normalizeUrl(input, 'request')).toBe(
+      'http://[2001:db8::1]:8080/alpha'
+    );
+  });
+
+  it('host validation | accepts IPv6 literal with port (proof)', () => {
+    const input = 'http://[2001:db8::1]:3000/path?x=1#y';
+    expect(normalizeUrl(input, 'proof')).toBe('http://[2001:db8::1]:3000/path');
+  });
+
+  it('host validation | rejects malformed IPv6 literal (missing closing bracket)', () => {
+    const input = 'http://[2001:db8::1/path';
+    // WHATWG URL will throw a TypeError; we map to generic InvalidRequestError
+    expect(() => normalizeUrl(input, 'request')).toThrow(InvalidRequestError);
+    expect(() => normalizeUrl(input, 'request')).toThrow('Invalid request URL');
+  });
+
+  it('path checks | rejects protocol-relative path (request)', () => {
+    const input = 'https://api.example.com//evil.example.com/steal';
+    expect(() => normalizeUrl(input, 'request')).toThrow(InvalidRequestError);
+    expect(() => normalizeUrl(input, 'request')).toThrow(
+      'Invalid request URL: Path must not start with "//"'
+    );
+  });
+
+  it('path checks | allows "//" sequence for proof', () => {
+    const input = 'https://api.example.com//double/slash?x=1#y';
+    expect(normalizeUrl(input, 'proof')).toBe(
+      'https://api.example.com//double/slash'
+    );
+  });
+
+  it('path checks | rejects protocol-looking substring right after "/" in path (request)', () => {
+    const input = 'https://api.example.com/https://evil.example.com/steal';
+    expect(() => normalizeUrl(input, 'request')).toThrow(InvalidRequestError);
+    expect(() => normalizeUrl(input, 'request')).toThrow(
+      'Invalid request URL: Path must not contain an absolute URL'
+    );
+  });
+
+  it('path checks | does not apply the path protocol check to proof', () => {
+    const input =
+      'https://api.example.com/https://evil.example.com/steal?x=1#y';
+    const expected = 'https://api.example.com/https://evil.example.com/steal';
+    expect(normalizeUrl(input, 'proof')).toBe(expected);
+  });
+
+  it('malformed URLs | rejects protocol-relative path derived from double-scheme (request)', () => {
+    const input = 'https://https://resource.com/intendedPath?/targetPath';
+    expect(() => normalizeUrl(input, 'request')).toThrow(InvalidRequestError);
+    expect(() => normalizeUrl(input, 'request')).toThrow(
+      'Invalid request URL: Path must not start with "//"'
+    );
+  });
+
+  it('malformed URLs and parser failures | throws generic InvalidProofError on URL parse failure (proof)', () => {
+    const input = '::::://';
+    expect(() => normalizeUrl(input, 'proof')).toThrow(InvalidProofError);
+    expect(() => normalizeUrl(input, 'proof')).toThrow('Invalid htu claim URL');
+  });
+
+  it('origin + pathname output shape | strips credentials (userinfo) by returning origin + pathname (request)', () => {
+    const raw = 'https://user:pass@api.example.com/secure?x=1#frag';
+    const expected = 'https://api.example.com/secure';
+    expect(normalizeUrl(raw, 'request')).toBe(expected);
+  });
+
+  it('origin + pathname output shape | keeps non-default port and lowercases scheme/host', () => {
+    const raw = 'HTTPS://API.EXAMPLE.COM:8443/A/Path?Q=1#F';
+    const expected = 'https://api.example.com:8443/A/Path';
+    expect(normalizeUrl(raw, 'proof')).toBe(expected);
+  });
+
+  it('scheme normalization | strips default port 80 for http', () => {
+    const input = 'http://api.example.com:80/path?x=1#y';
+    expect(normalizeUrl(input, 'request')).toBe('http://api.example.com/path');
+  });
+
+  it('IDN host | Unicode hostname is normalized to punycode', () => {
+    const input = 'https://bücher.de/weg';
+    // WHATWG URL serializes to punycode
+    expect(normalizeUrl(input, 'proof')).toBe('https://xn--bcher-kva.de/weg');
+  });
+
+  it('percent-encoding | non-ASCII bytes remain encoded with uppercase hex', () => {
+    const input = 'https://api.example.com/price/%e2%82%ac';
+    const expected = 'https://api.example.com/price/%E2%82%AC';
+    expect(normalizeUrl(input, 'request')).toBe(expected);
+  });
+
+  it('path semantics | encoded dot-segments collapse after decode', () => {
+    const input = 'https://api.example.com/a/%2e%2e/b';
+    const expected = 'https://api.example.com/b';
+    expect(normalizeUrl(input, 'proof')).toBe(expected);
+  });
+
+  it('IPv4-mapped IPv6 | canonicalizes embedded IPv4 to hex groups', () => {
+    const input = 'http://[::ffff:192.0.2.128]:3000/x';
+    expect(normalizeUrl(input, 'proof')).toBe(
+      'http://[::ffff:c000:280]:3000/x'
+    );
+  });
+});
 
 describe('assertDPoPRequest', () => {
   const baseHeaders = (): HeadersLike => ({
@@ -299,6 +453,16 @@ describe('assertDPoPRequest', () => {
   it('fails when DPoP header is missing', () => {
     const headers = baseHeaders();
     delete headers.dpop;
+    expectFail(
+      headers,
+      validClaims(),
+      'Operation indicated DPoP use but the request has no DPoP HTTP Header'
+    );
+  });
+
+  it('fails when DPoP header is null', () => {
+    const headers = baseHeaders();
+    headers.dpop = null as any;
     expectFail(
       headers,
       validClaims(),
@@ -515,20 +679,36 @@ describe('verifyDPoP', () => {
   it('fails when headers are invalid (delegates to assertDPoPRequest)', async () => {
     // No authorization or dpop -> assertDPoPRequest should throw
     const opts = createOptions({ headers: {} as any });
-    await expect(verifyDPoP(opts)).rejects.toThrow(InvalidRequestError);
+    const fn = verifyDPoP(opts);
+    await expect(fn).rejects.toThrow(InvalidRequestError);
+    await expect(fn).rejects.toThrow(
+      'Operation indicated DPoP use but the request is missing an Authorization HTTP Header'
+    );
   });
 
   it('fails when access token (jwt) is missing', async () => {
     headers.dpop = await createProof();
     const opts = createOptions();
     delete (opts as any).jwt;
-    await expect(verifyDPoP(opts)).rejects.toThrow(InvalidTokenError);
-    await expect(verifyDPoP({ ...opts, jwt: 123 as any })).rejects.toThrow(
-      InvalidTokenError
+    const fn = verifyDPoP(opts);
+    await expect(fn).rejects.toThrow(InvalidTokenError);
+    await expect(fn).rejects.toThrow(
+      'Missing access token for DPoP verification'
     );
   });
 
-  it('fails if verifyProof rejects (unsupported alg or malformed proof)', async () => {
+  it('fails when access token (jwt) is not a string', async () => {
+    headers.dpop = await createProof();
+    const opts = createOptions();
+    opts.jwt = 123 as any; // Not a string
+    const fn = verifyDPoP(opts);
+    await expect(fn).rejects.toThrow(InvalidTokenError);
+    await expect(fn).rejects.toThrow(
+      'Missing access token for DPoP verification'
+    );
+  });
+
+  it('fails when proof is signed with an unsupported algorithm', async () => {
     // Create RS256 proof but only allow ES256 to make verifyProof fail
     const { publicKey, privateKey } = await generateKeyPair('RS256');
     const rsJwk = await exportJWK(publicKey);
@@ -543,83 +723,92 @@ describe('verifyDPoP', () => {
       .sign(privateKey);
 
     headers.dpop = rsProof;
-    await expect(
-      verifyDPoP(createOptions({ supportedAlgorithms: ['ES256'] }))
-    ).rejects.toThrow(InvalidProofError);
+    const fn = verifyDPoP(createOptions({ supportedAlgorithms: ['ES256'] }));
+    await expect(fn).rejects.toThrow(InvalidProofError);
+    await expect(fn).rejects.toThrow(
+      /Failed to verify DPoP proof|"alg" \(Algorithm\) Header Parameter not allowed/
+    );
   });
 
   it('fails when iat is missing', async () => {
     headers.dpop = await createProof({ iat: undefined });
-    await expect(verifyDPoP(createOptions())).rejects.toThrow(
-      'Missing "iat" claim in DPoP proof'
-    );
+    const fn = verifyDPoP(createOptions());
+    await expect(fn).rejects.toThrow(InvalidProofError);
+    await expect(fn).rejects.toThrow('Missing "iat" claim in DPoP proof');
   });
 
   it('fails when iat is not a number', async () => {
     headers.dpop = await createProof({ iat: 'bad' as any });
-    await expect(verifyDPoP(createOptions())).rejects.toThrow(
-      '"iat" claim must be a number'
-    );
+    const fn = verifyDPoP(createOptions());
+    await expect(fn).rejects.toThrow(InvalidProofError);
+    await expect(fn).rejects.toThrow('"iat" claim must be a number');
   });
 
   it('fails when iat is outside acceptable range (too old)', async () => {
     headers.dpop = await createProof({
       iat: Math.floor(Date.now() / 1000) - 1000,
     });
-    await expect(
-      verifyDPoP(createOptions({ iatOffset: 300, iatLeeway: 60 }))
-    ).rejects.toThrow('DPoP proof "iat" is outside the acceptable range');
+
+    const fn = verifyDPoP(createOptions({ iatOffset: 300, iatLeeway: 60 }));
+    await expect(fn).rejects.toThrow(InvalidProofError);
+    await expect(fn).rejects.toThrow(
+      'DPoP proof "iat" is outside the acceptable range'
+    );
   });
 
   it('fails when iat is outside acceptable range (in future)', async () => {
     headers.dpop = await createProof({
       iat: Math.floor(Date.now() / 1000) + 1000,
     });
-    await expect(
-      verifyDPoP(createOptions({ iatOffset: 300, iatLeeway: 60 }))
-    ).rejects.toThrow('DPoP proof "iat" is outside the acceptable range');
+    const fn = verifyDPoP(createOptions({ iatOffset: 300, iatLeeway: 60 }));
+    await expect(fn).rejects.toThrow(InvalidProofError);
+    await expect(fn).rejects.toThrow(
+      'DPoP proof "iat" is outside the acceptable range'
+    );
   });
 
   it('fails when htm is missing', async () => {
     headers.dpop = await createProof({ htm: undefined });
-    await expect(verifyDPoP(createOptions())).rejects.toThrow(
-      'Missing "htm" in DPoP proof'
-    );
+    const fn = verifyDPoP(createOptions());
+    await expect(fn).rejects.toThrow(InvalidProofError);
+    await expect(fn).rejects.toThrow('Missing "htm" in DPoP proof');
   });
 
   it('fails when htm is not a string', async () => {
     headers.dpop = await createProof({ htm: 123 as any });
-    await expect(verifyDPoP(createOptions())).rejects.toThrow(
-      'Invalid "htm" claim'
-    );
+    const fn = verifyDPoP(createOptions());
+    await expect(fn).rejects.toThrow(InvalidProofError);
+    await expect(fn).rejects.toThrow('Invalid "htm" claim');
   });
 
   it('fails when htm does not match request method', async () => {
     headers.dpop = await createProof({ htm: 'POST' });
-    await expect(verifyDPoP(createOptions({ method: 'GET' }))).rejects.toThrow(
-      'DPoP Proof htm mismatch'
-    );
+    const fn = verifyDPoP(createOptions({ method: 'GET' }));
+    await expect(fn).rejects.toThrow(InvalidProofError);
+    await expect(fn).rejects.toThrow('DPoP Proof htm mismatch');
   });
 
   it('fails when htu is missing', async () => {
     headers.dpop = await createProof({ htu: undefined });
-    await expect(verifyDPoP(createOptions())).rejects.toThrow(
-      'Missing "htu" in DPoP proof'
-    );
+    const fn = verifyDPoP(createOptions());
+    await expect(fn).rejects.toThrow(InvalidProofError);
+    await expect(fn).rejects.toThrow('Missing "htu" in DPoP proof');
   });
 
   it('fails when htu is not a string', async () => {
     headers.dpop = await createProof({ htu: 123 as any });
-    await expect(verifyDPoP(createOptions())).rejects.toThrow(
-      'Invalid "htu" claim'
-    );
+    const fn = verifyDPoP(createOptions());
+    await expect(fn).rejects.toThrow(InvalidProofError);
+    await expect(fn).rejects.toThrow('Invalid "htu" claim');
   });
 
   it('fails when normalized htu does not match request URL', async () => {
     headers.dpop = await createProof({ htu: 'https://api.example.com/other' });
-    await expect(
-      verifyDPoP(createOptions({ url: 'https://api.example.com/resource' }))
-    ).rejects.toThrow('DPoP Proof htu mismatch');
+    const fn = verifyDPoP(
+      createOptions({ url: 'https://api.example.com/resource' })
+    );
+    await expect(fn).rejects.toThrow(InvalidProofError);
+    await expect(fn).rejects.toThrow('DPoP Proof htu mismatch');
   });
 
   it('fails when jti is missing', async () => {
@@ -680,5 +869,79 @@ describe('verifyDPoP', () => {
     await expect(verifyDPoP(options)).rejects.toThrow(
       'JWT Access Token confirmation mismatch'
     );
+  });
+
+  it('accepts additional custom claims in the payload (ignored for validation but preserved in output)', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    const proof = await createProof({
+      // extra, non-standard claims
+      foo: 'bar',
+      aud: 'https://api.example.com',
+      nbf: now - 10,
+      exp: now + 300,
+      nested: { a: 1, b: 'two' },
+    });
+
+    const { proofClaims } = await verifyProof(proof, ['ES256']);
+
+    // Standard claims are present
+    expect(proofClaims).toMatchObject({
+      htm: method,
+      htu: url,
+      iat: expect.any(Number),
+      jti: expect.any(String),
+      ath: expect.any(String),
+    });
+
+    // Extra claims are carried through and do not cause errors
+    expect(proofClaims.foo).toBe('bar');
+    expect(proofClaims.aud).toBe('https://api.example.com');
+    expect(typeof proofClaims.nbf).toBe('number');
+    expect(typeof proofClaims.exp).toBe('number');
+    expect(proofClaims.nested).toEqual({ a: 1, b: 'two' });
+  });
+
+  it('accepts additional protected header parameters (ignored for validation but preserved in output)', async () => {
+    // Add benign extra header params alongside the required ones
+    const proof = await createProof({}, {
+      kid: 'kid123',
+      cty: 'dpop+jwt',
+      'x-extra': 'yes',
+    } as any);
+
+    const { proofHeader } = await verifyProof(proof, ['ES256']);
+
+    // Required protected headers are there
+    expect(proofHeader).toMatchObject({
+      typ: 'dpop+jwt',
+      alg: 'ES256',
+      jwk: expect.any(Object),
+    });
+
+    // Extra header parameters are preserved and do not cause errors
+    expect(proofHeader.kid).toBe('kid123');
+    expect(proofHeader.cty).toBe('dpop+jwt');
+    expect((proofHeader as any)['x-extra']).toBe('yes');
+  });
+
+  it('accepts extra fields in both payload and protected header at once', async () => {
+    const proof = await createProof({ foo: 'payload-ok', arr: [1, 2, 3] }, {
+      kid: 'kid-xyz',
+      'x-extra': 'hdr-ok',
+    } as any);
+
+    const { proofClaims, proofHeader } = await verifyProof(proof, ['ES256']);
+
+    // sanity
+    expect(proofClaims.htm).toBe(method);
+    expect(proofClaims.htu).toBe(url);
+
+    // payload extras
+    expect(proofClaims.foo).toBe('payload-ok');
+    expect(proofClaims.arr).toEqual([1, 2, 3]);
+
+    // header extras
+    expect(proofHeader.kid).toBe('kid-xyz');
+    expect((proofHeader as any)['x-extra']).toBe('hdr-ok');
   });
 });

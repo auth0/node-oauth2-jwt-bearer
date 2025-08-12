@@ -9,7 +9,12 @@ import type {
 
 import { ASYMMETRIC_ALGS as SUPPORTED_ALGORITHMS } from './jwt-verifier';
 
-import { normalizeUrl, verifyDPoP, assertDPoPRequest, DPoPJWTPayload } from './dpop-verifier';
+import {
+  normalizeUrl,
+  verifyDPoP,
+  assertDPoPRequest,
+  DPoPJWTPayload,
+} from './dpop-verifier';
 
 const DEFAULT_DPOP_ENABLED = true; // DPoP is enabled by default.
 const DEFAULT_DPOP_REQUIRED = false; // DPoP is allowed by default.
@@ -24,13 +29,20 @@ const DEFAULT_IAT_LEEWAY = 30; // 30 seconds.
  * access/refresh tokens by proving possession of a private key. This SDK supports
  * validating DPoP proofs on incoming requests when enabled.
  *
- *
  * Behavior matrix:
  *
- * - <code>enabled: true</code>, <code>required: false</code> — <strong>Default.</strong> Accept Bearer and DPoP. Validate proofs when present.
- * - <code>enabled: false</code>, <code>required: false</code> — <strong>Bearer-only.</strong> DPoP proofs/tokens are ignored.
- * - <code>enabled: false</code>, <code>required: true</code> — <strong>Misconfiguration.</strong> DPoP is disabled, so <code>required</code> is ignored; effective behavior is Bearer-only.
- * - <code>enabled: true</code>, <code>required: true</code> — <strong>DPoP-only.</strong> Reject non-DPoP Bearer tokens.
+- <u>Default</u> (*`{ enabled: true, required: false }`*):  
+  Accepts both Bearer and DPoP, validating the DPoP proof when present.
+
+- <u>Bearer-only</u> (*`{ enabled: false, required: false }`*):  
+  Rejects any non-Bearer scheme tokens (including those using the DPoP scheme), accepts DPoP-bound tokens over Bearer (ignoring `cnf`), and ignores any DPoP proof headers if present.
+
+- <u>Misconfiguration</u> (*`{ enabled: false, required: true }`*):  
+  This configuration is invalid. DPoP is disabled, and the SDK cannot be used with this setting.
+
+- <u>DPoP-only</u> (*`{ enabled: true, required: true }`*):  
+  Accepts only tokens using the DPoP scheme, validates the associated DPoP proof, and rejects any token using a different (non-DPoP) scheme.
+
  *
  * Proof timing:
  * - `iatOffset` bounds how far in the past a proof’s `iat` may be (replay window).
@@ -45,17 +57,20 @@ const DEFAULT_IAT_LEEWAY = 30; // 30 seconds.
  * app.enable('trust proxy');
  * ```
  *
- *
  * @see https://www.rfc-editor.org/rfc/rfc9449
- * @see https://www.rfc-editor.org/rfc/rfc3986#section-6 (URI normalization)
  */
 interface DPoPOptions {
   /**
    * Enables DPoP support.
    *
-   * When `true`, requests may use DPoP (Authorization scheme `DPoP` plus a `DPoP` header)
-   * and the middleware will validate proofs. When `false`, DPoP headers/tokens are ignored
-   * and only standard Bearer tokens are accepted.
+   * When `enabled: true`:
+   * - Requests can use the DPoP authorization scheme (`Authorization: DPoP …` plus a `DPoP` proof header), and the middleware will validate proofs.
+   *
+   * When `enabled: false`:
+   * - Only the Bearer scheme is supported.
+   * - Any token sent with the DPoP scheme is rejected.
+   * - DPoP-bound tokens sent with Bearer are accepted (the `cnf` claim is ignored).
+   * - Any `DPoP` proof header is ignored.
    *
    * @default true
    * @example
@@ -63,7 +78,7 @@ interface DPoPOptions {
    * auth({ dpop: { enabled: true, required: false } })
    *
    * @example
-   * // Bearer-only:
+   * // Bearer-only (DPoP disabled):
    * auth({ dpop: { enabled: false } })
    */
   enabled?: boolean;
@@ -71,8 +86,11 @@ interface DPoPOptions {
   /**
    * Requires DPoP tokens exclusively when DPoP is enabled.
    *
-   * When `enabled: true` and `required: true`, only DPoP tokens are accepted and non-DPoP
-   * Bearer tokens are rejected. When `enabled: false`, using this flag results in a misconfiguration (Bearer-only mode).
+   * When `enabled: true` and `required: true`:
+   * - Only DPoP tokens are accepted, and non-DPoP tokens are rejected.
+   *
+   * When `enabled: false`:
+   * - Setting this flag results in a misconfiguration (Bearer-only mode).
    *
    * @default false
    * @example
@@ -84,10 +102,8 @@ interface DPoPOptions {
   /**
    * Maximum accepted age (in seconds) for a DPoP proof’s `iat` claim.
    *
-   * Proofs older than `iatOffset` (relative to current server time) are rejected to
-   * reduce replay risk. Typical values are a few minutes.
-   *
-   * Applied only when `enabled: true` and a DPoP proof is present.
+   * Proofs older than `iatOffset` (relative to current server time) are rejected.
+   * This is applied only when `enabled: true` and a DPoP proof is present.
    *
    * @default 300  // 5 minutes
    * @example
@@ -99,10 +115,9 @@ interface DPoPOptions {
   /**
    * Allowed clock skew (in seconds) for future-dated `iat` values.
    *
-   * Some clients may have slightly skewed clocks. A small positive leeway prevents
-   * valid proofs from being rejected when `iat` is a bit in the future.
-   *
-   * Applied only when `enabled: true` and a DPoP proof is present.
+   * Some clients have slightly skewed clocks; a small positive leeway prevents valid proofs
+   * from being rejected when `iat` appears a bit in the future.
+   * This is applied only when `enabled: true` and a DPoP proof is present.
    *
    * @default 30  // 30 seconds
    * @example
@@ -158,7 +173,13 @@ type RequestLike = Record<string, unknown> & {
 };
 
 function isJsonObject(input: unknown): boolean {
-  return typeof input === 'object' && input !== null && !Array.isArray(input);
+  return (
+    typeof input === 'object' &&
+    input !== null &&
+    !Array.isArray(input) &&
+    !(input instanceof Map) &&
+    !(input instanceof Set)
+  );
 }
 
 // Normalize headers to a lowercase key object
@@ -208,9 +229,7 @@ function assertValidDPoPOptions(dpopOptions?: DPoPOptions): void {
   if (dpopOptions === undefined) return;
 
   assert(
-    typeof dpopOptions === 'object' &&
-      dpopOptions !== null &&
-      !Array.isArray(dpopOptions),
+    isJsonObject(dpopOptions),
     'Invalid DPoP configuration: "dpop" must be an object'
   );
 
@@ -283,7 +302,7 @@ function tokenVerifier(
   } = options;
   let hasNonHeaderToken = false;
   let url = requestOptions?.url;
-  
+
   /*
    * Validates the request options to ensure they are in the expected format.
    * Throws InvalidRequestError if any of the options are invalid.
@@ -352,14 +371,14 @@ function tokenVerifier(
     if (typeof body?.access_token === 'string' && isUrlEncoded) {
       locations.push({ location: 'body', jwt: body.access_token });
     }
-    
+
     if (locations.length === 0) throw new UnauthorizedError();
     if (locations.length > 1)
       throw new InvalidRequestError(
-    'More than one method used for authentication'
-  );
+        'More than one method used for authentication'
+      );
 
-  return locations[0];
+    return locations[0];
   }
 
   /**
@@ -439,7 +458,7 @@ function tokenVerifier(
    *
    * - If DPoP is disabled, only a Bearer challenge is returned.
    * - If DPoP is required, only a DPoP challenge is returned.
-   * - If DPoP is optional, both Bearer and DPoP challenges are returned but `error` and `error_description` will be added based on the HTTP `scheme`.
+   * - If DPoP is optional, both Bearer and DPoP challenges are returned but `error` and `error_description` will be added based on the authentication `scheme`.
    *
    * @method applyAuthChallenges
    * @param e - The thrown AuthError instance
@@ -483,16 +502,12 @@ function tokenVerifier(
       challenges.push(buildChallenge('dpop'));
     } else {
       const mode =
-        !hasBearer && !hasDpop
-          ? 'none'
-          : hasBearer
-          ? 'bearer'
-          : 'dpop';
+        !hasBearer && !hasDpop ? 'none' : hasBearer ? 'bearer' : 'dpop';
 
       switch (mode) {
         case 'none':
           /*
-           * If the authorization `scheme` is missing, the token may still have been provided via `query` or `body` parameters.
+           * If the authentication `scheme` is missing, the token may still have been provided via `query` or `body` parameters.
            * In these cases, the `Bearer` challenge may include `error` attributes depending on the specific error raised.
            * For errors of type `UnauthorizedError` (which do not have an `error` code), the challenge will not include `error` attributes.
            * For other errors (such as InvalidRequestError), the `Bearer` challenge should include the `error` attribute.
