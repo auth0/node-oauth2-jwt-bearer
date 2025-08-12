@@ -65,6 +65,17 @@ export class InsufficientScopeError extends UnauthorizedError {
   }
 }
 
+export class InvalidProofError extends UnauthorizedError {
+  code = 'invalid_dpop_proof';
+  status = 400;
+  statusCode = 400;
+
+  constructor(message = 'Invalid DPoP Proof') {
+    super(message);
+    this.headers = getHeaders(this.code, this.message);
+  }
+}
+
 // Generate a response header per https://tools.ietf.org/html/rfc6750#section-3
 const getHeaders = (error: string, description: string, scopes?: string[]) => ({
   'WWW-Authenticate': `Bearer realm="api", error="${error}", error_description="${description.replace(
