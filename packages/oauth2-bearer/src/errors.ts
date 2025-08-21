@@ -29,9 +29,14 @@ export class InvalidRequestError extends UnauthorizedError {
   status = 400;
   statusCode = 400;
 
-  constructor(message = 'Invalid Request') {
+  constructor(message = 'Invalid Request', useErrorCode = true) {
     super(message);
-    this.headers = getHeaders(this.code, this.message);
+    if (useErrorCode) {
+      this.headers = getHeaders(this.code, this.message);
+    } else {
+      // Set `useErrorCode` to `false` to exclude the error code and description from the WWW-Authenticate header.
+      this.code = '';
+    }
   }
 }
 
@@ -62,6 +67,17 @@ export class InsufficientScopeError extends UnauthorizedError {
   constructor(scopes?: string[], message = 'Insufficient Scope') {
     super(message);
     this.headers = getHeaders(this.code, this.message, scopes);
+  }
+}
+
+export class InvalidProofError extends UnauthorizedError {
+  code = 'invalid_dpop_proof';
+  status = 400;
+  statusCode = 400;
+
+  constructor(message = 'Invalid DPoP Proof') {
+    super(message);
+    this.headers = getHeaders(this.code, this.message);
   }
 }
 

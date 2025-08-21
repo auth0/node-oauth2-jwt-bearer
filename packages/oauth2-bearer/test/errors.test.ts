@@ -3,6 +3,7 @@ import {
   InvalidRequestError,
   InvalidTokenError,
   InsufficientScopeError,
+  InvalidProofError,
 } from '../src';
 
 describe('errors', () => {
@@ -73,6 +74,36 @@ describe('errors', () => {
     });
   });
 
+  // useErrorCode = false (default message)
+  it('should omit error attributes in WWW-Authenticate when useErrorCode is false', () => {
+    const err = new InvalidRequestError(undefined, false);
+    expect(err).toMatchObject({
+      code: '',
+      headers: { 'WWW-Authenticate': 'Bearer realm="api"' },
+      message: 'Invalid Request',
+      name: 'InvalidRequestError',
+      status: 400,
+      statusCode: 400,
+    });
+    expect(err.headers['WWW-Authenticate']).toBe('Bearer realm="api"');
+    expect(err.headers['WWW-Authenticate']).not.toContain('error=');
+    expect(err.headers['WWW-Authenticate']).not.toContain('error_description=');
+  });
+
+  // useErrorCode = false (custom message)
+  it('should keep the custom message but still omit error attributes when useErrorCode is false', () => {
+    const err = new InvalidRequestError('Missing Authorization header', false);
+    expect(err).toMatchObject({
+      code: '',
+      headers: { 'WWW-Authenticate': 'Bearer realm="api"' },
+      message: 'Missing Authorization header',
+      name: 'InvalidRequestError',
+      status: 400,
+      statusCode: 400,
+    });
+    expect(err.headers['WWW-Authenticate']).toBe('Bearer realm="api"');
+  });
+
   it('should raise an Insufficient Scope error', () => {
     expect(new InsufficientScopeError(['foo', 'bar'])).toMatchObject({
       code: 'insufficient_scope',
@@ -84,6 +115,34 @@ describe('errors', () => {
       name: 'InsufficientScopeError',
       status: 403,
       statusCode: 403,
+    });
+  });
+
+  it('should raise an Invalid Proof error', () => {
+    expect(new InvalidProofError()).toMatchObject({
+      code: 'invalid_dpop_proof',
+      headers: {
+        'WWW-Authenticate':
+          'Bearer realm="api", error="invalid_dpop_proof", error_description="Invalid DPoP Proof"',
+      },
+      message: 'Invalid DPoP Proof',
+      name: 'InvalidProofError',
+      status: 400,
+      statusCode: 400,
+    });
+  });
+
+  it('should raise an Invalid Proof error with a custom message', () => {
+    expect(new InvalidProofError('Proof rejected')).toMatchObject({
+      code: 'invalid_dpop_proof',
+      headers: {
+        'WWW-Authenticate':
+          'Bearer realm="api", error="invalid_dpop_proof", error_description="Proof rejected"',
+      },
+      message: 'Proof rejected',
+      name: 'InvalidProofError',
+      status: 400,
+      statusCode: 400,
     });
   });
 });

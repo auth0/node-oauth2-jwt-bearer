@@ -1,4 +1,13 @@
 export {
+  default as tokenVerifier,
+  assertValidDPoPOptions,
+  type DPoPJWTPayload,
+  type RequestLike,
+  type HeadersLike,
+  type AuthOptions,
+  type DPoPOptions,
+} from './token-verifier'
+export {
   default as jwtVerifier,
   JwtVerifierOptions,
   VerifyJwt,
