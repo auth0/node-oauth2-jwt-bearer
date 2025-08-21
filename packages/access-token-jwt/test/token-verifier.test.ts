@@ -642,7 +642,7 @@ describe('tokenVerifier / getToken', () => {
         headers: { authorization: 'badtoken' },
       },
       InvalidRequestError,
-      'Invalid Authorization HTTP Header format'
+      ''
     );
   });
 

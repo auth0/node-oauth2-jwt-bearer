@@ -357,9 +357,7 @@ function tokenVerifier(
       // Check for correct Authorization HTTP Header format
       const { length } = auth.split(' ');
       if (length !== 2) {
-        throw new InvalidRequestError(
-          'Invalid Authorization HTTP Header format'
-        );
+        throw new InvalidRequestError('', false);
       }
 
       const match = auth.match(TOKEN_RE);
