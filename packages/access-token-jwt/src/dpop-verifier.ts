@@ -40,6 +40,16 @@ export type DPoPVerifierOptions = {
 
 const UNRESERVED = /[A-Za-z0-9\-._~]/;
 
+function isJsonObject(input: unknown): boolean {
+  return (
+    typeof input === 'object' &&
+    input !== null &&
+    !Array.isArray(input) &&
+    !(input instanceof Map) &&
+    !(input instanceof Set)
+  );
+}
+
 function normalizePercentEncodings(s: string): string {
   // Replace each %xx byte:
   // - If it decodes to an unreserved ASCII char, decode it to that char.
@@ -153,44 +163,36 @@ function assertDPoPRequest(
     headers.authorization === null ||
     !('authorization' in headers)
   ) {
-    throw new InvalidRequestError(
-      'Operation indicated DPoP use but the request is missing an Authorization HTTP Header'
-    );
+    throw new InvalidRequestError('', false);
   }
 
   if (typeof headers.authorization !== 'string') {
-    throw new InvalidRequestError(
-      "Operation indicated DPoP use but the request's Authorization HTTP Header is malformed"
-    );
+    throw new InvalidRequestError('', false);
   }
 
   // Check for correct Authorization scheme
   if (!headers.authorization.toLowerCase().startsWith('dpop ')) {
-    throw new InvalidRequestError(
-      "Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP"
-    );
-  }
-
-  // Check for correct Authorization HTTP Header format
-  const { length } = headers.authorization.split(' ');
-  if (length !== 2) {
-    throw new InvalidRequestError('Invalid Authorization HTTP Header format');
+    throw new InvalidRequestError('', false);
   }
 
   // Check for DPoP HTTP Header
-  if (!headers.dpop)
-    throw new InvalidRequestError(
-      'Operation indicated DPoP use but the request has no DPoP HTTP Header'
-    );
+  if (!('dpop' in headers)) {
+    throw new InvalidRequestError('', false);
+  }
 
   // Ensure DPoP HTTP Header is a string
   if (typeof headers.dpop !== 'string') {
-    throw new InvalidRequestError('DPoP HTTP Header must be a string');
+    throw new InvalidRequestError('', false);
+  }
+
+  // Ensure DPoP HTTP Header is not empty
+  if (!headers.dpop.length) {
+    throw new InvalidRequestError('', false);
   }
 
   // Ensure a single DPoP proof
   if (headers.dpop.includes(',')) {
-    throw new InvalidRequestError('Multiple DPoP headers are not allowed');
+    throw new InvalidRequestError('', false);
   }
 
   // If accessTokenClaims is provided, validate the confirmation "cnf" claims
@@ -198,35 +200,33 @@ function assertDPoPRequest(
     const { cnf } = accessTokenClaims;
 
     if (!cnf) {
-      throw new InvalidRequestError(
-        'Operation indicated DPoP use but the JWT Access Token has no confirmation claim'
+      throw new InvalidTokenError(
+        'JWT Access Token has no jkt confirmation claim'
       );
     }
 
-    if (typeof cnf !== 'object' || Array.isArray(cnf)) {
-      throw new InvalidRequestError(
-        'Invalid "cnf" confirmation claim structure'
-      );
+    if (!isJsonObject(cnf)) {
+      throw new InvalidTokenError('Invalid "cnf" confirmation claim structure');
     }
 
     if (Object.keys(cnf).length > 1) {
-      throw new InvalidRequestError(
+      throw new InvalidTokenError(
         'Multiple confirmation claims are not supported'
       );
     }
 
     if (!('jkt' in cnf)) {
-      throw new InvalidRequestError(
-        'Operation indicated DPoP use but the JWT Access Token has no jkt confirmation claim'
+      throw new InvalidTokenError(
+        'JWT Access Token has no jkt confirmation claim'
       );
     }
 
     if (typeof cnf.jkt !== 'string') {
-      throw new InvalidRequestError('Malformed "jkt" confirmation claim');
+      throw new InvalidTokenError('Malformed "jkt" confirmation claim');
     }
 
     if (!cnf.jkt.length) {
-      throw new InvalidRequestError('Invalid "jkt" confirmation claim');
+      throw new InvalidTokenError('Invalid "jkt" confirmation claim');
     }
   }
 }
@@ -374,5 +374,11 @@ async function verifyDPoP(options: DPoPVerifierOptions): Promise<void> {
   }
 }
 
-export { normalizeUrl, assertDPoPRequest, verifyProof, verifyDPoP };
+export {
+  isJsonObject,
+  normalizeUrl,
+  assertDPoPRequest,
+  verifyProof,
+  verifyDPoP,
+};
 export type { DPoPJWTPayload };

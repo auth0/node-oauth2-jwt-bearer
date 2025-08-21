@@ -1,4 +1,8 @@
-import { InvalidRequestError, UnauthorizedError } from 'oauth2-bearer';
+import {
+  InvalidRequestError,
+  InvalidTokenError,
+  UnauthorizedError,
+} from 'oauth2-bearer';
 import { strict as assert } from 'assert';
 
 import type {
@@ -10,6 +14,7 @@ import type {
 import { ASYMMETRIC_ALGS as SUPPORTED_ALGORITHMS } from './jwt-verifier';
 
 import {
+  isJsonObject,
   normalizeUrl,
   verifyDPoP,
   assertDPoPRequest,
@@ -171,16 +176,6 @@ type RequestLike = Record<string, unknown> & {
   body?: BodyLike;
   isUrlEncoded?: boolean; // true if the request's Content-Type is `application/x-www-form-urlencoded`
 };
-
-function isJsonObject(input: unknown): boolean {
-  return (
-    typeof input === 'object' &&
-    input !== null &&
-    !Array.isArray(input) &&
-    !(input instanceof Map) &&
-    !(input instanceof Set)
-  );
-}
 
 // Normalize headers to a lowercase key object
 function normalizeHeaders(input: unknown): HeadersLike {
@@ -354,10 +349,24 @@ function tokenVerifier(
 
   function getToken(): TokenInfo {
     const TOKEN_RE = /^(Bearer|DPoP) (.+)$/i;
-
     const auth = headers.authorization;
-    const match = typeof auth === 'string' && auth.match(TOKEN_RE);
-    const fromHeader = match && match[2];
+
+    let fromHeader: string | undefined;
+
+    if (typeof auth === 'string') {
+      // Check for correct Authorization HTTP Header format
+      const { length } = auth.split(' ');
+      if (length !== 2) {
+        throw new InvalidRequestError(
+          'Invalid Authorization HTTP Header format'
+        );
+      }
+
+      const match = auth.match(TOKEN_RE);
+      if (match) {
+        fromHeader = match[2];
+      }
+    }
 
     const locations: TokenInfo[] = [];
     if (fromHeader) {
@@ -372,7 +381,7 @@ function tokenVerifier(
       locations.push({ location: 'body', jwt: body.access_token });
     }
 
-    if (locations.length === 0) throw new UnauthorizedError();
+    if (locations.length === 0) throw new InvalidRequestError('', false);
     if (locations.length > 1)
       throw new InvalidRequestError(
         'More than one method used for authentication'
@@ -406,7 +415,7 @@ function tokenVerifier(
     if (!dpopEnabled) {
       if (authScheme && authScheme !== 'bearer') {
         // @see https://datatracker.ietf.org/doc/html/rfc6750#section-3.1
-        throw new UnauthorizedError();
+        throw new InvalidRequestError('', false);
       }
     } else if (dpopRequired) {
       // Perform initial DPoP pre-checks
@@ -414,16 +423,7 @@ function tokenVerifier(
     } else {
       // When auth scheme is `dpop` but `dpop` proof is not present,
       if (authScheme === 'dpop' && typeof headers.dpop !== 'string') {
-        throw new InvalidRequestError(
-          'Operation indicated DPoP use but the request has no DPoP HTTP Header'
-        );
-      }
-
-      // When auth scheme is `bearer` but `dpop` proof is present,
-      if (authScheme === 'bearer' && typeof headers.dpop === 'string') {
-        throw new InvalidRequestError(
-          "Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP"
-        );
+        throw new InvalidRequestError('', false);
       }
 
       // When the scheme is present but neither `dpop` nor `bearer`,
@@ -436,6 +436,19 @@ function tokenVerifier(
 
     const verifiedJwt = await verifyJwt(jwt);
     const accessTokenClaims = verifiedJwt.payload as DPoPJWTPayload;
+
+    if (
+      authScheme === 'bearer' &&
+      'cnf' in accessTokenClaims &&
+      dpopEnabled &&
+      !dpopRequired
+    ) {
+      // In "allowed" DPoP mode, if the token is DPoP-bound but sent with Bearer scheme,
+      // we throw an InvalidTokenError to indicate that the token is not valid for Bearer
+      throw new InvalidTokenError(
+        'DPoP-bound token requires the DPoP authentication scheme, not Bearer.'
+      );
+    }
 
     if (shouldVerifyDPoP(accessTokenClaims)) {
       await verifyDPoP({
@@ -482,24 +495,23 @@ function tokenVerifier(
 
     const buildChallenge = (
       scheme: 'bearer' | 'dpop',
-      includeError = true
+      includeError: boolean
     ): string => {
       const algs = supportedAlgs.join(' ');
-      const hasError = includeError && hasErrorCode;
 
       if (scheme === 'dpop') {
-        return hasError
+        return includeError
           ? `DPoP error="${errorCode}", error_description="${safeDescription}", algs="${algs}"`
           : `DPoP algs="${algs}"`;
       } else {
-        return hasError
+        return includeError
           ? `Bearer realm="api", error="${errorCode}", error_description="${safeDescription}"`
           : `Bearer realm="api"`;
       }
     };
 
     if (dpopRequired) {
-      challenges.push(buildChallenge('dpop'));
+      challenges.push(buildChallenge('dpop', hasErrorCode));
     } else {
       const mode =
         !hasBearer && !hasDpop ? 'none' : hasBearer ? 'bearer' : 'dpop';
@@ -522,8 +534,8 @@ function tokenVerifier(
           challenges.push(buildChallenge('dpop', false));
           break;
         case 'dpop':
-          challenges.push(buildChallenge('dpop', hasErrorCode));
           challenges.push(buildChallenge('bearer', false));
+          challenges.push(buildChallenge('dpop', hasErrorCode));
           break;
       }
     }
@@ -546,12 +558,7 @@ function tokenVerifier(
 }
 
 export default tokenVerifier;
-export {
-  isJsonObject,
-  normalizeHeaders,
-  getAuthScheme,
-  assertValidDPoPOptions,
-};
+export { normalizeHeaders, getAuthScheme, assertValidDPoPOptions };
 export type {
   DPoPJWTPayload,
   AuthOptions,

@@ -2,6 +2,7 @@ import {
   InvalidRequestError,
   InvalidTokenError,
   UnauthorizedError,
+  InvalidProofError,
 } from 'oauth2-bearer';
 import tokenVerifier, {
   type DPoPOptions,
@@ -9,7 +10,6 @@ import tokenVerifier, {
   type AuthOptions,
   type QueryLike,
   type BodyLike,
-  isJsonObject,
   normalizeHeaders,
   getAuthScheme,
   assertValidDPoPOptions,
@@ -114,59 +114,6 @@ function parseWwwAuthenticate(header: string | string[]) {
 
   return result;
 }
-
-describe('isJsonObject', () => {
-  it('returns true for plain objects', () => {
-    expect(isJsonObject({})).toBe(true);
-    expect(isJsonObject({ a: 1 })).toBe(true);
-    expect(isJsonObject(Object.create(null))).toBe(true);
-  });
-
-  it('returns false for null', () => {
-    expect(isJsonObject(null)).toBe(false);
-  });
-
-  it('returns true for objects created with Object.create(null)', () => {
-    expect(isJsonObject(Object.create(null))).toBe(true);
-  });
-
-  it('isJsonObject | returns false for Map and Set', () => {
-    expect(isJsonObject(new Map())).toBe(false);
-    expect(isJsonObject(new Set())).toBe(false);
-  });
-
-  it('returns false for arrays', () => {
-    expect(isJsonObject([])).toBe(false);
-    expect(isJsonObject([1, 2, 3])).toBe(false);
-  });
-
-  it('returns false for primitive types', () => {
-    expect(isJsonObject('string')).toBe(false);
-    expect(isJsonObject(123)).toBe(false);
-    expect(isJsonObject(true)).toBe(false);
-    expect(isJsonObject(undefined)).toBe(false);
-    expect(isJsonObject(Symbol('sym'))).toBe(false);
-  });
-
-  it('returns false for functions and arrow functions', () => {
-    expect(
-      isJsonObject(function () {
-        return true;
-      })
-    ).toBe(false);
-    expect(
-      isJsonObject(() => {
-        return true;
-      })
-    ).toBe(false);
-  });
-
-  it('returns true for class instances (object type)', () => {
-    class MyClass {}
-    const instance = new MyClass();
-    expect(isJsonObject(instance)).toBe(true);
-  });
-});
 
 describe('normalizeHeaders', () => {
   // Note: To avoid unhandled exceptions, this function does not throw errors.
@@ -608,14 +555,14 @@ describe('tokenVerifier / getToken', () => {
   });
 
   it('throws if no token is provided anywhere', () => {
-    expectGetTokenToThrow({}, UnauthorizedError, 'Unauthorized');
+    expectGetTokenToThrow({}, InvalidRequestError, '');
   });
 
   it('throws if empty token in Authorization', () => {
     expectGetTokenToThrow(
       { headers: { authorization: 'Bearer ' } },
-      UnauthorizedError,
-      'Unauthorized'
+      InvalidRequestError,
+      ''
     );
   });
 
@@ -637,8 +584,8 @@ describe('tokenVerifier / getToken', () => {
   it('throws if empty token in body when isUrlEncoded is false', () => {
     expectGetTokenToThrow(
       { body: { access_token: '' }, isUrlEncoded: false },
-      UnauthorizedError,
-      'Unauthorized'
+      InvalidRequestError,
+      ''
     );
   });
 
@@ -694,19 +641,20 @@ describe('tokenVerifier / getToken', () => {
       {
         headers: { authorization: 'badtoken' },
       },
-      UnauthorizedError,
-      'Unauthorized'
+      InvalidRequestError,
+      'Invalid Authorization HTTP Header format'
     );
   });
 
-  it('throws if authorization header is not a string', () => {
-    expectGetTokenToThrow(
-      {
-        headers: { authorization: 12345 },
-      },
-      UnauthorizedError,
-      'Unauthorized'
-    );
+  it("Doesn't throw if authorization header is not a string and token is supplied via query", () => {
+    const token = makeVerifier({
+      headers: { authorization: 12345 },
+      query: { access_token: 'abc.def.hgi' },
+    }).getToken();
+
+    // When authorization header is not a string, it is ignored,
+    // This doesn't mean that the header is not type checked. It's just that it's not taken care of in this function.
+    expect(token).toEqual({ location: 'query', jwt: 'abc.def.hgi' });
   });
 });
 
@@ -754,9 +702,9 @@ describe('tokenVerifier / applyAuthChallenges', () => {
 
     const e = verifier.applyAuthChallenges(error) as UnauthorizedError;
     expect(e.headers?.['WWW-Authenticate']).toBe(
-      `DPoP error="invalid_request", error_description="Invalid DPoP", algs="${SUPPORTED_ALGS.join(
+      `Bearer realm="api", DPoP error="invalid_request", error_description="Invalid DPoP", algs="${SUPPORTED_ALGS.join(
         ' '
-      )}", Bearer realm="api"`
+      )}"`
     );
   });
 
@@ -861,7 +809,7 @@ describe('tokenVerifier / applyAuthChallenges', () => {
   });
 
   it('"disabled" mode | returns original error if DPoP is disabled', () => {
-    const error = new UnauthorizedError('unauth');
+    const error = new UnauthorizedError('Unauthorized');
     const verifier = makeVerifier({
       dpop: { enabled: false },
     });
@@ -999,7 +947,7 @@ describe('tokenVerifier / verify', () => {
     expect((dpopVerifier.verifyDPoP as sinon.SinonStub).notCalled).toBe(true);
   });
 
-  it('"allowed" mode | throws if bearer scheme used but dpop header is present', async () => {
+  it('"allowed" mode | throws "InvalidRequestError" with "no-error-information" | if bearer scheme used but dpop header is present', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
     const { verifier } = createVerifier(
       jwtResult,
@@ -1013,17 +961,16 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        "Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP",
-      expectedCode: 'invalid_request',
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: [
-        'Bearer realm="api", error="invalid_request", error_description="Operation indicated DPoP use but the request\'s Authorization HTTP Header scheme is not DPoP"',
+        'Bearer realm="api"',
         `DPoP algs="${SUPPORTED_ALGS.join(' ')}"`,
       ],
     });
   });
 
-  it('"allowed" mode | throws `UnauthorizedError` if malformed `Bearer` Authorization header with valid DPoP proof header', async () => {
+  it('"allowed" mode | throws "InvalidRequestError" with "no-error-information" | if malformed `Bearer` Authorization header with valid DPoP proof header', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
     const { verifier } = createVerifier(
       jwtResult,
@@ -1035,9 +982,9 @@ describe('tokenVerifier / verify', () => {
     );
     await expectVerifyToThrow({
       verifier,
-      expectedError: UnauthorizedError,
-      expectedMessage: 'Unauthorized',
-      expectedCode: undefined,
+      expectedError: InvalidRequestError,
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: [
         'Bearer realm="api"',
         `DPoP algs="${SUPPORTED_ALGS.join(' ')}"`,
@@ -1072,7 +1019,7 @@ describe('tokenVerifier / verify', () => {
     });
   });
 
-  it('"allowed" mode | throws `InvalidRequestError` if `Bearer` token is invalid and DPoP proof header is present', async () => {
+  it('"allowed" mode | throws `InvalidTokenError` if `Bearer` token is invalid and DPoP proof header is present', async () => {
     const verifyJwtStub = sinon.stub();
     verifyJwtStub.callsFake(async () => {
       throw new InvalidTokenError('signature verification failed');
@@ -1092,18 +1039,17 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: InvalidRequestError,
-      expectedMessage:
-        "Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP",
-      expectedCode: 'invalid_request',
+      expectedError: InvalidTokenError,
+      expectedMessage: 'signature verification failed',
+      expectedCode: 'invalid_token',
       expectedChallengeIncludes: [
-        `Bearer realm="api", error="invalid_request", error_description="Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP"`,
+        `Bearer realm="api", error="invalid_token", error_description="signature verification failed"`,
         `DPoP algs="${SUPPORTED_ALGS.join(' ')}"`,
       ],
     });
   });
 
-  it('"allowed" mode | throws `InvalidRequestError` if Bearer token is DPoP-bound but no DPoP proof header is present', async () => {
+  it('"allowed" mode | throws `InvalidTokenError` if Bearer token is DPoP-bound but no DPoP proof header is present', async () => {
     const jwtResult = createJwtResult({
       sub: 'user',
       cnf: {
@@ -1127,18 +1073,18 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: InvalidRequestError,
+      expectedError: InvalidTokenError,
       expectedMessage:
-        "Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP",
-      expectedCode: 'invalid_request',
+        'DPoP-bound token requires the DPoP authentication scheme, not Bearer.',
+      expectedCode: 'invalid_token',
       expectedChallengeIncludes: [
-        `Bearer realm="api", error="invalid_request", error_description="Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP"`,
+        `Bearer realm="api", error="invalid_token", error_description="DPoP-bound token requires the DPoP authentication scheme, not Bearer."`,
         `DPoP algs="${SUPPORTED_ALGS.join(' ')}"`,
       ],
     });
   });
 
-  it('"allowed" mode | throws `InvalidRequestError` if DPoP-bound token is used with DPoP scheme but no DPoP proof header is present', async () => {
+  it('"allowed" mode |  throws "InvalidRequestError" with "no-error-information" | if DPoP-bound token is used with DPoP scheme but no DPoP proof header is present', async () => {
     const jwtResult = createJwtResult({
       sub: 'user',
       cnf: {
@@ -1163,19 +1109,16 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        'Operation indicated DPoP use but the request has no DPoP HTTP Header',
-      expectedCode: 'invalid_request',
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request has no DPoP HTTP Header", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
         `Bearer realm="api"`,
+        `DPoP algs="${SUPPORTED_ALGS.join(' ')}"`,
       ],
     });
   });
 
-  it('"allowed" mode | throws `InvalidRequestError` if non-DPoP-bound token is used with DPoP scheme and a proof header is present', async () => {
+  it('"allowed" mode | throws `InvalidTokenError` if non-DPoP-bound token is used with DPoP scheme and a proof header is present', async () => {
     const jwtResult = createJwtResult({
       sub: 'user',
       // no `cnf.jkt`, so NOT DPoP-bound
@@ -1197,20 +1140,19 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: InvalidRequestError,
-      expectedMessage:
-        'Operation indicated DPoP use but the JWT Access Token has no confirmation claim',
-      expectedCode: 'invalid_request',
+      expectedError: InvalidTokenError,
+      expectedMessage: 'JWT Access Token has no jkt confirmation claim',
+      expectedCode: 'invalid_token',
       expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the JWT Access Token has no confirmation claim", algs="${SUPPORTED_ALGS.join(
+        `Bearer realm="api"`,
+        `DPoP error="invalid_token", error_description="JWT Access Token has no jkt confirmation claim", algs="${SUPPORTED_ALGS.join(
           ' '
         )}"`,
-        `Bearer realm="api"`,
       ],
     });
   });
 
-  it('"allowed" mode | throws `UnauthorizedError` if request has DPoP proof header but no Authorization header', async () => {
+  it('"allowed" mode | throws "InvalidRequestError" with "no-error-information" | if request has DPoP proof header but no Authorization header', async () => {
     const verifier = tokenVerifier(
       sinon.stub().resolves(createJwtResult({ sub: 'user' })), // Won’t be called
       { dpop: { enabled: true } },
@@ -1224,8 +1166,8 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: UnauthorizedError,
-      expectedMessage: 'Unauthorized',
+      expectedError: InvalidRequestError,
+      expectedMessage: '',
       expectedChallengeIncludes: [
         `Bearer realm="api"`,
         `DPoP algs="${SUPPORTED_ALGS.join(' ')}"`,
@@ -1233,7 +1175,7 @@ describe('tokenVerifier / verify', () => {
     });
   });
 
-  it('"allowed" mode | throws `InvalidRequestError` if DPoP-bound token is in query param and DPoP proof header is missing', async () => {
+  it('"allowed" mode | throws "InvalidRequestError" with "no-error-information" | if DPoP-bound token is in query param and DPoP proof header is missing', async () => {
     const jwtResult = createJwtResult({
       sub: 'user',
       cnf: {
@@ -1260,11 +1202,10 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        'Operation indicated DPoP use but the request is missing an Authorization HTTP Header',
-      expectedCode: 'invalid_request',
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: [
-        `Bearer realm="api", error="invalid_request", error_description="Operation indicated DPoP use but the request is missing an Authorization HTTP Header"`,
+        `Bearer realm="api"`,
         `DPoP algs="${SUPPORTED_ALGS.join(' ')}"`,
       ],
     });
@@ -1298,7 +1239,7 @@ describe('tokenVerifier / verify', () => {
     });
   });
 
-  it('"allowed" mode | throws if DPoP scheme is present but DPoP proof header is missing', async () => {
+  it('"allowed" mode | throws "InvalidRequestError" with "no-error-information" | if DPoP scheme is present but DPoP proof header is missing', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
     const { verifier } = createVerifier(
       jwtResult,
@@ -1311,19 +1252,16 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        'Operation indicated DPoP use but the request has no DPoP HTTP Header',
-      expectedCode: 'invalid_request',
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request has no DPoP HTTP Header", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
         'Bearer realm="api"',
+        `DPoP algs="${SUPPORTED_ALGS.join(' ')}"`,
       ],
     });
   });
 
-  it('"allowed" mode | throws UnauthorizedError if scheme is unknown', async () => {
+  it('"allowed" mode | throws "InvalidRequestError" with "no-error-information" | if scheme is unknown', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
     const { verifier } = createVerifier(
       jwtResult,
@@ -1335,8 +1273,8 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: UnauthorizedError,
-      expectedMessage: 'Unauthorized',
+      expectedError: InvalidRequestError,
+      expectedMessage: '',
       expectedChallengeIncludes: [
         'Bearer realm="api"',
         `DPoP algs="${SUPPORTED_ALGS.join(' ')}"`,
@@ -1344,7 +1282,7 @@ describe('tokenVerifier / verify', () => {
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if authorization scheme is Bearer with valid DPoP bound token and a valid DPoP proof header', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if authorization scheme is Bearer with valid DPoP bound token and a valid DPoP proof header', async () => {
     const jwtResult = createJwtResult({ sub: 'user', cnf: { jkt: 'abc123' } });
     const { verifier } = createVerifier(
       jwtResult,
@@ -1359,18 +1297,13 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        "Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP",
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `UnauthorizedError` if authorization scheme is Bearer with an empty token and valid DPoP proof header', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if authorization scheme is Bearer with an empty token and valid DPoP proof header', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
     const { verifier } = createVerifier(
       jwtResult,
@@ -1384,13 +1317,14 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: UnauthorizedError,
-      expectedMessage: 'Unauthorized',
+      expectedError: InvalidRequestError,
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if authorization scheme is Bearer with an invalid Bearer token and no DPoP proof header', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if authorization scheme is Bearer with an invalid Bearer token and no DPoP proof header', async () => {
     const badVerifyJwt = sinon
       .stub()
       .rejects(new InvalidTokenError('invalid bearer token')); // Simulate invalid token verification
@@ -1403,18 +1337,13 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        "Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP",
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if authorization scheme is Bearer with an invalid Bearer token and valid DPoP proof header', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if authorization scheme is Bearer with an invalid Bearer token and valid DPoP proof header', async () => {
     const badVerifyJwt = sinon
       .stub()
       .rejects(new InvalidTokenError('invalid bearer token'));
@@ -1430,18 +1359,13 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        "Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP",
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if authorization scheme is DPoP with a valid DPoP bound token and no DPoP proof header', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" if authorization scheme is DPoP with a valid DPoP bound token and no DPoP proof header', async () => {
     const jwtResult = createJwtResult({ sub: 'user', cnf: { jkt: 'abc123' } });
     (dpopVerifier.verifyDPoP as sinon.SinonStub).restore();
 
@@ -1457,18 +1381,13 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        'Operation indicated DPoP use but the request has no DPoP HTTP Header',
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request has no DPoP HTTP Header", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if authorization scheme is Bearer with a valid Bearer token and no DPoP proof header', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if authorization scheme is Bearer with a valid Bearer token and no DPoP proof header', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
     const { verifier } = createVerifier(
       jwtResult,
@@ -1479,18 +1398,13 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        "Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP",
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if authorization scheme is Bearer with a valid DPoP bound token and no DPoP proof header', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if authorization scheme is Bearer with a valid DPoP bound token and no DPoP proof header', async () => {
     const jwtResult = createJwtResult({ sub: 'user', cnf: { jkt: 'abc123' } });
     (dpopVerifier.verifyDPoP as sinon.SinonStub).restore();
 
@@ -1506,18 +1420,13 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        "Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP",
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if authorization scheme is DPoP with an invalid DPoP bound token and no DPoP proof header', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if authorization scheme is DPoP with an invalid DPoP bound token and no DPoP proof header', async () => {
     const badVerifyJwt = sinon
       .stub()
       .rejects(new InvalidTokenError('signature verification failed')); // Simulate invalid token verification
@@ -1534,18 +1443,13 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        'Operation indicated DPoP use but the request has no DPoP HTTP Header',
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request has no DPoP HTTP Header", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if authorization scheme is DPoP with a valid Bearer(regular) token and a valid DPoP proof header', async () => {
+  it('"required" mode | throws `InvalidTokenError` if authorization scheme is DPoP with a valid Bearer(regular) token and a valid DPoP proof header', async () => {
     const jwtResult = createJwtResult({ sub: 'user' }); // no cnf.jkt => regular bearer token
     (dpopVerifier.verifyDPoP as sinon.SinonStub).restore();
 
@@ -1563,24 +1467,23 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: InvalidRequestError,
-      expectedMessage:
-        'Operation indicated DPoP use but the JWT Access Token has no confirmation claim',
-      expectedCode: 'invalid_request',
+      expectedError: InvalidTokenError,
+      expectedMessage: 'JWT Access Token has no jkt confirmation claim',
+      expectedCode: 'invalid_token',
       expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the JWT Access Token has no confirmation claim", algs="${SUPPORTED_ALGS.join(
+        `DPoP error="invalid_token", error_description="JWT Access Token has no jkt confirmation claim", algs="${SUPPORTED_ALGS.join(
           ' '
         )}"`,
       ],
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if authorization scheme is DPoP with a valid DPoP bound token and a malformed DPoP proof header', async () => {
-    // Make verifyDPoP throw a predictable InvalidRequestError to avoid coupling to jose error text
+  it('"required" mode | throws `InvalidProofError` if authorization scheme is DPoP with a valid DPoP bound token and an invalid DPoP proof header', async () => {
+    // Make verifyDPoP throw a predictable InvalidProofError to avoid coupling to jose error text
     (dpopVerifier.verifyDPoP as sinon.SinonStub).restore();
     sinon
       .stub(dpopVerifier, 'verifyDPoP')
-      .rejects(new InvalidRequestError('Bad DPoP proof'));
+      .rejects(new InvalidProofError('Invalid JWS string'));
 
     const jwtResult = createJwtResult({ sub: 'user', cnf: { jkt: 'abc123' } });
     const verifier = tokenVerifier(
@@ -1588,24 +1491,24 @@ describe('tokenVerifier / verify', () => {
       { dpop: { enabled: true, required: true } },
       {
         ...baseRequest,
-        headers: { authorization: 'DPoP token', dpop: 'not-a-jws' },
+        headers: { authorization: 'DPoP token', dpop: 'bad.jws.string' },
       }
     );
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: InvalidRequestError,
-      expectedMessage: 'Bad DPoP proof',
-      expectedCode: 'invalid_request',
+      expectedError: InvalidProofError,
+      expectedMessage: 'Invalid JWS string',
+      expectedCode: 'invalid_dpop_proof',
       expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Bad DPoP proof", algs="${SUPPORTED_ALGS.join(
+        `DPoP error="invalid_dpop_proof", error_description="Invalid JWS string", algs="${SUPPORTED_ALGS.join(
           ' '
         )}"`,
       ],
     });
   });
 
-  it('"required" mode | throws `UnauthorizedError` if authorization scheme is a random string with a valid DPoP bound token and a valid DPoP proof header', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if authorization scheme is a random string with a valid DPoP bound token and a valid DPoP proof header', async () => {
     const jwtResult = createJwtResult({ sub: 'user', cnf: { jkt: 'abc123' } });
     const verifier = tokenVerifier(
       sinon.stub().resolves(jwtResult),
@@ -1621,14 +1524,14 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: UnauthorizedError,
-      expectedMessage: 'Unauthorized',
-      expectedCode: undefined,
+      expectedError: InvalidRequestError,
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if authorization header is missing but DPoP proof header is present', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if authorization header is missing but DPoP proof header is present', async () => {
     // Put the token in query so we get to DPoP validation path (and then fail due to missing Authorization)
     const jwtResult = createJwtResult(
       { sub: 'user', cnf: { jkt: 'abc123' } },
@@ -1647,14 +1550,9 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        'Operation indicated DPoP use but the request is missing an Authorization HTTP Header',
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request is missing an Authorization HTTP Header", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
@@ -1721,7 +1619,7 @@ describe('tokenVerifier / verify', () => {
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if missing Authorization header and receives a DPoP-bound token via query', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if missing Authorization header and receives a DPoP-bound token via query', async () => {
     const jwtResult = createJwtResult(
       { sub: 'user', cnf: { jkt: 'abc' } },
       'query.dpop.bound'
@@ -1737,18 +1635,13 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        'Operation indicated DPoP use but the request is missing an Authorization HTTP Header',
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request is missing an Authorization HTTP Header", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if missing Authorization and DPoP proof headers and receives a DPoP-bound token via query', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if missing Authorization and DPoP proof headers and receives a DPoP-bound token via query', async () => {
     const jwtResult = createJwtResult(
       { sub: 'user', cnf: { jkt: 'abc' } },
       'query.dpop.bound'
@@ -1764,18 +1657,13 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        'Operation indicated DPoP use but the request is missing an Authorization HTTP Header',
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request is missing an Authorization HTTP Header", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if RANDOM scheme contains a valid DPoP bound token and receives DPoP bound token via query as-well', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if RANDOM scheme contains a valid DPoP bound token and receives DPoP bound token via query as-well', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
 
     const { verifier } = createVerifier(
@@ -1788,14 +1676,9 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        "Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP",
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
@@ -1851,7 +1734,7 @@ describe('tokenVerifier / verify', () => {
     await expect(verifier.verify()).resolves.toEqual(jwtResult);
   });
 
-  it('"required" mode | throws `InvalidRequestError` if authorization scheme is DPoP with a valid DPoP-bound token and also receives token via body but doesn\'t contain DPoP proof', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if authorization scheme is DPoP with a valid DPoP-bound token and also receives token via body but doesn\'t contain DPoP proof', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
 
     const { verifier } = createVerifier(
@@ -1876,7 +1759,7 @@ describe('tokenVerifier / verify', () => {
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if authorization scheme is DPoP with a valid DPoP-bound token and also receives token via body but doesn\'t contain DPoP proof (isUrlEncoded: false)', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if authorization scheme is DPoP with a valid DPoP-bound token and also receives token via body but doesn\'t contain DPoP proof (isUrlEncoded: false)', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
 
     const { verifier } = createVerifier(
@@ -1891,18 +1774,13 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        'Operation indicated DPoP use but the request has no DPoP HTTP Header',
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request has no DPoP HTTP Header", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if missing Authorization header and receives a DPoP-bound token via body', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if missing Authorization header and receives a DPoP-bound token via body', async () => {
     const jwtResult = createJwtResult(
       { sub: 'user', cnf: { jkt: 'abc' } },
       'query.dpop.bound'
@@ -1920,18 +1798,13 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        'Operation indicated DPoP use but the request is missing an Authorization HTTP Header',
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request is missing an Authorization HTTP Header", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `UnauthorizedError` if missing Authorization header and receives a DPoP-bound token via body (isUrlEncoded: false)', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if missing Authorization header and receives a DPoP-bound token via body (isUrlEncoded: false)', async () => {
     const jwtResult = createJwtResult(
       { sub: 'user', cnf: { jkt: 'abc' } },
       'query.dpop.bound'
@@ -1948,14 +1821,14 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: UnauthorizedError,
-      expectedMessage: 'Unauthorized',
-      expectedCode: undefined,
+      expectedError: InvalidRequestError,
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if missing Authorization and DPoP proof headers and receives a DPoP-bound token via body', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if missing Authorization and DPoP proof headers and receives a DPoP-bound token via body', async () => {
     const jwtResult = createJwtResult(
       { sub: 'user', cnf: { jkt: 'abc' } },
       'query.dpop.bound'
@@ -1973,18 +1846,13 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        'Operation indicated DPoP use but the request is missing an Authorization HTTP Header',
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request is missing an Authorization HTTP Header", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `UnauthorizedError` if missing Authorization and DPoP proof headers and receives a DPoP-bound token via body (isUrlEncoded: false)', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if missing Authorization and DPoP proof headers and receives a DPoP-bound token via body (isUrlEncoded: false)', async () => {
     const jwtResult = createJwtResult(
       { sub: 'user', cnf: { jkt: 'abc' } },
       'query.dpop.bound'
@@ -2001,14 +1869,14 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: UnauthorizedError,
-      expectedMessage: 'Unauthorized',
-      expectedCode: undefined,
+      expectedError: InvalidRequestError,
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `InvalidRequestError` if RANDOM scheme contains a valid DPoP bound token and receives DPoP bound token via body as-well', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if RANDOM scheme contains a valid DPoP bound token and receives DPoP bound token via body as-well', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
 
     const { verifier } = createVerifier(
@@ -2023,18 +1891,13 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage:
-        "Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP",
-      expectedCode: 'invalid_request',
-      expectedChallengeIncludes: [
-        `DPoP error="invalid_request", error_description="Operation indicated DPoP use but the request's Authorization HTTP Header scheme is not DPoP", algs="${SUPPORTED_ALGS.join(
-          ' '
-        )}"`,
-      ],
+      expectedMessage: '',
+      expectedCode: '',
+      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
-  it('"required" mode | throws `UnauthorizedError` if RANDOM scheme contains a valid DPoP bound token and receives DPoP bound token via body as-well (isUrlEncoded: false)', async () => {
+  it('"required" mode | throws `InvalidRequestError` with "no-error-information" | if RANDOM scheme contains a valid DPoP bound token and receives DPoP bound token via body as-well (isUrlEncoded: false)', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
 
     const { verifier } = createVerifier(
@@ -2042,15 +1905,15 @@ describe('tokenVerifier / verify', () => {
       { dpop: { enabled: true, required: true } },
       { authorization: 'RANDOM abc.def.hgi' }, // header source (unknown scheme)
       {},
-      { access_token: 'abc.def.hgi' }, // Token received via body will be ignored as `usUrlEncoded` is false
+      { access_token: 'abc.def.hgi' }, // Token received via body will be ignored as `isUrlEncoded` is false
       false // isUrlEncoded: false
     );
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: UnauthorizedError,
-      expectedMessage: 'Unauthorized',
-      expectedCode: undefined,
+      expectedError: InvalidRequestError,
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
@@ -2069,7 +1932,7 @@ describe('tokenVerifier / verify', () => {
     expect((dpopVerifier.verifyDPoP as sinon.SinonStub).notCalled).toBe(true);
   });
 
-  it('"disabled" mode | throws if scheme is not bearer', async () => {
+  it('"disabled" mode | throws `InvalidRequestError` with "no-error-information" | if scheme is not bearer', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
     const { verifier } = createVerifier(
       jwtResult,
@@ -2079,8 +1942,9 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: UnauthorizedError,
-      expectedMessage: 'Unauthorized',
+      expectedError: InvalidRequestError,
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: ['Bearer realm="api"'],
     });
   });
@@ -2168,7 +2032,7 @@ describe('tokenVerifier / verify', () => {
     expect((dpopVerifier.verifyDPoP as sinon.SinonStub).notCalled).toBe(true);
   });
 
-  it('"disabled" mode | throws `UnauthorizedError` if DPoP-bound token is used with DPoP scheme | `WWW-Authenticate` would contain only `Bearer` challenge', async () => {
+  it('"disabled" mode | throws `InvalidRequestError` with "no-error-information" | if DPoP-bound token is used with DPoP scheme | `WWW-Authenticate` would contain only `Bearer` challenge', async () => {
     const jwtResult = createJwtResult({
       sub: 'user',
       cnf: {
@@ -2193,14 +2057,14 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: UnauthorizedError,
-      expectedMessage: 'Unauthorized',
-      expectedCode: undefined,
+      expectedError: InvalidRequestError,
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: [`Bearer realm="api"`],
     });
   });
 
-  it('"disabled" mode | throws `UnauthorizedError` if `Bearer` token is used with DPoP scheme and a proof header is present | `WWW-Authenticate` would contain only `Bearer` challenge', async () => {
+  it('"disabled" mode | throws `InvalidRequestError` with "no-error-information" | if `Bearer` token is used with DPoP scheme and a proof header is present | `WWW-Authenticate` would contain only `Bearer` challenge', async () => {
     const jwtResult = createJwtResult({
       sub: 'user',
       // no `cnf.jkt`, so NOT DPoP-bound
@@ -2222,14 +2086,14 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: UnauthorizedError,
-      expectedMessage: 'Unauthorized',
-      expectedCode: undefined,
+      expectedError: InvalidRequestError,
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: [`Bearer realm="api"`],
     });
   });
 
-  it('"disabled" mode | throws `UnauthorizedError` if request has no auth header, and token was not sent via query or body | `WWW-Authenticate` would contain only `Bearer` challenge', async () => {
+  it('"disabled" mode | throws `InvalidRequestError` with "no-error-information" | if request has no auth header, and token was not sent via query or body | `WWW-Authenticate` would contain only `Bearer` challenge', async () => {
     const verifier = tokenVerifier(
       sinon.stub().resolves(createJwtResult({ sub: 'user' })), // Won’t be called
       { dpop: { enabled: false } },
@@ -2243,8 +2107,9 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: UnauthorizedError,
-      expectedMessage: 'Unauthorized',
+      expectedError: InvalidRequestError,
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: [`Bearer realm="api"`],
     });
   });
@@ -2284,7 +2149,7 @@ describe('tokenVerifier / verify', () => {
     });
   });
 
-  it('"disabled" mode | throws `UnauthorizedError` if auth scheme is `random` but the token is also received via query | `WWW-Authenticate` would contain only `Bearer` challenge', async () => {
+  it('"disabled" mode | throws `InvalidRequestError` with "no-error-information" | if auth scheme is `random` but the token is also received via query | `WWW-Authenticate` would contain only `Bearer` challenge', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
 
     const verifier = tokenVerifier(
@@ -2303,8 +2168,9 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: UnauthorizedError,
-      expectedMessage: 'Unauthorized',
+      expectedError: InvalidRequestError,
+      expectedMessage: '',
+      expectedCode: '',
       expectedChallengeIncludes: ['Bearer realm="api"'],
     });
   });
