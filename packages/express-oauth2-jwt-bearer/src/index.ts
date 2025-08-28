@@ -18,6 +18,7 @@ import {
   type AuthOptions,
   type DPoPOptions
 } from 'access-token-jwt';
+import { resolveHost } from './resolve-host';
 
 declare global {
   namespace Express {
@@ -82,7 +83,7 @@ export const auth = (opts: AuthOptions = {}): Handler => {
     const { headers, query, body, method } = req;
 
     // Construct the URL from the request object.
-    const url = `${req.protocol}://${req.host}${req.originalUrl ?? req.url}`;
+    const url = `${req.protocol}://${resolveHost(req)}${req.originalUrl ?? req.url}`;
 
     // Get DPoP verifier instance with the provided options.
     const requestOptions: RequestLike = {
