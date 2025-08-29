@@ -10,7 +10,7 @@ type HeadersLike = Record<string, unknown> & {
   'content-type'?: string;
 };
 
-const TOKEN_RE = /^Bearer (.+)$/i;
+const TOKEN_RE = /^(Bearer|DPoP) (.+)$/i;
 
 const getTokenFromHeader = (headers: HeadersLike) => {
   if (typeof headers.authorization !== 'string') {
@@ -20,7 +20,7 @@ const getTokenFromHeader = (headers: HeadersLike) => {
   if (!match) {
     return;
   }
-  return match[1];
+  return match[2];
 };
 
 const getTokenFromQuery = (query?: QueryLike) => {
