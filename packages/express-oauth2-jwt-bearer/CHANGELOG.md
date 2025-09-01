@@ -1,5 +1,12 @@
 # Change Log
 
+## [v1.7.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.7.0) (2025-09-01)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.6.1...v1.7.0)
+
+**Added**
+- feat: Add DPoP (Demonstrating Proof of Possession) authentication support [\#183](https://github.com/auth0/node-oauth2-jwt-bearer/pull/183) ([nandan-bhat](https://github.com/nandan-bhat))
+- Update engines to support Node 24 [\#186](https://github.com/auth0/node-oauth2-jwt-bearer/pull/186) ([frederikprijck](https://github.com/frederikprijck))
+
 ## [v1.6.1](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.6.1) (2025-03-14)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.6.0...v1.6.1)
 
