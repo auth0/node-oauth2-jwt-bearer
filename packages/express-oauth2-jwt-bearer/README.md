@@ -97,7 +97,7 @@ To learn how to:
 - Disable DPoP entirely
 - Configure proof timing with `iatOffset` and `iatLeeway`
 
-**See [DPoP examples in `EXAMPLES.md`](./EXAMPLES.md#dpop-authentication-early-access)**
+**See [DPoP examples in `EXAMPLES.md`](https://github.com/auth0/node-oauth2-jwt-bearer/blob/main/packages/express-oauth2-jwt-bearer/EXAMPLES.md)**
 
 
 ### Security Headers
