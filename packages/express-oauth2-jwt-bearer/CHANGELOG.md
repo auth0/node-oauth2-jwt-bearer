@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.7.1](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.7.1) (2025-09-03)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.7.0...v1.7.1)
+
+**Fixed**
+- fix: fix broken link on README.md [\#188](https://github.com/auth0/node-oauth2-jwt-bearer/pull/188) ([nandan-bhat](https://github.com/nandan-bhat))
+
 ## [v1.7.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.7.0) (2025-09-01)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.6.1...v1.7.0)
 
