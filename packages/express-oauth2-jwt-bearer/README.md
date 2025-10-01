@@ -18,7 +18,7 @@
 
 This package supports the following tooling versions:
 
-- Node.js: `^12.19.0 || ^14.15.0 || ^16.13.0 || ^18.12.0 || ^20.2.0`
+- Node.js: `^12.19.0 || ^14.15.0 || ^16.13.0 || ^18.12.0 || ^20.2.0 || ^22.1.0`
 
 ### Installation
 
@@ -84,6 +84,21 @@ app.get('/api/messages', (req, res, next) => {
   auth.token; // The raw JWT token.
 });
 ```
+
+#### DPoP Authentication (Early Access)
+
+> **Note:** DPoP support is currently in **Early Access**. Contact [Auth0 Support](https://support.auth0.com/) to have it enabled for your tenant.
+
+This SDK supports [DPoP (Demonstration of Proof-of-Possession)](https://datatracker.ietf.org/doc/html/rfc9449), which enhances access token security by requiring clients to prove possession of a private key associated with each request.
+
+To learn how to:
+- Enforce DPoP-only authentication
+- Accept both DPoP and Bearer tokens (default)
+- Disable DPoP entirely
+- Configure proof timing with `iatOffset` and `iatLeeway`
+
+**See [DPoP examples in `EXAMPLES.md`](https://github.com/auth0/node-oauth2-jwt-bearer/blob/main/packages/express-oauth2-jwt-bearer/EXAMPLES.md#dpop-authentication-early-access)**
+
 
 ### Security Headers
 
