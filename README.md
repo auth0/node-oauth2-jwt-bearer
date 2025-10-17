@@ -1,3 +1,5 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/auth0/node-oauth2-jwt-bearer)
+
 # oauth2-jwt-bearer
 
 Monorepo for `oauth2-jwt-bearer`. Contains the following packages:
