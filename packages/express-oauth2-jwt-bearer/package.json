@@ -41,6 +41,8 @@
     "typescript": "^5.0.2"
   },
   "dependencies": {
+    "access-token-jwt": "0.0.1",
+    "oauth2-bearer": "0.0.1",
     "jose": "^4.15.5"
   },
   "engines": {

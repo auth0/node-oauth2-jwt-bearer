@@ -99,6 +99,106 @@ To learn how to:
 
 **See [DPoP examples in `EXAMPLES.md`](https://github.com/auth0/node-oauth2-jwt-bearer/blob/main/packages/express-oauth2-jwt-bearer/EXAMPLES.md#dpop-authentication-early-access)**
 
+### Token Exchange (OAuth 2.0 RFC 8693)
+
+This SDK supports [OAuth 2.0 Token Exchange (RFC 8693)](https://datatracker.ietf.org/doc/html/rfc8693), which allows you to exchange an access token for a different token, typically for calling downstream APIs with different audiences or scopes.
+
+#### Basic Token Exchange
+
+```js
+const { auth, tokenExchange } = require('express-oauth2-jwt-bearer');
+
+// Setup auth middleware first
+app.use(auth({
+  audience: 'https://api.example.com',
+  issuerBaseURL: 'https://auth.example.com',
+}));
+
+// Add token exchange middleware
+app.use(tokenExchange({
+  tokenEndpoint: 'https://auth.example.com/oauth/token',
+  clientId: 'your-client-id',
+  clientSecret: 'your-client-secret',
+  targetAudience: 'https://downstream-api.example.com',
+}));
+
+app.get('/api/data', async (req, res) => {
+  // Access the exchanged token
+  const exchangedToken = req.exchangedAuth?.access_token;
+  
+  // Use it to call downstream APIs
+  const response = await fetch('https://downstream-api.example.com/data', {
+    headers: { 'Authorization': `Bearer ${exchangedToken}` }
+  });
+  
+  const data = await response.json();
+  res.json(data);
+});
+```
+
+#### Environment Variable Configuration
+
+```shell
+TOKEN_EXCHANGE_ENDPOINT=https://auth.example.com/oauth/token
+TOKEN_EXCHANGE_CLIENT_ID=your-client-id
+TOKEN_EXCHANGE_CLIENT_SECRET=your-client-secret
+TOKEN_EXCHANGE_AUDIENCE=https://downstream-api.example.com
+```
+
+```js
+// Uses environment variables
+app.use(tokenExchange());
+```
+
+#### Conditional Token Exchange
+
+```js
+app.use(tokenExchange({
+  tokenEndpoint: process.env.TOKEN_EXCHANGE_ENDPOINT,
+  clientId: process.env.TOKEN_EXCHANGE_CLIENT_ID,
+  clientSecret: process.env.TOKEN_EXCHANGE_CLIENT_SECRET,
+  targetAudience: 'https://special-api.example.com',
+  when: 'conditional',
+  shouldExchange: (req) => req.path.startsWith('/api/special'),
+  onError: 'skip', // Continue even if exchange fails
+}));
+```
+
+#### Manual Token Exchange
+
+```js
+const { exchangeToken } = require('express-oauth2-jwt-bearer');
+
+app.get('/api/manual', async (req, res) => {
+  try {
+    const exchangedToken = await exchangeToken(req.auth.token, {
+      tokenEndpoint: 'https://auth.example.com/oauth/token',
+      clientId: 'your-client-id',
+      clientSecret: 'your-client-secret',
+      targetAudience: 'https://special-api.example.com',
+      scope: 'read:special-data',
+    });
+    
+    res.json({ success: true, tokenType: exchangedToken.token_type });
+  } catch (error) {
+    res.status(500).json({ error: 'Token exchange failed' });
+  }
+});
+```
+
+After successful token exchange, your request object will have:
+
+```js
+app.get('/api/protected', (req, res) => {
+  const auth = req.auth; // Original token validation result
+  const exchangedAuth = req.exchangedAuth; // Exchanged token result
+  
+  exchangedAuth.access_token; // The new access token
+  exchangedAuth.token_type;   // Usually "Bearer"
+  exchangedAuth.expires_in;   // Token expiration (seconds)
+  exchangedAuth.scope;        // Token scope
+});
+```
 
 ### Security Headers
 
@@ -121,6 +221,10 @@ See the Express.js [docs on error handling](https://expressjs.com/en/guide/error
 
 - [auth](https://auth0.github.io/node-oauth2-jwt-bearer/functions/auth.html) - Middleware that will return a 401 if a valid Access token JWT bearer token is not provided in the request.
 - [AuthResult](https://auth0.github.io/node-oauth2-jwt-bearer/interfaces/AuthResult.html) - The properties added to `req.auth` upon successful authorization.
+- [tokenExchange](./src/token-exchange.ts) - Middleware for OAuth 2.0 Token Exchange (RFC 8693) that exchanges access tokens for downstream API calls.
+- [exchangeToken](./src/token-exchange.ts) - Function to manually perform OAuth 2.0 Token Exchange.
+- [TokenExchangeOptions](./src/token-exchange.ts) - Configuration options for token exchange.
+- [TokenExchangeResult](./src/token-exchange.ts) - The result of a successful token exchange.
 - [requiredScopes](https://auth0.github.io/node-oauth2-jwt-bearer/functions/requiredScopes.html) - Check a token's scope claim to include a number of given scopes, raises a 403 `insufficient_scope` error if the value of the scope claim does not include all the given scopes.
 - [claimEquals](https://auth0.github.io/node-oauth2-jwt-bearer/functions/claimEquals.html) - Check a token's claim to be equal a given JSONPrimitive (string, number, boolean or null) raises a 401 `invalid_token` error if the value of the claim does not match.
 - [claimIncludes](https://auth0.github.io/node-oauth2-jwt-bearer/functions/claimIncludes.html) - Check a token's claim to include a number of given JSONPrimitives (string, number, boolean or null) raises a 401 `invalid_token` error if the value of the claim does not include all the given values.

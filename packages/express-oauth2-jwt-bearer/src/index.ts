@@ -12,13 +12,35 @@ import {
   requiredScopes as _requiredScopes,
   RequiredScopes,
   scopeIncludesAny as _scopeIncludesAny,
-  VerifyJwtResult as AuthResult,
+  VerifyJwtResult,
   type JWTPayload,
   type RequestLike,
   type AuthOptions,
   type DPoPOptions
 } from 'access-token-jwt';
 import { resolveHost } from './resolve-host';
+import { 
+  exchangeToken, 
+  type TokenExchangeOptions, 
+  type TokenExchangeResult 
+} from './token-exchange';
+
+export {
+  exchangeToken,
+  type TokenExchangeOptions,
+  type TokenExchangeResult,
+} from './token-exchange';
+
+// Extend the VerifyJwtResult to include exchange method
+export interface AuthResult extends VerifyJwtResult {
+  /**
+   * Exchange the current access token for another token using OAuth 2.0 Token Exchange (RFC 8693)
+   * 
+   * @param options - Token exchange configuration options
+   * @returns Promise resolving to the exchanged token
+   */
+  exchange(options: TokenExchangeOptions): Promise<TokenExchangeResult>;
+}
 
 declare global {
   namespace Express {
@@ -99,7 +121,14 @@ export const auth = (opts: AuthOptions = {}): Handler => {
     const verifier = tokenVerifier(verifyJwt, opts, requestOptions);
 
     try {
-      req.auth = await verifier.verify();
+      const verifyResult = await verifier.verify();
+      
+      // Create AuthResult with exchange method
+      req.auth = {
+        ...verifyResult,
+        exchange: (options: TokenExchangeOptions) => exchangeToken(verifyResult.token, options)
+      };
+      
       next();
     } catch (e) {
       if (opts.authRequired === false) {
@@ -199,7 +228,7 @@ export const requiredScopes: RequiredScopes<Handler> = (...args) =>
 export const scopeIncludesAny: RequiredScopes<Handler> = (...args) =>
   toHandler(_scopeIncludesAny(...args));
 
-export { AuthResult, JWTPayload, AuthOptions, DPoPOptions };
+export { JWTPayload, AuthOptions, DPoPOptions };
 export {
   FunctionValidator,
   Validator,

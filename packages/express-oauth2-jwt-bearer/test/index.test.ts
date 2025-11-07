@@ -18,6 +18,7 @@ import {
   InvalidRequestError,
   InvalidTokenError,
   InsufficientScopeError,
+  exchangeToken,
 } from '../src';
 
 const expectFailsWith = async (
@@ -436,6 +437,17 @@ describe('index', () => {
   });
 
   it('should export errors', () => {
+    expect(UnauthorizedError).toBeDefined();
+    expect(InvalidRequestError).toBeDefined();
+    expect(InvalidTokenError).toBeDefined();
+    expect(InsufficientScopeError).toBeDefined();
+  });
+
+  it('should export token exchange functions', () => {
+    expect(typeof exchangeToken).toBe('function');
+  });
+
+  it('should export errors', () => {
     expect(() => {
       throw new UnauthorizedError();
     }).toThrow(UnauthorizedError);
@@ -526,6 +538,37 @@ describe('index', () => {
   
     server.close();
   });
-  
-  
+
+  it('should add exchange method to auth context', async () => {
+    const jwt = await createJwt();
+    const app = express();
+
+    app.use(auth({ 
+      issuerBaseURL: 'https://issuer.example.com/',
+      audience: 'https://api/'
+    }));
+    app.get('/test-exchange', (req, res) => {
+      expect(req.auth).toBeDefined();
+      expect(typeof req.auth?.exchange).toBe('function');
+      res.json({ hasExchange: typeof req.auth?.exchange === 'function' });
+    });
+
+    const server = await new Promise<Server>((resolve) => {
+      const s = app.listen(0, () => resolve(s));
+    });
+
+    const address = server.address() as AddressInfo;
+    const url = `http://localhost:${address.port}/test-exchange`;
+
+    const response = await got(url, {
+      headers: { authorization: `Bearer ${jwt}` },
+      responseType: 'json',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toEqual({ hasExchange: true });
+
+    server.close();
+  });
+
 });
