@@ -8,9 +8,18 @@
 
 import express from 'express';
 import { auth, exchangeToken } from 'express-oauth2-jwt-bearer';
+import rateLimit from 'express-rate-limit';
 
 const app = express();
 app.use(express.json());
+
+// Rate limiter: max 100 requests per 15 minutes per IP for expensive routes
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
 
 // Setup the auth middleware
 const authenticateToken = auth({
@@ -25,7 +34,7 @@ app.get('/health', (req, res) => {
 
 // Example 1: Exchange using request auth context (recommended for Express middleware)
 // This approach automatically uses the token from the current authenticated request
-app.post('/exchange-via-context', authenticateToken, async (req, res) => {
+app.post('/exchange-via-context', authenticateToken, limiter, async (req, res) => {
   try {
     if (!req.auth) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -54,7 +63,7 @@ app.post('/exchange-via-context', authenticateToken, async (req, res) => {
 
 // Example 2: Direct token exchange using the exchangeToken function
 // This approach allows you to exchange any token manually
-app.post('/exchange-direct', authenticateToken, async (req, res) => {
+app.post('/exchange-direct', authenticateToken, limiter, async (req, res) => {
   try {
     if (!req.auth) {
       return res.status(401).json({ error: 'Authentication required' });
