@@ -3,7 +3,7 @@ import {
   InvalidTokenError,
   UnauthorizedError,
   InvalidProofError,
-} from 'oauth2-bearer';
+} from '@internal/oauth2-bearer-utils';
 import tokenVerifier, {
   type DPoPOptions,
   type AuthError,

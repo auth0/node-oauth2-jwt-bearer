@@ -11,7 +11,7 @@ import {
   InvalidRequestError,
   InvalidProofError,
   InvalidTokenError,
-} from 'oauth2-bearer';
+} from '@internal/oauth2-bearer-utils';
 
 import { HeadersLike } from '../src/token-verifier';
 
