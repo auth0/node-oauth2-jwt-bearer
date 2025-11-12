@@ -18,6 +18,6 @@
   },
   "devDependencies": {
     "typedoc": "^0.24.6",
-    "typescript": "^5.0.2"
+    "typescript": "^5.1.6"
   }
 }

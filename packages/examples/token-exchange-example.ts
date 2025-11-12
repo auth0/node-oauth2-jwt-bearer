@@ -21,6 +21,17 @@ const limiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
+// Stricter rate limiter for token exchange operations
+const tokenExchangeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // Limit each IP to 50 token exchange requests per 15 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: 'Too many token exchange requests, please try again later.'
+  }
+});
+
 // Setup the auth middleware
 const authenticateToken = auth({
   issuerBaseURL: 'https://dev-ankita-t.us.auth0.com',
@@ -34,7 +45,7 @@ app.get('/health', (req, res) => {
 
 // Example 1: Exchange using request auth context (recommended for Express middleware)
 // This approach automatically uses the token from the current authenticated request
-app.post('/exchange-via-context', authenticateToken, limiter, async (req, res) => {
+app.post('/exchange-via-context', authenticateToken, tokenExchangeLimiter, async (req, res) => {
   try {
     if (!req.auth) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -53,7 +64,8 @@ app.post('/exchange-via-context', authenticateToken, limiter, async (req, res) =
       exchangedToken,
     });
   } catch (error) {
-    console.error('Token exchange failed:', error);
+    // Secure logging: don't log user input directly
+    console.error('Token exchange failed (via context):', error instanceof Error ? 'Error occurred' : 'Unknown error');
     res.status(500).json({
       error: 'Token exchange failed',
       details: error instanceof Error ? error.message : 'Unknown error',
@@ -63,7 +75,7 @@ app.post('/exchange-via-context', authenticateToken, limiter, async (req, res) =
 
 // Example 2: Direct token exchange using the exchangeToken function
 // This approach allows you to exchange any token manually
-app.post('/exchange-direct', authenticateToken, limiter, async (req, res) => {
+app.post('/exchange-direct', authenticateToken, tokenExchangeLimiter, async (req, res) => {
   try {
     if (!req.auth) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -86,10 +98,11 @@ app.post('/exchange-direct', authenticateToken, limiter, async (req, res) => {
       exchangedToken,
     });
   } catch (error) {
+    // Secure logging: don't log user-provided data directly
+    console.error('Token exchange failed (direct):', error instanceof Error ? 'Error occurred' : 'Unknown error');
     const sanitizedErrorMsg = (error instanceof Error ? error.message : String(error))
       // Remove all non-printable/controls (incl. \r \n \t, Unicode separators, etc.)
       .replace(/[\r\n\t\x00-\x1F\x7F-\x9F\u2028\u2029]+/g, ' ');
-    console.error('Token exchange failed:', '[sanitized]', JSON.stringify(sanitizedErrorMsg));
     res.status(500).json({
       error: 'Token exchange failed',
       details: sanitizedErrorMsg,
@@ -99,7 +112,7 @@ app.post('/exchange-direct', authenticateToken, limiter, async (req, res) => {
 
 // Example 3: Exchange a token from request body (demonstrating flexibility of direct function)
 // This shows how you can exchange any token, not just the current request's token
-app.post('/exchange-any-token', async (req, res) => {
+app.post('/exchange-any-token', tokenExchangeLimiter, async (req, res) => {
   try {
     const { token } = req.body;
     
@@ -121,10 +134,11 @@ app.post('/exchange-any-token', async (req, res) => {
       exchangedToken,
     });
   } catch (error) {
+    // Secure logging: don't log user-provided data directly
+    console.error('Token exchange failed (external):', error instanceof Error ? 'Error occurred' : 'Unknown error');
     const sanitizedErrorMsg = (error instanceof Error ? error.message : String(error))
       // Remove all non-printable/controls (incl. \r \n \t, Unicode separators, etc.)
       .replace(/[\r\n\t\x00-\x1F\x7F-\x9F\u2028\u2029]+/g, ' ');
-    console.error('Token exchange failed:', '[sanitized]', JSON.stringify(sanitizedErrorMsg));
     res.status(500).json({
       error: 'Token exchange failed',
       details: sanitizedErrorMsg,
@@ -169,7 +183,7 @@ app.get('/compare-approaches', authenticateToken, limiter, async (req, res) => {
 });
 
 // Information endpoint for getting tokens (for testing)
-app.get('/get-token', (req, res) => {
+app.get('/get-token', limiter, (req, res) => {
   res.json({
     message: 'To get tokens for testing, use one of these approaches:',
     approaches: {

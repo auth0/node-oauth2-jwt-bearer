@@ -3,6 +3,7 @@ import { AddressInfo } from 'net';
 import express from 'express';
 import nock from 'nock';
 import got from 'got';
+import rateLimit from 'express-rate-limit';
 import { createJwt } from 'access-token-jwt/test/helpers';
 import { auth } from '../src';
 
@@ -17,6 +18,15 @@ describe('Integration: Token Exchange API', () => {
   it('should provide req.auth.exchange() method following express-openid-connect pattern', async () => {
     const jwt = await createJwt();
     const app = express();
+
+    // Rate limiting for token exchange operations (security requirement)
+    const tokenExchangeLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 50, // Limit each IP to 50 requests per windowMs
+      message: { error: 'Token exchange rate limit exceeded' },
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
 
     // Setup auth middleware
     app.use(auth({ 
@@ -35,8 +45,8 @@ describe('Integration: Token Exchange API', () => {
       .post('/oauth/token')
       .reply(200, mockTokenResponse);
 
-    // Route that uses the new exchange API
-    app.get('/exchange', async (req, res) => {
+    // Route that uses the new exchange API - with rate limiting applied
+    app.get('/exchange', tokenExchangeLimiter, async (req, res) => {
       try {
         // This is the new simplified API - one method on auth context
         const result = await req.auth!.exchange({
@@ -51,7 +61,9 @@ describe('Integration: Token Exchange API', () => {
           hasExchangeMethod: typeof req.auth?.exchange === 'function'
         });
       } catch (error) {
-        res.status(500).json({ error: error.message });
+        // Secure error handling - prevent log injection
+        const sanitizedError = error instanceof Error ? error.message.replace(/[\r\n]/g, '') : 'Unknown error';
+        res.status(500).json({ error: sanitizedError });
       }
     });
 
