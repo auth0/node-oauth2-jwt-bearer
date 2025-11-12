@@ -3,6 +3,7 @@ import { Server } from 'http';
 import { randomBytes } from 'crypto';
 import { Handler } from 'express';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import nock from 'nock';
 import got, { CancelableRequest } from 'got';
 import { createJwt } from 'access-token-jwt/test/helpers';
@@ -20,6 +21,13 @@ import {
   InsufficientScopeError,
   exchangeToken,
 } from '../src';
+
+
+// Define a "relaxed" limiter for use in test Express apps, to satisfy CodeQL and not interfere with tests.
+const testLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 1000 // generously high to never interfere with local test requests
+});
 
 const expectFailsWith = async (
   promise: CancelableRequest,
@@ -502,6 +510,7 @@ describe('index', () => {
   it('for full coverage: should use req.url when req.originalUrl is undefined', async () => {
     const jwt = await createJwt();
     const app = express();
+    app.use(testLimiter);
   
     // Simulate a broken originalUrl (force it to be undefined)
     app.use((req, res, next) => {
@@ -542,7 +551,7 @@ describe('index', () => {
   it('should add exchange method to auth context', async () => {
     const jwt = await createJwt();
     const app = express();
-
+    app.use(testLimiter);
     app.use(auth({ 
       issuerBaseURL: 'https://issuer.example.com/',
       audience: 'https://api/'
