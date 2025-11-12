@@ -1,5 +1,5 @@
 {
-  "name": "oauth2-bearer",
+  "name": "@internal/oauth2-bearer-utils",
   "private": true,
   "license": "MIT",
   "author": "Auth0 <support@auth0.com>",

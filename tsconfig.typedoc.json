@@ -4,7 +4,7 @@
     "baseUrl": ".",
     "paths": {
       "access-token-jwt": ["packages/access-token-jwt/src"],
-      "oauth2-bearer": ["packages/oauth2-bearer/src"]
+      "@internal/oauth2-bearer-utils": ["packages/oauth2-bearer/src"]
     },
     "useUnknownInCatchVariables": false,
   },

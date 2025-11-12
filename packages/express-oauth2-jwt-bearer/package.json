@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "access-token-jwt": "0.0.1",
-    "oauth2-bearer": "0.0.1",
+    "@internal/oauth2-bearer-utils": "0.0.1",
     "jose": "^4.15.5",
     "express-rate-limit": "^8.2.1"
   },

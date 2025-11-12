@@ -21,7 +21,7 @@ module.exports = {
     },
   },
   moduleNameMapper: {
-    '^oauth2-bearer$': '<rootDir>/../oauth2-bearer/src/',
+    '^@internal/oauth2-bearer-utils$': '<rootDir>/../oauth2-bearer/src/',
   },
   transform: {
     '^.+\\.tsx?$': [
@@ -30,7 +30,7 @@ module.exports = {
         tsconfig: {
           baseUrl: '.',
           paths: {
-            'oauth2-bearer': ['../oauth2-bearer/src'],
+            '@internal/oauth2-bearer-utils': ['../oauth2-bearer/src'],
           },
         },
       },

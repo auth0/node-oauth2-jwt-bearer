@@ -19,7 +19,7 @@ export {
   InvalidTokenError,
   UnauthorizedError,
   InsufficientScopeError,
-} from 'oauth2-bearer';
+} from '@internal/oauth2-bearer-utils';
 export { default as discover, IssuerMetadata } from './discovery';
 export {
   claimCheck,

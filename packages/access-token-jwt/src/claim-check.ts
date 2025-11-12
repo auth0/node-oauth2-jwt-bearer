@@ -2,7 +2,7 @@ import {
   InvalidTokenError,
   InsufficientScopeError,
   UnauthorizedError,
-} from 'oauth2-bearer';
+} from '@internal/oauth2-bearer-utils';
 import type { JWTPayload } from 'jose';
 
 export type JSONPrimitive = string | number | boolean | null;

@@ -3,7 +3,7 @@ import { Agent as HttpAgent } from 'http';
 import { Agent as HttpsAgent } from 'https';
 import { jwtVerify } from 'jose';
 import type { JWTPayload, JWSHeaderParameters } from 'jose';
-import { InvalidTokenError } from 'oauth2-bearer';
+import { InvalidTokenError } from '@internal/oauth2-bearer-utils';
 import discovery from './discovery';
 import getKeyFn from './get-key-fn';
 import validate, { defaultValidators, Validators } from './validate';

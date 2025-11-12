@@ -2,7 +2,7 @@ import {
   InvalidRequestError,
   InvalidTokenError,
   UnauthorizedError,
-} from 'oauth2-bearer';
+} from '@internal/oauth2-bearer-utils';
 import { strict as assert } from 'assert';
 
 import type {

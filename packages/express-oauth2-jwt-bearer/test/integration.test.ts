@@ -19,6 +19,15 @@ describe('Integration: Token Exchange API', () => {
     const jwt = await createJwt();
     const app = express();
 
+    // Global rate limiting for all routes (security baseline)
+    const globalLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // Global limit for all routes
+      message: { error: 'Rate limit exceeded' },
+      standardHeaders: true,
+      legacyHeaders: false,
+    });
+
     // Rate limiting for token exchange operations (security requirement)
     const tokenExchangeLimiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
@@ -30,7 +39,10 @@ describe('Integration: Token Exchange API', () => {
       skipFailedRequests: false,
     });
 
-    // Setup auth middleware
+    // Apply global rate limiting to all routes first
+    app.use(globalLimiter);
+
+    // Setup auth middleware (protected by global rate limiting above)
     app.use(auth({ 
       issuerBaseURL: 'https://issuer.example.com/',
       audience: 'https://api/'
@@ -47,9 +59,14 @@ describe('Integration: Token Exchange API', () => {
       .post('/oauth/token')
       .reply(200, mockTokenResponse);
 
-    // Route that uses the new exchange API - with rate limiting applied
+    // Route that uses the new exchange API - PROTECTED: global rate limiting + specific token exchange rate limiting
     app.get('/exchange', tokenExchangeLimiter, async (req, res) => {
       try {
+        // Security validation: Ensure authenticated request
+        if (!req.auth) {
+          return res.status(401).json({ error: 'Authentication required' });
+        }
+
         // This is the new simplified API - one method on auth context
         const result = await req.auth!.exchange({
           tokenEndpoint: 'https://auth.example.com/oauth/token',

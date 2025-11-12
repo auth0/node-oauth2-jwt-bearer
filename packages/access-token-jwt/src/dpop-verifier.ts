@@ -13,7 +13,7 @@ import {
   InvalidRequestError,
   InvalidProofError,
   InvalidTokenError,
-} from 'oauth2-bearer';
+} from '@internal/oauth2-bearer-utils';
 
 export interface ConfirmationClaims {
   jkt: string;

@@ -241,4 +241,4 @@ export {
   InvalidRequestError,
   InvalidTokenError,
   InsufficientScopeError,
-} from 'oauth2-bearer';
+} from '@internal/oauth2-bearer-utils';

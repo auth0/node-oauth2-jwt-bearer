@@ -31,6 +31,7 @@
     "typescript": "~5.1.6"
   },
   "dependencies": {
+    "@internal/oauth2-bearer-utils": "0.0.1",
     "jose": "^4.15.5"
   },
   "engines": {

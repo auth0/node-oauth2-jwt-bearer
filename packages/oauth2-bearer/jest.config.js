@@ -5,8 +5,8 @@ module.exports = {
     [
       'jest-junit',
       {
-        suiteName: 'oauth2-bearer',
-        outputDirectory: '../../test-results/oauth2-bearer',
+        suiteName: '@internal/oauth2-bearer-utils',
+        outputDirectory: '../../test-results/oauth2-bearer-utils',
       },
     ],
   ],
