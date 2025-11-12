@@ -86,7 +86,9 @@ app.post('/exchange-direct', authenticateToken, limiter, async (req, res) => {
       exchangedToken,
     });
   } catch (error) {
-    const sanitizedErrorMsg = (error instanceof Error ? error.message : String(error)).replace(/[\r\n]+/g, ' ');
+    const sanitizedErrorMsg = (error instanceof Error ? error.message : String(error))
+      // Remove all non-printable/controls (incl. \r \n \t, Unicode separators, etc.)
+      .replace(/[\r\n\t\x00-\x1F\x7F-\x9F\u2028\u2029]+/g, ' ');
     console.error('Token exchange failed:', `[sanitized] ${sanitizedErrorMsg}`);
     res.status(500).json({
       error: 'Token exchange failed',
@@ -119,7 +121,9 @@ app.post('/exchange-any-token', async (req, res) => {
       exchangedToken,
     });
   } catch (error) {
-    const sanitizedErrorMsg = (error instanceof Error ? error.message : String(error)).replace(/[\r\n]+/g, ' ');
+    const sanitizedErrorMsg = (error instanceof Error ? error.message : String(error))
+      // Remove all non-printable/controls (incl. \r \n \t, Unicode separators, etc.)
+      .replace(/[\r\n\t\x00-\x1F\x7F-\x9F\u2028\u2029]+/g, ' ');
     console.error('Token exchange failed:', `[sanitized] ${sanitizedErrorMsg}`);
     res.status(500).json({
       error: 'Token exchange failed',
