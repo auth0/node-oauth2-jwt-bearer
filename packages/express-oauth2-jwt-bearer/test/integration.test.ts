@@ -22,10 +22,12 @@ describe('Integration: Token Exchange API', () => {
     // Rate limiting for token exchange operations (security requirement)
     const tokenExchangeLimiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 50, // Limit each IP to 50 requests per windowMs
+      max: 10, // Very restrictive: Limit each IP to 10 requests per windowMs
       message: { error: 'Token exchange rate limit exceeded' },
       standardHeaders: true,
       legacyHeaders: false,
+      skipSuccessfulRequests: false,
+      skipFailedRequests: false,
     });
 
     // Setup auth middleware

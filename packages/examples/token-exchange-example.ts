@@ -21,15 +21,38 @@ const limiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 
-// Stricter rate limiter for token exchange operations
+// Stricter rate limiter for token exchange operations (security requirement)
 const tokenExchangeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // Limit each IP to 50 token exchange requests per 15 minutes
+  max: 10, // Very restrictive: Limit each IP to 10 token exchange requests per 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: false, // Count all requests towards limit
+  skipFailedRequests: false, // Count failed requests too
   message: {
-    error: 'Too many token exchange requests, please try again later.'
+    error: 'Token exchange rate limit exceeded. Please try again later.',
+    retryAfter: '15 minutes'
+  },
+  // Additional security: block the IP for repeated violations
+  onLimitReached: (req: any, res: any, options: any) => {
+    console.warn(`Token exchange rate limit exceeded for IP: ${req.ip}`);
   }
+});
+
+// Apply global rate limiting to all routes as a security baseline
+app.use(limiter);
+
+// Security headers middleware
+app.use((req: any, res: any, next: any) => {
+  // Prevent clickjacking
+  res.setHeader('X-Frame-Options', 'DENY');
+  // Prevent MIME type sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  // Enable XSS protection
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  // Enforce HTTPS
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
 });
 
 // Setup the auth middleware
@@ -38,14 +61,14 @@ const authenticateToken = auth({
   audience: 'https://api.example.com'
 });
 
-// Health check endpoint (no authentication required)
-app.get('/health', (req, res) => {
+// Health check endpoint (no authentication required but with basic rate limiting)
+app.get('/health', limiter, (req: any, res: any) => {
   res.json({ status: 'OK', message: 'Token exchange service is running' });
 });
 
 // Example 1: Exchange using request auth context (recommended for Express middleware)
 // This approach automatically uses the token from the current authenticated request
-app.post('/exchange-via-context', authenticateToken, tokenExchangeLimiter, async (req, res) => {
+app.post('/exchange-via-context', authenticateToken, tokenExchangeLimiter, async (req: any, res: any) => {
   try {
     if (!req.auth) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -75,7 +98,7 @@ app.post('/exchange-via-context', authenticateToken, tokenExchangeLimiter, async
 
 // Example 2: Direct token exchange using the exchangeToken function
 // This approach allows you to exchange any token manually
-app.post('/exchange-direct', authenticateToken, tokenExchangeLimiter, async (req, res) => {
+app.post('/exchange-direct', authenticateToken, tokenExchangeLimiter, async (req: any, res: any) => {
   try {
     if (!req.auth) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -112,7 +135,7 @@ app.post('/exchange-direct', authenticateToken, tokenExchangeLimiter, async (req
 
 // Example 3: Exchange a token from request body (demonstrating flexibility of direct function)
 // This shows how you can exchange any token, not just the current request's token
-app.post('/exchange-any-token', tokenExchangeLimiter, async (req, res) => {
+app.post('/exchange-any-token', tokenExchangeLimiter, async (req: any, res: any) => {
   try {
     const { token } = req.body;
     
@@ -147,7 +170,7 @@ app.post('/exchange-any-token', tokenExchangeLimiter, async (req, res) => {
 });
 
 // Demonstration endpoint showing the difference
-app.get('/compare-approaches', authenticateToken, limiter, async (req, res) => {
+app.get('/compare-approaches', authenticateToken, limiter, async (req: any, res: any) => {
   if (!req.auth) {
     return res.status(401).json({ error: 'Authentication required' });
   }
@@ -183,7 +206,7 @@ app.get('/compare-approaches', authenticateToken, limiter, async (req, res) => {
 });
 
 // Information endpoint for getting tokens (for testing)
-app.get('/get-token', limiter, (req, res) => {
+app.get('/get-token', limiter, (req: any, res: any) => {
   res.json({
     message: 'To get tokens for testing, use one of these approaches:',
     approaches: {
