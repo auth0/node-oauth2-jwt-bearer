@@ -38,7 +38,7 @@
     "rollup-plugin-typescript2": "^0.31.2",
     "ts-jest": "^29.0.5",
     "tslib": "^2.5.0",
-    "typescript": "^5.1.6"
+    "typescript": "~5.1.6"
   },
   "dependencies": {
     "access-token-jwt": "0.0.1",
