@@ -86,10 +86,11 @@ app.post('/exchange-direct', authenticateToken, limiter, async (req, res) => {
       exchangedToken,
     });
   } catch (error) {
-    console.error('Token exchange failed:', error);
+    const sanitizedErrorMsg = (error instanceof Error ? error.message : String(error)).replace(/[\r\n]+/g, ' ');
+    console.error('Token exchange failed:', `[sanitized] ${sanitizedErrorMsg}`);
     res.status(500).json({
       error: 'Token exchange failed',
-      details: error instanceof Error ? error.message : 'Unknown error',
+      details: sanitizedErrorMsg,
     });
   }
 });
@@ -118,10 +119,11 @@ app.post('/exchange-any-token', async (req, res) => {
       exchangedToken,
     });
   } catch (error) {
-    console.error('Token exchange failed:', error);
+    const sanitizedErrorMsg = (error instanceof Error ? error.message : String(error)).replace(/[\r\n]+/g, ' ');
+    console.error('Token exchange failed:', `[sanitized] ${sanitizedErrorMsg}`);
     res.status(500).json({
       error: 'Token exchange failed',
-      details: error instanceof Error ? error.message : 'Unknown error',
+      details: sanitizedErrorMsg,
     });
   }
 });
