@@ -156,8 +156,7 @@ export async function exchangeToken(
           const result = JSON.parse(data) as TokenExchangeResult;
           resolve(result);
         } catch (parseError) {
-          const errorMessage = parseError instanceof Error ? parseError.message : String(parseError);
-          reject(new Error(`Failed to parse token exchange response: ${errorMessage}`));
+          reject(new Error(`Failed to parse token exchange response: ${(parseError as Error).message}`));
         }
       });
     });

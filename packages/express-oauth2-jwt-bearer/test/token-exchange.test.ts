@@ -78,7 +78,7 @@ describe('Token Exchange', () => {
         'client_id=test-client-id',
         'requested_token_type=urn%3Aietf%3Aparams%3Aoauth%3Atoken-type%3Aaccess_token',
         'audience=https%3A%2F%2Fapi.example.com',
-        'scope=read%3Adata%20write%3Adata',
+        'scope=read%3Adata+write%3Adata',  // URLSearchParams encodes spaces as + signs
       ].join('&');
 
       nock('https://auth.example.com')
