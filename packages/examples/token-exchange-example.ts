@@ -129,7 +129,7 @@ app.post('/exchange-any-token', async (req, res) => {
 });
 
 // Demonstration endpoint showing the difference
-app.get('/compare-approaches', authenticateToken, async (req, res) => {
+app.get('/compare-approaches', authenticateToken, limiter, async (req, res) => {
   if (!req.auth) {
     return res.status(401).json({ error: 'Authentication required' });
   }
