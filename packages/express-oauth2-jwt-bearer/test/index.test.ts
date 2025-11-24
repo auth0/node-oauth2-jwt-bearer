@@ -6,6 +6,15 @@ import express from 'express';
 import nock from 'nock';
 import got, { CancelableRequest } from 'got';
 import { createJwt } from 'access-token-jwt/test/helpers';
+
+// Jest matcher extensions
+declare global {
+  namespace jest {
+    interface Expect {
+      objectContaining(sample: Record<string, any>): any;
+    }
+  }
+}
 import {
   auth,
   AuthOptions,
@@ -29,8 +38,11 @@ const expectFailsWith = async (
 ) => {
   try {
     await promise;
-    fail('Request should fail');
-  } catch (e) {
+    throw new Error('Request should fail');
+  } catch (e: any) {
+    if (e.message === 'Request should fail') {
+      throw e;
+    }
     const error = code ? `, error="${code}"` : '';
     const errorDescription = description
       ? `, error_description="${description}"`

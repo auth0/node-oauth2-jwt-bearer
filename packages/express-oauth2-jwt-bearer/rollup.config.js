@@ -9,7 +9,7 @@ export default [
       dir: 'dist',
       format: 'cjs',
     },
-    external: ['jose'],
+    external: ['jose', 'jsonwebtoken', 'node-fetch'],
     plugins: [
       nodeResolve(),
       typescript({
@@ -23,7 +23,7 @@ export default [
       dir: 'dist',
       format: 'es',
     },
-    external: ['express', 'http', 'https'],
+    external: ['express', 'http', 'https', 'jsonwebtoken', 'node-fetch'],
     plugins: [dts({ respectExternal: true })],
   },
 ];

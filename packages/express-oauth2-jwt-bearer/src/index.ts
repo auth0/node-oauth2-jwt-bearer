@@ -1,4 +1,4 @@
-import { Handler, NextFunction, Request, Response } from 'express';
+import express, { Handler, NextFunction, Request, Response } from 'express';
 import {
   jwtVerifier,
   tokenVerifier,
@@ -20,6 +20,7 @@ import {
 } from 'access-token-jwt';
 import { resolveHost } from './resolve-host';
 
+// Extend Express Request interface to include auth property
 declare global {
   namespace Express {
     interface Request {
@@ -80,10 +81,10 @@ export const auth = (opts: AuthOptions = {}): Handler => {
   assertValidDPoPOptions(opts.dpop);
 
   return async (req: Request, res: Response, next: NextFunction) => {
-    const { headers, query, body, method } = req;
+    const { headers, query, body, method } = req as any;
 
     // Construct the URL from the request object.
-    const url = `${req.protocol}://${resolveHost(req)}${req.originalUrl ?? req.url}`;
+    const url = `${(req as any).protocol}://${resolveHost(req)}${(req as any).originalUrl ?? (req as any).url}`;
 
     // Get DPoP verifier instance with the provided options.
     const requestOptions: RequestLike = {
@@ -92,14 +93,14 @@ export const auth = (opts: AuthOptions = {}): Handler => {
       method,
       query,
       body,
-      isUrlEncoded: !!req.is('urlencoded'),
+      isUrlEncoded: !!(req as any).is('urlencoded'),
     };
 
     // Verify both JWT and DPoP token claims.
     const verifier = tokenVerifier(verifyJwt, opts, requestOptions);
 
     try {
-      req.auth = await verifier.verify();
+      (req as any).auth = await verifier.verify();
       next();
     } catch (e) {
       if (opts.authRequired === false) {
@@ -114,9 +115,9 @@ export const auth = (opts: AuthOptions = {}): Handler => {
 
 const toHandler =
   (fn: (payload?: JWTPayload) => void): Handler =>
-  (req, res, next) => {
+  (req: Request, res: Response, next: NextFunction) => {
     try {
-      fn(req.auth?.payload);
+      fn((req as any).auth?.payload);
       next();
     } catch (e) {
       next(e);
@@ -213,3 +214,25 @@ export {
   InvalidTokenError,
   InsufficientScopeError,
 } from 'oauth2-bearer';
+
+
+// Custom Token Exchange (RFC 8693) exports
+export {
+  customTokenExchange,
+  auth0TokenExchange,
+  validateTokenExchangeRequest,
+  validateSubjectToken,
+  createTokenExchangeResponse,
+  defaultTokenExchangeHandler,
+  TOKEN_EXCHANGE_GRANT_TYPE,
+  TOKEN_TYPES,
+  TokenExchangeError,
+  InvalidSubjectTokenError,
+  UnsupportedTokenTypeError,
+  type CustomTokenExchangeOptions,
+  type TokenExchangeRequest,
+  type TokenExchangeResponse,
+  type TokenExchangeHandler,
+  type TokenValidationOptions,
+  type ResponseOptions
+} from './custom-token-exchange';
