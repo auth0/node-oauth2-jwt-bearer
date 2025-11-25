@@ -76,12 +76,13 @@ const customExchangeHandler: TokenExchangeHandler = async (
   }
 
   // Create enhanced payload with additional claims
+  // Exclude exp, iat from original payload to avoid conflicts with jwt.sign options
+  const { exp, iat, ...subjectPayloadWithoutTiming } = subjectPayload;
   const newPayload: JWTPayload = {
-    ...subjectPayload,
+    ...subjectPayloadWithoutTiming,
     aud: request.audience || subjectPayload.aud,
     scope: request.scope || subjectPayload.scope,
     iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 7200, // 2 hours
     // Add custom claims
     exchanged_at: new Date().toISOString(),
     exchange_type: 'custom_exchange',
@@ -89,7 +90,7 @@ const customExchangeHandler: TokenExchangeHandler = async (
     permissions: await getUserPermissions(subjectPayload.sub as string)
   };
 
-  // Sign the new token
+  // Sign the new token - use expiresIn option instead of exp in payload
   const accessToken = jwt.sign(newPayload, config.secret, {
     algorithm: 'HS256',
     expiresIn: '2h'
@@ -168,6 +169,7 @@ app.post('/oauth/token/resource-specific', customTokenExchange({
   issuer: config.issuer,
   audience: config.audience,
   secret: config.secret,
+  algorithms: ['HS256', 'RS256'],
   exchangeHandler: resourceSpecificHandler
 }));
 
@@ -219,13 +221,16 @@ const delegationHandler: TokenExchangeHandler = async (
   }
 
   // Create the new token with delegation information
+  // Exclude exp, iat from payload to avoid conflicts with jwt.sign options
+  const { exp, iat, ...payloadWithoutTiming } = finalPayload;
   const newToken = jwt.sign({
-    ...finalPayload,
+    ...payloadWithoutTiming,
     aud: request.audience || finalPayload.aud,
     scope: request.scope || finalPayload.scope,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 3600
-  }, config.secret);
+    iat: Math.floor(Date.now() / 1000)
+  }, config.secret, {
+    expiresIn: '1h'
+  });
 
   return {
     access_token: newToken,
@@ -240,6 +245,7 @@ app.post('/oauth/token/delegation', customTokenExchange({
   issuer: config.issuer,
   audience: config.audience,
   secret: config.secret,
+  algorithms: ['HS256', 'RS256'],
   exchangeHandler: delegationHandler
 }));
 
@@ -250,6 +256,7 @@ app.post('/oauth/token/monitored', customTokenExchange({
   issuer: config.issuer,
   audience: config.audience,
   secret: config.secret,
+  algorithms: ['HS256', 'RS256'],
   exchangeHandler: async (subjectPayload: JWTPayload, request: TokenExchangeRequest, originalRequest?: Request) => {
     // Log the token exchange attempt
     console.log('Token exchange attempt:', {
@@ -462,8 +469,10 @@ async function handlePaymentsTokenExchange(
   request: TokenExchangeRequest
 ): Promise<TokenExchangeResponse> {
   // Payments-specific logic
+  // Exclude exp, iat from payload to avoid conflicts with jwt.sign options
+  const { exp, iat, ...payloadWithoutTiming } = subjectPayload;
   const enhancedPayload = {
-    ...subjectPayload,
+    ...payloadWithoutTiming,
     aud: 'https://api.payments.example.com',
     scope: 'payments:read payments:write',
     payment_permissions: ['view_transactions', 'create_payment']
@@ -485,8 +494,10 @@ async function handleUsersTokenExchange(
   request: TokenExchangeRequest
 ): Promise<TokenExchangeResponse> {
   // Users-specific logic
+  // Exclude exp, iat from payload to avoid conflicts with jwt.sign options
+  const { exp, iat, ...payloadWithoutTiming } = subjectPayload;
   const enhancedPayload = {
-    ...subjectPayload,
+    ...payloadWithoutTiming,
     aud: 'https://api.users.example.com',
     scope: 'users:read users:write',
     user_permissions: ['view_profiles', 'edit_profile']
@@ -508,8 +519,10 @@ async function handleAnalyticsTokenExchange(
   request: TokenExchangeRequest
 ): Promise<TokenExchangeResponse> {
   // Analytics-specific logic
+  // Exclude exp, iat from payload to avoid conflicts with jwt.sign options
+  const { exp, iat, ...payloadWithoutTiming } = subjectPayload;
   const enhancedPayload = {
-    ...subjectPayload,
+    ...payloadWithoutTiming,
     aud: 'https://api.analytics.example.com',
     scope: 'analytics:read',
     analytics_permissions: ['view_reports', 'export_data']
@@ -531,13 +544,16 @@ async function handleDefaultTokenExchange(
   request: TokenExchangeRequest
 ): Promise<TokenExchangeResponse> {
   // Default logic for unknown resources
+  // Exclude exp, iat from payload to avoid conflicts with jwt.sign options
+  const { exp, iat, ...payloadWithoutTiming } = subjectPayload;
   const token = jwt.sign({
-    ...subjectPayload,
+    ...payloadWithoutTiming,
     aud: request.audience || subjectPayload.aud,
     scope: request.scope || subjectPayload.scope,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 3600
-  }, config.secret);
+    iat: Math.floor(Date.now() / 1000)
+  }, config.secret, {
+    expiresIn: '1h'
+  });
 
   return {
     access_token: token,
