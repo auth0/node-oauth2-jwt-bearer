@@ -81,9 +81,11 @@ export const auth = (opts: AuthOptions = {}): Handler => {
   assertValidDPoPOptions(opts.dpop);
 
   return async (req: Request, res: Response, next: NextFunction) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { headers, query, body, method } = req as any;
 
     // Construct the URL from the request object.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const url = `${(req as any).protocol}://${resolveHost(req)}${(req as any).originalUrl ?? (req as any).url}`;
 
     // Get DPoP verifier instance with the provided options.
@@ -93,6 +95,7 @@ export const auth = (opts: AuthOptions = {}): Handler => {
       method,
       query,
       body,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       isUrlEncoded: !!(req as any).is('urlencoded'),
     };
 
@@ -100,6 +103,7 @@ export const auth = (opts: AuthOptions = {}): Handler => {
     const verifier = tokenVerifier(verifyJwt, opts, requestOptions);
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (req as any).auth = await verifier.verify();
       next();
     } catch (e) {
@@ -117,6 +121,7 @@ const toHandler =
   (fn: (payload?: JWTPayload) => void): Handler =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       fn((req as any).auth?.payload);
       next();
     } catch (e) {

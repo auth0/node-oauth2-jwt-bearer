@@ -7,6 +7,21 @@ import * as jwt from 'jsonwebtoken';
 import { JWTPayload } from 'access-token-jwt';
 import fetch from 'node-fetch';
 
+// Extend Express Request interface for token exchange
+declare global {
+  namespace Express {
+    interface Request {
+      tokenExchangeOptions?: CustomTokenExchangeOptions;
+      tokenExchange?: {
+        subjectPayload: JWTPayload;
+        exchangeRequest: TokenExchangeRequest;
+        actorInfo?: ActorTokenInfo;
+        providerName?: string;
+      };
+    }
+  }
+}
+
 /**
  * RFC 8693 Token Exchange Grant Type
  */
@@ -68,7 +83,7 @@ export interface AudienceScopeMapping {
     [sourceScope: string]: string | string[];
   };
   /** Additional claims to add */
-  additionalClaims?: Record<string, any>;
+  additionalClaims?: Record<string, unknown>;
 }
 
 /**
@@ -134,10 +149,10 @@ export interface ResponseOptions {
   /** Custom expires_in value */
   expiresIn?: number;
   /** Additional response fields */
-  additionalFields?: Record<string, any>;
+  additionalFields?: Record<string, unknown>;
   /** Provider-specific additional fields */
   providerAdditionalFields?: {
-    [providerName: string]: Record<string, any>;
+    [providerName: string]: Record<string, unknown>;
   };
 }
 
@@ -225,7 +240,7 @@ declare global {
 const DEFAULT_PROVIDERS: ProviderConfig[] = [
   {
     name: 'auth0',
-    issuerPattern: /^https:\/\/[a-zA-Z0-9\-]+\.auth0\.com\/?$/,
+    issuerPattern: /^https:\/\/[a-zA-Z0-9-]+\.auth0\.com\/?$/,
     algorithms: ['RS256'],
     jwksUri: undefined // Will be constructed from issuer
   },
@@ -237,12 +252,12 @@ const DEFAULT_PROVIDERS: ProviderConfig[] = [
   },
   {
     name: 'cognito',
-    issuerPattern: /^https:\/\/cognito-idp\.[a-zA-Z0-9\-]+\.amazonaws\.com\/[a-zA-Z0-9\-_]+\/?$/,
+    issuerPattern: /^https:\/\/cognito-idp\.[a-zA-Z0-9-]+\.amazonaws\.com\/[a-zA-Z0-9-_]+\/?$/,
     algorithms: ['RS256']
   },
   {
     name: 'azure',
-    issuerPattern: /^https:\/\/login\.microsoftonline\.com\/[a-fA-F0-9\-]+\/?$/,
+    issuerPattern: /^https:\/\/login\.microsoftonline\.com\/[a-fA-F0-9-]+\/?$/,
     algorithms: ['RS256']
   }
 ];
@@ -293,7 +308,7 @@ async function validateTokenViaIntrospection(
     throw new InvalidSubjectTokenError('Token introspection failed');
   }
 
-  const result = await response.json() as any;
+  const result = await response.json() as { active: boolean; [key: string]: unknown };
   
   if (!result.active) {
     throw new InvalidSubjectTokenError('Token is not active');
@@ -309,11 +324,11 @@ function applyAudienceScopeMapping(
   payload: JWTPayload,
   request: TokenExchangeRequest,
   mappings: AudienceScopeMapping[]
-): { audience: string; scope?: string; additionalClaims: Record<string, any> } {
+): { audience: string; scope?: string; additionalClaims: Record<string, unknown> } {
   const sourceAudience = payload.aud as string;
   let targetAudience = request.audience || sourceAudience;
   let mappedScope: string | undefined = request.scope || (payload.scope as string);
-  let additionalClaims: Record<string, any> = {};
+  let additionalClaims: Record<string, unknown> = {};
 
   for (const mapping of mappings) {
     const matches = typeof mapping.sourceAudience === 'string' 
@@ -457,10 +472,10 @@ async function validateActorToken(
 export const defaultTokenExchangeHandler: TokenExchangeHandler = (
   subjectPayload: JWTPayload,
   request: TokenExchangeRequest,
-  originalRequest: Request,
+  originalRequest: Request & { tokenExchangeOptions?: CustomTokenExchangeOptions },
   actorInfo?: ActorTokenInfo
 ): TokenExchangeResponse => {
-  const options = (originalRequest as any).tokenExchangeOptions as CustomTokenExchangeOptions | undefined;
+  const options = originalRequest.tokenExchangeOptions;
   
   // Apply audience and scope mapping
   const { audience, scope, additionalClaims } = applyAudienceScopeMapping(
@@ -511,7 +526,7 @@ export const defaultTokenExchangeHandler: TokenExchangeHandler = (
 /**
  * Validates the token exchange request according to RFC 8693
  */
-export function validateTokenExchangeRequest(body: any): TokenExchangeRequest {
+export function validateTokenExchangeRequest(body: Record<string, unknown>): TokenExchangeRequest {
   if (!body.grant_type || body.grant_type !== TOKEN_EXCHANGE_GRANT_TYPE) {
     throw new TokenExchangeError('Invalid or missing grant_type', 'invalid_request');
   }
@@ -525,15 +540,15 @@ export function validateTokenExchangeRequest(body: any): TokenExchangeRequest {
   }
 
   return {
-    grant_type: body.grant_type,
-    subject_token: body.subject_token,
-    subject_token_type: body.subject_token_type,
-    audience: body.audience,
-    scope: body.scope,
-    requested_token_type: body.requested_token_type,
-    resource: body.resource,
-    actor_token: body.actor_token,
-    actor_token_type: body.actor_token_type
+    grant_type: body.grant_type as string,
+    subject_token: body.subject_token as string,
+    subject_token_type: body.subject_token_type as string,
+    audience: body.audience as string | undefined,
+    scope: body.scope as string | undefined,
+    requested_token_type: body.requested_token_type as string | undefined,
+    resource: body.resource as string | undefined,
+    actor_token: body.actor_token as string | undefined,
+    actor_token_type: body.actor_token_type as string | undefined
   };
 }
 
@@ -610,15 +625,19 @@ export function customTokenExchange(options: CustomTokenExchangeOptions): Handle
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Only handle POST requests to token endpoints
-      if ((req as any).method !== 'POST') {
+      if (req.method !== 'POST') {
         return next();
       }
 
       // Store options in request for access by handler
-      (req as any).tokenExchangeOptions = options;
+      const extReq = req as Request & { 
+        tokenExchangeOptions?: CustomTokenExchangeOptions;
+        body: Record<string, unknown>;
+      };
+      extReq.tokenExchangeOptions = options;
 
       // Validate the token exchange request
-      const exchangeRequest = validateTokenExchangeRequest((req as any).body);
+      const exchangeRequest = validateTokenExchangeRequest(extReq.body);
 
       // Validate and decode the subject token with provider detection
       const { payload: subjectPayload, providerName } = await validateSubjectToken(
@@ -642,7 +661,15 @@ export function customTokenExchange(options: CustomTokenExchangeOptions): Handle
       }
 
       // Store token exchange data in request for potential use by other middleware
-      (req as any).tokenExchange = {
+      const reqWithExchange = req as Request & {
+        tokenExchange?: {
+          subjectPayload: JWTPayload;
+          exchangeRequest: TokenExchangeRequest;
+          actorInfo?: ActorTokenInfo;
+          providerName?: string;
+        };
+      };
+      reqWithExchange.tokenExchange = {
         subjectPayload,
         exchangeRequest,
         actorInfo,
@@ -665,6 +692,7 @@ export function customTokenExchange(options: CustomTokenExchangeOptions): Handle
       );
 
       // Set appropriate headers according to RFC 6749
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (res as any).set({
         'Content-Type': 'application/json',
         'Cache-Control': 'no-store',
@@ -672,6 +700,7 @@ export function customTokenExchange(options: CustomTokenExchangeOptions): Handle
       });
 
       // Send the token exchange response
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (res as any).json(response);
 
     } catch (error) {
@@ -700,6 +729,7 @@ export function customTokenExchange(options: CustomTokenExchangeOptions): Handle
         statusCode = 400;
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (res as any).status(statusCode).json({
         error: errorCode,
         error_description: errorMessage
