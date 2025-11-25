@@ -322,19 +322,19 @@ app.post('/oauth/token/monitored', customTokenExchange({
 const advancedProviderConfig: ProviderConfig[] = [
   {
     name: 'auth0',
-    issuerPattern: /\.auth0\.com\/$/,
+    issuerPattern: /^https:\/\/[a-zA-Z0-9\-]+\.auth0\.com\/?$/,
     algorithms: ['RS256'],
     jwksUri: 'https://your-domain.auth0.com/.well-known/jwks.json'
   },
   {
     name: 'google',
-    issuerPattern: /accounts\.google\.com/,
+    issuerPattern: /^https:\/\/accounts\.google\.com\/?$/,
     jwksUri: 'https://www.googleapis.com/oauth2/v3/certs',
     algorithms: ['RS256']
   },
   {
     name: 'custom-idp',
-    issuerPattern: /custom-idp\.example\.com/,
+    issuerPattern: /^https:\/\/custom-idp\.example\.com\/?$/,
     algorithms: ['HS256'],
     customValidator: async (token: string) => {
       // Custom validation logic for your identity provider
@@ -349,7 +349,7 @@ const advancedProviderConfig: ProviderConfig[] = [
 
 const audienceScopeMapping: AudienceScopeMapping[] = [
   {
-    sourceAudience: /external-api\.com/,
+    sourceAudience: /^https:\/\/.*\.external-api\.com\/?$/,
     targetAudience: 'https://internal-api.example.com',
     scopeMapping: {
       'read': ['internal:read', 'internal:list'],

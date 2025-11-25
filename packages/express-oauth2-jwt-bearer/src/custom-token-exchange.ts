@@ -225,24 +225,24 @@ declare global {
 const DEFAULT_PROVIDERS: ProviderConfig[] = [
   {
     name: 'auth0',
-    issuerPattern: /auth0\.com/,
+    issuerPattern: /^https:\/\/[a-zA-Z0-9\-]+\.auth0\.com\/?$/,
     algorithms: ['RS256'],
     jwksUri: undefined // Will be constructed from issuer
   },
   {
     name: 'google',
-    issuerPattern: /accounts\.google\.com/,
+    issuerPattern: /^https:\/\/accounts\.google\.com\/?$/,
     jwksUri: 'https://www.googleapis.com/oauth2/v3/certs',
     algorithms: ['RS256']
   },
   {
     name: 'cognito',
-    issuerPattern: /cognito-idp\..*\.amazonaws\.com/,
+    issuerPattern: /^https:\/\/cognito-idp\.[a-zA-Z0-9\-]+\.amazonaws\.com\/[a-zA-Z0-9\-_]+\/?$/,
     algorithms: ['RS256']
   },
   {
     name: 'azure',
-    issuerPattern: /login\.microsoftonline\.com/,
+    issuerPattern: /^https:\/\/login\.microsoftonline\.com\/[a-fA-F0-9\-]+\/?$/,
     algorithms: ['RS256']
   }
 ];

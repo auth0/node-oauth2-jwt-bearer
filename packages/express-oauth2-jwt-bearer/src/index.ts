@@ -1,4 +1,4 @@
-import express, { Handler, NextFunction, Request, Response } from 'express';
+import { Handler, NextFunction, Request, Response } from 'express';
 import {
   jwtVerifier,
   tokenVerifier,
