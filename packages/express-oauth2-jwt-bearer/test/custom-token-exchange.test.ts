@@ -583,7 +583,7 @@ describe('Custom Token Exchange', () => {
           audience: 'test-audience',
           providers: [{
             name: 'custom-provider',
-            issuerPattern: /custom-provider\.com/,
+            issuerPattern: /^https:\/\/custom-provider\.com\/?$/,
             algorithms: ['RS256'],
             customValidator
           }]
@@ -681,7 +681,7 @@ describe('Custom Token Exchange', () => {
           algorithms: ['HS256'],
           providers: [{
             name: 'auth0',
-            issuerPattern: /auth0\.com/,
+            issuerPattern: /^https:\/\/[a-zA-Z0-9\-]+\.auth0\.com\/?$/,
             algorithms: ['HS256']
           }],
           responseOptions: {
@@ -838,7 +838,7 @@ describe('Custom Token Exchange', () => {
           algorithms: ['HS256'],
           providers: [{
             name: 'external-provider',
-            issuerPattern: /external-provider\.com/,
+            issuerPattern: /^https:\/\/external-provider\.com\/?$/,
             algorithms: ['HS256'],
             introspectionEndpoint: 'https://external-provider.com/introspect'
           }],
@@ -889,7 +889,7 @@ describe('Custom Token Exchange', () => {
           algorithms: ['HS256'],
           providers: [{
             name: 'external-provider',
-            issuerPattern: /external-provider\.com/,
+            issuerPattern: /^https:\/\/external-provider\.com\/?$/,
             algorithms: ['HS256'],
             introspectionEndpoint: 'https://external-provider.com/introspect'
           }],
