@@ -1,5 +1,16 @@
 # Change Log
 
+## [v1.7.2](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.7.2) (2025-12-15)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.7.1...v1.7.2)
+
+**Added**
+- docs: Add Ask DeepWiki badge to README [\#202](https://github.com/auth0/node-oauth2-jwt-bearer/pull/202) ([arpit-jn](https://github.com/arpit-jn))
+- feat: add Claude Code PR Review workflow [\#206](https://github.com/auth0/node-oauth2-jwt-bearer/pull/206) ([ankita10119](https://github.com/ankita10119))
+- Update the `docs` folder with latest contents. [\#192](https://github.com/auth0/node-oauth2-jwt-bearer/pull/192) ([nandan-bhat](https://github.com/nandan-bhat))
+
+**Fixed**
+- Fix: Remove overly restrictive request body/query validation (Issue #193) [\#208](https://github.com/auth0/node-oauth2-jwt-bearer/pull/208) ([ankita10119](https://github.com/ankita10119))
+
 ## [v1.7.1](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.7.1) (2025-09-03)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.7.0...v1.7.1)
 
