@@ -310,9 +310,6 @@ describe('assertValidDPoPOptions', () => {
   });
 });
 
-// Note: validateRequestOptions() logic is now inline in verify() method (lines 389-391 in token-verifier.ts)
-// Request validation tests are included in the 'tokenVerifier / verify' section below
-
 describe('tokenVerifier / shouldVerifyDPoP', () => {
   it('"allowed" mode | returns true if Authorization scheme is DPoP', () => {
     const verifier = makeVerifier({
