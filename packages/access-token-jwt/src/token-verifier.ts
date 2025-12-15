@@ -160,8 +160,8 @@ type HeadersLike = Record<string, unknown> & {
   dpop?: string;
 };
 
-type QueryLike = Record<string, unknown> & { access_token?: string };
-type BodyLike = QueryLike;
+type QueryLike = unknown;
+type BodyLike = unknown;
 
 type TokenInfo = {
   location: 'header' | 'query' | 'body';
@@ -298,27 +298,6 @@ function tokenVerifier(
   let hasNonHeaderToken = false;
   let url = requestOptions?.url;
 
-  /*
-   * Validates the request options to ensure they are in the expected format.
-   * Throws InvalidRequestError if any of the options are invalid.
-   */
-  function validateRequestOptions(): void {
-    if (typeof method !== 'string' || method.length === 0) {
-      throw new InvalidRequestError('Invalid HTTP method received in request');
-    }
-
-    if (query && isJsonObject(query) === false) {
-      throw new InvalidRequestError(
-        "Request 'query' parameter must be a valid JSON object"
-      );
-    }
-
-    if (body && isJsonObject(body) === false) {
-      throw new InvalidRequestError(
-        "Request 'body' parameter must be a valid JSON object"
-      );
-    }
-  }
 
   /**
    * Determines whether DPoP validation is required for a given request context.
@@ -371,12 +350,12 @@ function tokenVerifier(
       locations.push({ location: 'header', jwt: fromHeader });
     }
 
-    if (typeof query?.access_token === 'string') {
-      locations.push({ location: 'query', jwt: query.access_token });
+    if (typeof (query as any)?.access_token === 'string') {
+      locations.push({ location: 'query', jwt: (query as any).access_token });
     }
 
-    if (typeof body?.access_token === 'string' && isUrlEncoded) {
-      locations.push({ location: 'body', jwt: body.access_token });
+    if (typeof (body as any)?.access_token === 'string' && isUrlEncoded) {
+      locations.push({ location: 'body', jwt: (body as any).access_token });
     }
 
     if (locations.length === 0) throw new InvalidRequestError('', false);
@@ -402,7 +381,9 @@ function tokenVerifier(
   async function verify(): Promise<VerifyJwtResult> {
     url = normalizeUrl(url, 'request');
     // Validate request options
-    validateRequestOptions();
+    if (typeof method !== 'string' || method.length === 0) {
+      throw new InvalidRequestError('Invalid HTTP method received in request');
+    }
 
     // Extract the token from the request headers, query, or body.
     const { jwt, location } = getToken();
