@@ -160,8 +160,8 @@ type HeadersLike = Record<string, unknown> & {
   dpop?: string;
 };
 
-type QueryLike = unknown;
-type BodyLike = unknown;
+type QueryLike = Record<string, unknown> & { access_token?: string };
+type BodyLike = QueryLike;
 
 type TokenInfo = {
   location: 'header' | 'query' | 'body';
@@ -350,12 +350,12 @@ function tokenVerifier(
       locations.push({ location: 'header', jwt: fromHeader });
     }
 
-    if (typeof (query as any)?.access_token === 'string') {
-      locations.push({ location: 'query', jwt: (query as any).access_token });
+    if (typeof query?.access_token === 'string') {
+      locations.push({ location: 'query', jwt: query.access_token });
     }
 
-    if (typeof (body as any)?.access_token === 'string' && isUrlEncoded) {
-      locations.push({ location: 'body', jwt: (body as any).access_token });
+    if (typeof body?.access_token === 'string' && isUrlEncoded) {
+      locations.push({ location: 'body', jwt: body.access_token });
     }
 
     if (locations.length === 0) throw new InvalidRequestError('', false);

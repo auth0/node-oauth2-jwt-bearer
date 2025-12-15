@@ -862,7 +862,7 @@ describe('tokenVerifier / verify', () => {
         {},
         { authorization: 'Bearer ' + dummyJwt },
         undefined,
-        ['item1', 'item2', 'item3'], // array body - should be allowed
+        ['item1', 'item2', 'item3'] as any, // array body - should be allowed
         false
       );
 
@@ -877,7 +877,7 @@ describe('tokenVerifier / verify', () => {
         {},
         { authorization: 'Bearer ' + dummyJwt },
         undefined,
-        'plain text body', // string body - should be allowed
+        'plain text body' as any, // string body - should be allowed
         false
       );
 
@@ -892,7 +892,7 @@ describe('tokenVerifier / verify', () => {
         {},
         { authorization: 'Bearer ' + dummyJwt },
         undefined,
-        42, // number body - should be allowed
+        42 as any, // number body - should be allowed
         false
       );
 
@@ -906,7 +906,7 @@ describe('tokenVerifier / verify', () => {
         jwtResult,
         {},
         { authorization: 'Bearer ' + dummyJwt },
-        ['param1', 'param2'], // array query - should be allowed
+        ['param1', 'param2'] as any, // array query - should be allowed
         undefined,
         false
       );
@@ -921,7 +921,7 @@ describe('tokenVerifier / verify', () => {
         jwtResult,
         {},
         { authorization: 'Bearer ' + dummyJwt },
-        'query string', // string query - should be allowed
+        'query string' as any, // string query - should be allowed  
         undefined,
         false
       );
@@ -969,7 +969,7 @@ describe('tokenVerifier / verify', () => {
         {},
         {}, // no authorization header
         undefined,
-        ['item1', 'item2'], // array body - no access_token property
+        ['item1', 'item2'] as any, // array body - no access_token property
         true
       );
 
@@ -989,7 +989,7 @@ describe('tokenVerifier / verify', () => {
         {},
         {}, // no authorization header
         undefined,
-        'plain text', // string body - no access_token property
+        'plain text' as any, // string body - no access_token property
         true
       );
 
