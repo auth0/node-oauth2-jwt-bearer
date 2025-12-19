@@ -14,6 +14,7 @@ export {
   VerifyJwtResult,
   JWTPayload,
   JWSHeaderParameters as JWTHeader,
+  KeyLike,
 } from './jwt-verifier';
 export {
   InvalidTokenError,
