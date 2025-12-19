@@ -225,3 +225,129 @@ app.get('/api/admin/edit',
    }
 );
 ```
+
+## Using Direct Public Key Verification
+
+Instead of using JWKS discovery, you can provide a public key directly. This is useful for offline environments, custom key management, or partner integrations.
+
+### Load public key from PEM file
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+const { createPublicKey } = require('crypto');
+const fs = require('fs');
+
+// Load public key from a PEM file
+const publicKeyPem = fs.readFileSync('./keys/public-key.pem', 'utf8');
+const publicKey = createPublicKey(publicKeyPem);
+
+app.use(
+  auth({
+    issuer: 'https://my-issuer.com',
+    audience: 'https://my-api.com',
+    secret: publicKey,
+    tokenSigningAlg: 'RS256',
+  })
+);
+
+app.get('/api/protected', (req, res) => {
+  res.json({ message: 'Access granted', user: req.auth.payload });
+});
+```
+
+### Using different key types
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+const { createPublicKey } = require('crypto');
+const fs = require('fs');
+
+// RSA Key (RS256)
+const rsaPublicKey = createPublicKey(fs.readFileSync('./rsa-public.pem', 'utf8'));
+
+app.use('/api/rsa', auth({
+  issuer: 'https://issuer.com',
+  audience: 'https://api/',
+  secret: rsaPublicKey,
+  tokenSigningAlg: 'RS256',
+}));
+
+// Elliptic Curve Key (ES256)
+const ecPublicKey = createPublicKey(fs.readFileSync('./ec-public.pem', 'utf8'));
+
+app.use('/api/ec', auth({
+  issuer: 'https://issuer.com',
+  audience: 'https://api/',
+  secret: ecPublicKey,
+  tokenSigningAlg: 'ES256',
+}));
+
+// EdDSA Key
+const edPublicKey = createPublicKey(fs.readFileSync('./ed25519-public.pem', 'utf8'));
+
+app.use('/api/ed', auth({
+  issuer: 'https://issuer.com',
+  audience: 'https://api/',
+  secret: edPublicKey,
+  tokenSigningAlg: 'EdDSA',
+}));
+```
+
+### Load public key from environment variable
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+const { createPublicKey } = require('crypto');
+
+// Load from environment variable (useful for containerized apps)
+const publicKey = createPublicKey(process.env.JWT_PUBLIC_KEY);
+
+app.use(
+  auth({
+    issuer: process.env.JWT_ISSUER,
+    audience: process.env.JWT_AUDIENCE,
+    secret: publicKey,
+  })
+);
+```
+
+### Use cases
+
+**Air-gapped environments:**
+```js
+// No internet access, keys distributed via secure channels
+const publicKey = createPublicKey(fs.readFileSync('./secure/partner-public-key.pem'));
+
+app.use(auth({
+  issuer: 'https://partner.example.com',
+  audience: 'https://my-api.com',
+  secret: publicKey,
+}));
+```
+
+**Service-to-service authentication:**
+```js
+// Microservices with pre-shared keys
+const servicePublicKey = createPublicKey(Buffer.from(
+  process.env.SERVICE_PUBLIC_KEY_BASE64,
+  'base64'
+));
+
+app.use('/api/internal', auth({
+  issuer: 'https://internal-service',
+  audience: 'https://my-service',
+  secret: servicePublicKey,
+}));
+```
+
+**Partner integrations:**
+```js
+// Partner provides their public key for token verification
+const partnerPublicKey = createPublicKey(partnerPublicKeyPem);
+
+app.use('/api/partner', auth({
+  issuer: 'https://partner-auth.example.com',
+  audience: 'https://my-api.com',
+  secret: partnerPublicKey,
+}));
+```
