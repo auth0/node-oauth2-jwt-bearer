@@ -363,7 +363,7 @@ function tokenVerifier(
       if (hasBodyToken && !isUrlEncoded) {
         throw new InvalidRequestError('', false);
       }
-      if ('dpop' in headers) {
+      if (dpopEnabled && 'dpop' in headers) {
         throw new InvalidRequestError('', false);
       }
       throw new UnauthorizedError();
@@ -395,7 +395,7 @@ function tokenVerifier(
       throw new InvalidRequestError('Invalid HTTP method received in request');
     }
 
-    if ('dpop' in headers && !('authorization' in headers)) {
+    if (dpopEnabled && 'dpop' in headers && !('authorization' in headers)) {
       throw new InvalidRequestError('', false);
     }
 

@@ -2180,23 +2180,22 @@ describe('tokenVerifier / verify', () => {
     });
   });
 
-  it('"disabled" mode | throws `InvalidRequestError` with "no-error-information" | if request has no auth header, and token was not sent via query or body | `WWW-Authenticate` would contain only `Bearer` challenge', async () => {
+  it('"disabled" mode | throws `UnauthorizedError` | if request has no auth header, and token was not sent via query or body | dpop header is ignored when disabled', async () => {
     const verifier = tokenVerifier(
-      sinon.stub().resolves(createJwtResult({ sub: 'user' })), // Won’t be called
+      sinon.stub().resolves(createJwtResult({ sub: 'user' })), // Won't be called
       { dpop: { enabled: false } },
       {
         ...baseRequest,
         headers: {
-          dpop: 'valid.dpop.proof', // But no `authorization`
+          dpop: 'valid.dpop.proof', // Ignored when DPoP disabled
         },
       }
     );
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: InvalidRequestError,
-      expectedMessage: '',
-      expectedCode: '',
+      expectedError: UnauthorizedError,
+      expectedMessage: 'Unauthorized',
       expectedChallengeIncludes: [`Bearer realm="api"`],
     });
   });
