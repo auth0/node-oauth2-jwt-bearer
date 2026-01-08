@@ -555,7 +555,7 @@ describe('tokenVerifier / getToken', () => {
   });
 
   it('throws if no token is provided anywhere', () => {
-    expectGetTokenToThrow({}, InvalidRequestError, '');
+    expectGetTokenToThrow({}, UnauthorizedError, 'Unauthorized');
   });
 
   it('throws if empty token in Authorization', () => {
