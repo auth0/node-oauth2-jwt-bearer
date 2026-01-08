@@ -298,27 +298,6 @@ function tokenVerifier(
   let hasNonHeaderToken = false;
   let url = requestOptions?.url;
 
-  /*
-   * Validates the request options to ensure they are in the expected format.
-   * Throws InvalidRequestError if any of the options are invalid.
-   */
-  function validateRequestOptions(): void {
-    if (typeof method !== 'string' || method.length === 0) {
-      throw new InvalidRequestError('Invalid HTTP method received in request');
-    }
-
-    if (query && isJsonObject(query) === false) {
-      throw new InvalidRequestError(
-        "Request 'query' parameter must be a valid JSON object"
-      );
-    }
-
-    if (body && isJsonObject(body) === false) {
-      throw new InvalidRequestError(
-        "Request 'body' parameter must be a valid JSON object"
-      );
-    }
-  }
 
   /**
    * Determines whether DPoP validation is required for a given request context.
@@ -409,7 +388,11 @@ function tokenVerifier(
    */
   async function verify(): Promise<VerifyJwtResult> {
     url = normalizeUrl(url, 'request');
-    validateRequestOptions();
+
+    // Validate request options
+    if (typeof method !== 'string' || method.length === 0) {
+      throw new InvalidRequestError('Invalid HTTP method received in request');
+    }
 
     if ('dpop' in headers && !('authorization' in headers)) {
       throw new InvalidRequestError('', false);
