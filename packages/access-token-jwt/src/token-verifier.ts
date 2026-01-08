@@ -363,9 +363,10 @@ function tokenVerifier(
       if (hasBodyToken && !isUrlEncoded) {
         throw new InvalidRequestError('', false);
       }
-      throw typeof auth === 'string'
-        ? new InvalidRequestError('', false)
-        : new UnauthorizedError();
+      if ('dpop' in headers) {
+        throw new InvalidRequestError('', false);
+      }
+      throw new UnauthorizedError();
     }
     if (locations.length > 1)
       throw new InvalidRequestError(

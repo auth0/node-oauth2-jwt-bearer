@@ -442,8 +442,8 @@ describe('tokenVerifier / getToken', () => {
   it('throws if empty token in Authorization', () => {
     expectGetTokenToThrow(
       { headers: { authorization: 'Bearer ' } },
-      InvalidRequestError,
-      ''
+      UnauthorizedError,
+      'Unauthorized'
     );
   });
 
@@ -1348,7 +1348,7 @@ describe('tokenVerifier / verify', () => {
     });
   });
 
-  it('"allowed" mode | throws "InvalidRequestError" with "no-error-information" | if scheme is unknown', async () => {
+  it('"allowed" mode | throws "UnauthorizedError" | if scheme is unknown', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
     const { verifier } = createVerifier(
       jwtResult,
@@ -1360,8 +1360,8 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: InvalidRequestError,
-      expectedMessage: '',
+      expectedError: UnauthorizedError,
+      expectedMessage: 'Unauthorized',
       expectedChallengeIncludes: [
         'Bearer realm="api"',
         `DPoP algs="${SUPPORTED_ALGS.join(' ')}"`,
