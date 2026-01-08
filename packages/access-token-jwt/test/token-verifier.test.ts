@@ -975,7 +975,7 @@ describe('tokenVerifier / verify', () => {
         throw new Error('Expected getToken() to throw');
       } catch (err) {
         // Should throw because no token found in any location
-        expect(err).toBeInstanceOf(InvalidRequestError);
+        expect(err).toBeInstanceOf(UnauthorizedError);
       }
     });
 
@@ -995,7 +995,7 @@ describe('tokenVerifier / verify', () => {
         throw new Error('Expected getToken() to throw');
       } catch (err) {
         // Should throw because no token found in any location
-        expect(err).toBeInstanceOf(InvalidRequestError);
+        expect(err).toBeInstanceOf(UnauthorizedError);
       }
     });
   });
