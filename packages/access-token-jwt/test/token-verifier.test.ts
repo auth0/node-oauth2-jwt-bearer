@@ -1048,10 +1048,10 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage: '',
-      expectedCode: '',
+      expectedMessage: 'DPoP proof requires the DPoP authentication scheme, not Bearer',
+      expectedCode: 'invalid_request',
       expectedChallengeIncludes: [
-        'Bearer realm="api"',
+        'Bearer realm="api", error="invalid_request", error_description="DPoP proof requires the DPoP authentication scheme, not Bearer"',
         `DPoP algs="${SUPPORTED_ALGS.join(' ')}"`,
       ],
     });
@@ -1384,9 +1384,9 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage: '',
-      expectedCode: '',
-      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
+      expectedMessage: 'DPoP proof requires the DPoP authentication scheme, not Bearer',
+      expectedCode: 'invalid_request',
+      expectedChallengeIncludes: [`DPoP error="invalid_request", error_description="DPoP proof requires the DPoP authentication scheme, not Bearer", algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
@@ -1446,9 +1446,9 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage: '',
-      expectedCode: '',
-      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
+      expectedMessage: 'DPoP proof requires the DPoP authentication scheme, not Bearer',
+      expectedCode: 'invalid_request',
+      expectedChallengeIncludes: [`DPoP error="invalid_request", error_description="DPoP proof requires the DPoP authentication scheme, not Bearer", algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 

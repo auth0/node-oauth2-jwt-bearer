@@ -172,6 +172,10 @@ function assertDPoPRequest(
 
   // Check for correct Authorization scheme
   if (!headers.authorization.toLowerCase().startsWith('dpop ')) {
+    if ('dpop' in headers) {
+      throw new InvalidRequestError('DPoP proof requires the DPoP authentication scheme, not Bearer');
+    }
+
     throw new InvalidRequestError('', false);
   }
 
