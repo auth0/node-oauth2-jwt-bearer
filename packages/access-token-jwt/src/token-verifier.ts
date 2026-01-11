@@ -366,6 +366,9 @@ function tokenVerifier(
       if (dpopEnabled && 'dpop' in headers) {
         throw new InvalidRequestError('', false);
       }
+      if (typeof auth === 'string') {
+        throw new InvalidRequestError('', false);
+      }
       throw new UnauthorizedError();
     }
     if (locations.length > 1)

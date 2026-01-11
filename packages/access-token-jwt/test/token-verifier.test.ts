@@ -442,8 +442,8 @@ describe('tokenVerifier / getToken', () => {
   it('throws if empty token in Authorization', () => {
     expectGetTokenToThrow(
       { headers: { authorization: 'Bearer ' } },
-      UnauthorizedError,
-      'Unauthorized'
+      InvalidRequestError,
+      ''
     );
   });
 
@@ -1361,7 +1361,7 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: UnauthorizedError,
-      expectedMessage: 'Unauthorized',
+      expectedMessage: '',
       expectedChallengeIncludes: [
         'Bearer realm="api"',
         `DPoP algs="${SUPPORTED_ALGS.join(' ')}"`,

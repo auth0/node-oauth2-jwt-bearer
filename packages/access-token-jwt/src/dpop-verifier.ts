@@ -196,7 +196,7 @@ function assertDPoPRequest(
 
   // Ensure a single DPoP proof
   if (headers.dpop.includes(',')) {
-    throw new InvalidRequestError('', false);
+    throw new InvalidProofError('Multiple DPoP proofs are not allowed');
   }
 
   // If accessTokenClaims is provided, validate the confirmation "cnf" claims
