@@ -395,6 +395,7 @@ function tokenVerifier(
       throw new InvalidRequestError('Invalid HTTP method received in request');
     }
 
+    // Extract the token from the request headers, query, or body.
     if (dpopEnabled && 'dpop' in headers && !('authorization' in headers)) {
       throw new InvalidRequestError('', false);
     }
