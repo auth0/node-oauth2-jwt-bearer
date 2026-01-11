@@ -506,7 +506,7 @@ describe('assertDPoPRequest', () => {
   it('fails when multiple DPoP headers are provided (comma-separated)', () => {
     const headers = baseHeaders();
     headers.dpop = 'proof1,proof2';
-    expectFail(headers, validClaims(), '');
+    expectFail(headers, validClaims(), 'Multiple DPoP proofs are not allowed', InvalidProofError);
   });
 
   it('fails when accessTokenClaims.cnf is missing', () => {

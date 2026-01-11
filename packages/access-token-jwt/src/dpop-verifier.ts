@@ -172,6 +172,10 @@ function assertDPoPRequest(
 
   // Check for correct Authorization scheme
   if (!headers.authorization.toLowerCase().startsWith('dpop ')) {
+    if ('dpop' in headers) {
+      throw new InvalidRequestError('DPoP proof requires the DPoP authentication scheme, not Bearer');
+    }
+
     throw new InvalidRequestError('', false);
   }
 
@@ -192,7 +196,7 @@ function assertDPoPRequest(
 
   // Ensure a single DPoP proof
   if (headers.dpop.includes(',')) {
-    throw new InvalidRequestError('', false);
+    throw new InvalidProofError('Multiple DPoP proofs are not allowed');
   }
 
   // If accessTokenClaims is provided, validate the confirmation "cnf" claims

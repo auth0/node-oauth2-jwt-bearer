@@ -88,7 +88,7 @@ describe('index', () => {
 
   it('should fail for anonymous requests', async () => {
     const baseUrl = await setup();
-    await expectFailsWith(got(baseUrl), 400);
+    await expectFailsWith(got(baseUrl), 401);
   });
 
   it('should succeed for anonymous requests when authRequired is false', async () => {
@@ -112,7 +112,7 @@ describe('index', () => {
 
   it('should fail for anonymous requests when authRequired is true', async () => {
     const baseUrl = await setup({ authRequired: true });
-    await expectFailsWith(got(baseUrl), 400);
+    await expectFailsWith(got(baseUrl), 401);
   });
 
   it('should accept empty arguments and env vars', async () => {
