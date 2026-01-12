@@ -72,6 +72,35 @@ app.use(
 );
 ```
 
+#### JWTs verified with a direct public key (no JWKS discovery)
+
+If you already have the public key and want to bypass JWKS discovery:
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+const { createPublicKey } = require('crypto');
+const fs = require('fs');
+
+// Load your public key from a PEM file
+const publicKeyPem = fs.readFileSync('./public-key.pem', 'utf8');
+const publicKey = createPublicKey(publicKeyPem);
+
+app.use(
+  auth({
+    issuer: 'https://YOUR_ISSUER_DOMAIN',
+    audience: 'https://my-api.com',
+    secret: publicKey,  // Pass the public key directly
+    tokenSigningAlg: 'RS256',  // Optional: specify the algorithm
+  })
+);
+```
+
+This approach is useful for:
+- Air-gapped environments without internet access
+- Custom key management systems
+- Service-to-service authentication with pre-shared keys
+- Partner integrations where you receive the public key directly
+
 With this configuration, your api will require a valid Access Token JWT bearer token for all routes.
 
 Successful requests will have the following properties added to them:

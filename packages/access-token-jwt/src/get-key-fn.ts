@@ -22,7 +22,10 @@ export default ({
   let getKeyFn: GetKeyFn;
   let prevjwksUri: string;
 
-  const secretKey = secret && createSecretKey(Buffer.from(secret));
+  // Handle both string secrets (symmetric) and KeyLike objects (asymmetric)
+  const secretKey = secret && (typeof secret === 'string'
+    ? createSecretKey(Buffer.from(secret))
+    : secret);
 
   return (jwksUri: string) => {
     if (secretKey) return () => secretKey;
