@@ -354,11 +354,23 @@ function tokenVerifier(
       locations.push({ location: 'query', jwt: query.access_token });
     }
 
-    if (typeof body?.access_token === 'string' && isUrlEncoded) {
-      locations.push({ location: 'body', jwt: body.access_token });
+    const hasBodyToken = typeof body?.access_token === 'string';
+    if (hasBodyToken && isUrlEncoded) {
+      locations.push({ location: 'body', jwt: body.access_token as string });
     }
 
-    if (locations.length === 0) throw new InvalidRequestError('', false);
+    if (locations.length === 0) {
+      if (hasBodyToken && !isUrlEncoded) {
+        throw new InvalidRequestError('', false);
+      }
+      if (dpopEnabled && 'dpop' in headers) {
+        throw new InvalidRequestError('', false);
+      }
+      if (typeof auth === 'string') {
+        throw new InvalidRequestError('', false);
+      }
+      throw new UnauthorizedError();
+    }
     if (locations.length > 1)
       throw new InvalidRequestError(
         'More than one method used for authentication'
@@ -380,12 +392,17 @@ function tokenVerifier(
    */
   async function verify(): Promise<VerifyJwtResult> {
     url = normalizeUrl(url, 'request');
+
     // Validate request options
     if (typeof method !== 'string' || method.length === 0) {
       throw new InvalidRequestError('Invalid HTTP method received in request');
     }
 
     // Extract the token from the request headers, query, or body.
+    if (dpopEnabled && 'dpop' in headers && !('authorization' in headers)) {
+      throw new InvalidRequestError('', false);
+    }
+
     const { jwt, location } = getToken();
 
     // Determine if the token is from the header and set the flag.
