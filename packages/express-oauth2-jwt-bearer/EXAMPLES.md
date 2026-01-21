@@ -1,6 +1,6 @@
 # Examples
 
-- [DPoP Authentication (Early Access)](#dpop-authentication-early-access)
+- [DPoP Authentication](#dpop-authentication)
   - [Accept both Bearer and DPoP tokens (default)](#accept-both-bearer-and-dpop-tokens-default)
   - [Require only DPoP tokens](#require-only-dpop-tokens)
   - [Require only Bearer tokens](#require-only-bearer-tokens)
@@ -14,10 +14,8 @@
   - [Matching custom logic](#matching-custom-logic)
 
 
-## DPoP Authentication (Early Access) 
-> [!NOTE]  
-> DPoP (Demonstration of Proof-of-Possession) support is currently in [**Early Access**](https://auth0.com/docs/troubleshoot/product-lifecycle/product-release-stages#early-access). Contact Auth0 support to enable it for your tenant.
->
+## DPoP Authentication
+
 > If DPoP is disabled (`dpop: { enabled: false }`), only standard Bearer tokens will be accepted.
 
 [DPoP](https://www.rfc-editor.org/rfc/rfc9449.html) (Demonstrating Proof of Posession) is an application-level mechanism for sender-constraining OAuth 2.0 access and refresh tokens by proving that the client application is in possession of a certain private key.
