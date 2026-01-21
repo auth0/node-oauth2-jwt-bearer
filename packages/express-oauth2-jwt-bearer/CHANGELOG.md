@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.7.3](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.7.3) (2026-01-12)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.7.2...v1.7.3)
+
+**Fixed**
+- Fix: unauthorized response code [\#213](https://github.com/auth0/node-oauth2-jwt-bearer/pull/213) ([ankita10119](https://github.com/ankita10119))
+
 ## [v1.7.2](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.7.2) (2025-12-15)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.7.1...v1.7.2)
 
