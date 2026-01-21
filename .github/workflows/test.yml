@@ -39,7 +39,7 @@ jobs:
           node: ${{ matrix.node-version }}
 
       - name: Save build artifacts
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: .
           key: ${{ env.CACHE_KEY }}
@@ -62,7 +62,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
 
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v5
         with:
           path: .
           key: ${{ env.CACHE_KEY }}
@@ -85,7 +85,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v5
         with:
           path: .
           key: ${{ env.CACHE_KEY }}
