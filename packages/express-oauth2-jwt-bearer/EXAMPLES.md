@@ -1,12 +1,12 @@
 # Examples
 
-- [DPoP Authentication (Early Access)](#dpop-authentication-early-access)
+- [DPoP Authentication](#dpop-authentication)
   - [Accept both Bearer and DPoP tokens (default)](#accept-both-bearer-and-dpop-tokens-default)
   - [Require only DPoP tokens](#require-only-dpop-tokens)
   - [Require only Bearer tokens](#require-only-bearer-tokens)
   - [Customize DPoP validation behavior](#customize-dpop-validation-behavior)
   - [Hostname Resolution (`req.host` and `req.protocol`)](#hostname-resolution-reqhost-and-reqprotocol)
-  
+  - [DPoP jti Replay Prevention](#dpop-jti-replay-prevention)
 - [Restrict access with scopes](#restrict-access-with-scopes)
 - [Restrict access with claims](#restrict-access-with-claims)
   - [Matching a specific value](#matching-a-specific-value)
@@ -14,10 +14,8 @@
   - [Matching custom logic](#matching-custom-logic)
 
 
-## DPoP Authentication (Early Access) 
-> [!NOTE]  
-> DPoP (Demonstration of Proof-of-Possession) support is currently in [**Early Access**](https://auth0.com/docs/troubleshoot/product-lifecycle/product-release-stages#early-access). Contact Auth0 support to enable it for your tenant.
->
+## DPoP Authentication
+
 > If DPoP is disabled (`dpop: { enabled: false }`), only standard Bearer tokens will be accepted.
 
 [DPoP](https://www.rfc-editor.org/rfc/rfc9449.html) (Demonstrating Proof of Posession) is an application-level mechanism for sender-constraining OAuth 2.0 access and refresh tokens by proving that the client application is in possession of a certain private key.
@@ -134,6 +132,135 @@ This SDK uses `req.protocol` and `req.host` to construct the `htu` (HTTP URI) cl
     ```js
     app.enable('trust proxy');
     ```
+
+### DPoP jti Replay Prevention
+
+> [!WARNING]
+> **Security Notice**: The SDK validates that the `jti` (JWT ID) claim exists in DPoP proofs and verifies the proof signature, but it does **not** cache or validate `jti` uniqueness. This means the same DPoP proof can be replayed multiple times within its validity window.
+>
+> **For production use, you MUST implement your own `jti` validation logic to prevent replay attacks.**
+
+#### What the SDK validates
+- DPoP proof signature and structure
+- `ath` (access token hash) matches the access token
+- `htm` (HTTP method) and `htu` (HTTP URI) match the request
+- `iat` (issued at) is within the acceptable time range
+- `jti` claim exists
+
+#### What the SDK does not validate
+- `jti` uniqueness across requests (replay prevention)
+
+#### Implementation Example: In-Memory Cache (Development/Single Instance)
+
+```js
+ const express = require('express');
+const { auth } = require('express-oauth2-jwt-bearer');
+
+const jtiCache = new Map();
+
+const validateDPoPJti = (req, res, next) => {
+  const dpopProof = req.headers['dpop'];
+  if (!dpopProof) return next();
+
+  const [, payloadB64] = dpopProof.split('.');
+  const payload = JSON.parse(
+    Buffer.from(payloadB64, 'base64url').toString()
+  );
+
+  const { jti, iat } = payload;
+
+  if (jtiCache.has(jti)) {
+    return res.status(401).json({
+      error: 'invalid_token',
+      error_description: 'DPoP proof has already been used'
+    });
+  }
+
+  // Default validity window: 300s + 30s
+  jtiCache.set(jti, (iat + 330) * 1000);
+  next();
+};
+
+const app = express();
+
+app.use(auth({
+  issuerBaseURL: 'https://YOUR_ISSUER_DOMAIN',
+  audience: 'https://my-api.com',
+  dpop: { enabled: true }
+}));
+
+app.use(validateDPoPJti);
+
+app.get('/api/protected', (req, res) => {
+  res.json({ message: 'Access granted' });
+});
+```
+
+#### Implementation Example: Redis (Production/Multi-Instance)
+
+For production deployments with multiple server instances, use a shared cache like Redis:
+
+```js
+const express = require('express');
+const { auth } = require('express-oauth2-jwt-bearer');
+const Redis = require('ioredis');
+
+const redis = new Redis({
+  host: process.env.REDIS_HOST || 'localhost',
+  port: process.env.REDIS_PORT || 6379,
+});
+
+const validateDPoPJtiWithRedis = async (req, res, next) => {
+  const dpopProof = req.headers['dpop'];
+
+  if (!dpopProof) {
+    return next();
+  }
+
+  try {
+    const [, payloadB64] = dpopProof.split('.');
+    const payload = JSON.parse(
+      Buffer.from(payloadB64, 'base64url').toString()
+    );
+    const { jti, iat } = payload;
+
+    // Check if jti exists in Redis
+    const exists = await redis.exists(`dpop:jti:${jti}`);
+
+    if (exists) {
+      return res.status(401)
+        .set('WWW-Authenticate', 'DPoP error="use_dpop_nonce", error_description="DPoP proof has already been used"')
+        .json({
+          error: 'use_dpop_nonce',
+          error_description: 'DPoP proof has already been used'
+        });
+    }
+
+    // Store jti with TTL matching the proof's validity window
+    const now = Math.floor(Date.now() / 1000);
+    const ttlSeconds = Math.max(1, (iat + 330) - now); // iat + iatOffset + iatLeeway
+    await redis.setex(`dpop:jti:${jti}`, ttlSeconds, '1');
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
+const app = express();
+
+app.use(auth({
+  issuerBaseURL: 'https://YOUR_ISSUER_DOMAIN',
+  audience: 'https://my-api.com',
+  dpop: { enabled: true }
+}));
+
+app.use(validateDPoPJtiWithRedis);
+
+app.get('/api/protected', (req, res) => {
+  res.json({ message: 'Access granted' });
+});
+```
 
 ## Restrict access with scopes
 
