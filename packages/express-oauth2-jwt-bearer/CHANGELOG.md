@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.7.4](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.7.4) (2026-01-23)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.7.3...v1.7.4)
+
+**Added**
+- docs: Add DPoP jti replay prevention examples to EXAMPLES.md [\#215](https://github.com/auth0/node-oauth2-jwt-bearer/pull/215) ([ankita10119](https://github.com/ankita10119))
+
 ## [v1.7.3](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.7.3) (2026-01-12)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.7.2...v1.7.3)
 
