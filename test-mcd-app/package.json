@@ -9,5 +9,8 @@
   },
   "keywords": ["mcd", "test", "oauth2", "jwt"],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "express-rate-limit": "^7.1.5"
+  }
 }

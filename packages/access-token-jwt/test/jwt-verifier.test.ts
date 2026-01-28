@@ -391,10 +391,6 @@ describe('jwt-verifier', () => {
     });
 
     it('should throw when token missing iss claim in MCD mode', async () => {
-      const jwt = await createJwt({
-        issuer: 'https://tenant1.example.com/',
-        payload: {},
-      });
       // Manually create a token without iss claim
       const { generateKeyPair, SignJWT } = require('jose');
       const { privateKey } = await generateKeyPair('RS256');

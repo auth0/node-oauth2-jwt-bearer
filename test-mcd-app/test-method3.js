@@ -1,7 +1,16 @@
 const express = require('express');
 const { auth } = require('express-oauth2-jwt-bearer');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
+
+// Rate limiter for protected routes
+const protectedLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 console.log('\n🧪 MCD Test - Method 3: Dynamic Resolver (Multi-Tenant)\n');
 console.log('This tests dynamic issuer validation based on request context.');
@@ -70,13 +79,13 @@ async function issuerResolver(context) {
 }
 
 // Method 3: Dynamic resolver
-app.use(auth({
+const authMiddleware = auth({
   issuerResolver,
   audience: 'https://my-api.com',
   issuerCacheTTL: 300000 // 5 minutes (300000ms)
-}));
+});
 
-app.get('/protected', (req, res) => {
+app.get('/protected', protectedLimiter, authMiddleware, (req, res) => {
   res.json({
     message: '✅ Access granted!',
     issuer: req.auth.payload.iss,
