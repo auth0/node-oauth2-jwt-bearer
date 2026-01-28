@@ -85,9 +85,7 @@ app.get('/api/messages', (req, res, next) => {
 });
 ```
 
-#### DPoP Authentication (Early Access)
-
-> **Note:** DPoP support is currently in **Early Access**. Contact [Auth0 Support](https://support.auth0.com/) to have it enabled for your tenant.
+#### DPoP Authentication
 
 This SDK supports [DPoP (Demonstration of Proof-of-Possession)](https://datatracker.ietf.org/doc/html/rfc9449), which enhances access token security by requiring clients to prove possession of a private key associated with each request.
 

@@ -1,7 +1,7 @@
 {
   "name": "express-oauth2-jwt-bearer",
   "description": "Authentication middleware for Express.js that validates JWT bearer access tokens.",
-  "version": "1.7.1",
+  "version": "1.7.4",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": "auth0/node-oauth2-jwt-bearer",
@@ -26,7 +26,7 @@
     "@typescript-eslint/eslint-plugin": "^5.57.0",
     "@typescript-eslint/parser": "^5.57.0",
     "eslint": "^8.37.0",
-    "express": "^4.18.2",
+    "express": "^4.22.0",
     "got": "^11.8.6",
     "jest": "^29.5.0",
     "jest-junit": "^13.2.0",

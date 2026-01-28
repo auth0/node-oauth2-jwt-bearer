@@ -298,27 +298,6 @@ function tokenVerifier(
   let hasNonHeaderToken = false;
   let url = requestOptions?.url;
 
-  /*
-   * Validates the request options to ensure they are in the expected format.
-   * Throws InvalidRequestError if any of the options are invalid.
-   */
-  function validateRequestOptions(): void {
-    if (typeof method !== 'string' || method.length === 0) {
-      throw new InvalidRequestError('Invalid HTTP method received in request');
-    }
-
-    if (query && isJsonObject(query) === false) {
-      throw new InvalidRequestError(
-        "Request 'query' parameter must be a valid JSON object"
-      );
-    }
-
-    if (body && isJsonObject(body) === false) {
-      throw new InvalidRequestError(
-        "Request 'body' parameter must be a valid JSON object"
-      );
-    }
-  }
 
   /**
    * Determines whether DPoP validation is required for a given request context.
@@ -375,11 +354,23 @@ function tokenVerifier(
       locations.push({ location: 'query', jwt: query.access_token });
     }
 
-    if (typeof body?.access_token === 'string' && isUrlEncoded) {
-      locations.push({ location: 'body', jwt: body.access_token });
+    const hasBodyToken = typeof body?.access_token === 'string';
+    if (hasBodyToken && isUrlEncoded) {
+      locations.push({ location: 'body', jwt: body.access_token as string });
     }
 
-    if (locations.length === 0) throw new InvalidRequestError('', false);
+    if (locations.length === 0) {
+      if (hasBodyToken && !isUrlEncoded) {
+        throw new InvalidRequestError('', false);
+      }
+      if (dpopEnabled && 'dpop' in headers) {
+        throw new InvalidRequestError('', false);
+      }
+      if (typeof auth === 'string') {
+        throw new InvalidRequestError('', false);
+      }
+      throw new UnauthorizedError();
+    }
     if (locations.length > 1)
       throw new InvalidRequestError(
         'More than one method used for authentication'
@@ -401,10 +392,17 @@ function tokenVerifier(
    */
   async function verify(): Promise<VerifyJwtResult> {
     url = normalizeUrl(url, 'request');
+
     // Validate request options
-    validateRequestOptions();
+    if (typeof method !== 'string' || method.length === 0) {
+      throw new InvalidRequestError('Invalid HTTP method received in request');
+    }
 
     // Extract the token from the request headers, query, or body.
+    if (dpopEnabled && 'dpop' in headers && !('authorization' in headers)) {
+      throw new InvalidRequestError('', false);
+    }
+
     const { jwt, location } = getToken();
 
     // Determine if the token is from the header and set the flag.

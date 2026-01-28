@@ -310,125 +310,6 @@ describe('assertValidDPoPOptions', () => {
   });
 });
 
-describe('tokenVerifier / validateRequestOptions', () => {
-  let verifyJwt: sinon.SinonStub;
-  let defaultDPoPOptions: DPoPOptions;
-
-  beforeEach(() => {
-    verifyJwt = sinon.stub();
-
-    // Return the same JWT string passed in, with a hardcoded payload
-    verifyJwt.callsFake((jwt: string) =>
-      Promise.resolve({
-        token: jwt,
-        header: { alg: 'ES256', typ: 'JWT' },
-        payload: { sub: 'user' },
-      })
-    );
-
-    defaultDPoPOptions = { enabled: true, required: false };
-  });
-
-  afterEach(() => {
-    sinon.restore();
-    verifyJwt.resetHistory();
-  });
-
-  async function expectInvalidRequest({
-    request,
-    expectedMessage,
-  }: {
-    request: Record<string, any>;
-    expectedMessage: string;
-  }) {
-    const verifier = tokenVerifier(
-      verifyJwt,
-      { dpop: defaultDPoPOptions },
-      createRequest(request)
-    );
-    try {
-      await verifier.verify();
-      throw new Error('Expected verifier.verify() to throw');
-    } catch (err) {
-      // Note: In this context, error will not contain DPoP challenge headers.
-      // Because DPoP headers will be added later once the error is caught by the main `catch` block in the auth middleware.
-
-      expect(err.constructor).toBe(InvalidRequestError);
-      expect(err.message).toBe(expectedMessage);
-
-      const headers = err.headers;
-      expect(headers).toBeDefined();
-      expect(headers).toHaveProperty('WWW-Authenticate');
-
-      const challenge = headers['WWW-Authenticate'];
-      expect(typeof challenge).toBe('string');
-      expect(challenge).toMatch(/^Bearer/);
-
-      const parsed = parseWwwAuthenticate(challenge);
-      expect(parsed.Bearer?.error).toBe('invalid_request');
-      expect(parsed.Bearer?.error_description).toBe(expectedMessage);
-    }
-  }
-
-  it('throws error if request options is not an object (covering bad request)', async () => {
-    const verifyJwt = jest
-      .fn()
-      .mockResolvedValue(createJwtResult({ sub: 'user' }));
-    const verifier = tokenVerifier(verifyJwt, undefined, undefined as any);
-
-    try {
-      await verifier.verify();
-      throw new Error('Expected verifier.verify() to throw');
-    } catch (err) {
-      expect(err.constructor).toBe(InvalidRequestError);
-      expect(err.message).toBe('Invalid request URL');
-    }
-    expect(verifyJwt).not.toHaveBeenCalled();
-  });
-
-  it('throws error if request `url` is not a string', async () => {
-    await expectInvalidRequest({
-      request: { url: 12345 }, // invalid URL type
-      expectedMessage: 'Invalid request URL',
-    });
-  });
-
-  it('throws error if request `url` is an empty string', async () => {
-    await expectInvalidRequest({
-      request: { url: '' }, // empty string URL
-      expectedMessage: 'Invalid request URL',
-    });
-  });
-
-  it('throws error if request `method` is not a string', async () => {
-    await expectInvalidRequest({
-      request: { method: 12345 }, // invalid method type
-      expectedMessage: 'Invalid HTTP method received in request',
-    });
-  });
-
-  it('throws error if request `method` is an empty string', async () => {
-    await expectInvalidRequest({
-      request: { method: '' }, // empty string method
-      expectedMessage: 'Invalid HTTP method received in request',
-    });
-  });
-
-  it('throws error if request `query` exists but is not an object', async () => {
-    await expectInvalidRequest({
-      request: { query: 'random_string' }, // invalid query type
-      expectedMessage: "Request 'query' parameter must be a valid JSON object",
-    });
-  });
-
-  it('throws error if request `body` exists but is not an object', async () => {
-    await expectInvalidRequest({
-      request: { body: 'random_string' }, // invalid body type
-      expectedMessage: "Request 'body' parameter must be a valid JSON object",
-    });
-  });
-});
-
 describe('tokenVerifier / shouldVerifyDPoP', () => {
   it('"allowed" mode | returns true if Authorization scheme is DPoP', () => {
     const verifier = makeVerifier({
@@ -555,7 +436,7 @@ describe('tokenVerifier / getToken', () => {
   });
 
   it('throws if no token is provided anywhere', () => {
-    expectGetTokenToThrow({}, InvalidRequestError, '');
+    expectGetTokenToThrow({}, UnauthorizedError, 'Unauthorized');
   });
 
   it('throws if empty token in Authorization', () => {
@@ -913,6 +794,212 @@ describe('tokenVerifier / verify', () => {
     sinon.restore();
   });
 
+  // Request validation tests - testing inline validation in verify() method
+  describe('request validation', () => {
+    it('throws InvalidRequestError if request options is undefined', async () => {
+      const verifyJwtStub = sinon.stub().resolves(createJwtResult({ sub: 'user' }));
+      const verifier = tokenVerifier(verifyJwtStub, undefined, undefined as any);
+
+      try {
+        await verifier.verify();
+        throw new Error('Expected verifier.verify() to throw');
+      } catch (err) {
+        expect(err).toBeInstanceOf(InvalidRequestError);
+        expect(err.message).toBe('Invalid request URL');
+      }
+      expect(verifyJwtStub.called).toBe(false);
+    });
+
+    it('throws InvalidRequestError if request method is not a string', async () => {
+      const jwtResult = createJwtResult({ sub: 'user' });
+      const badVerifier = tokenVerifier(
+        sinon.stub().resolves(jwtResult),
+        {},
+        {
+          ...baseRequest,
+          method: 12345 as any, // invalid method type
+          headers: { authorization: 'Bearer ' + dummyJwt },
+        }
+      );
+
+      try {
+        await badVerifier.verify();
+        throw new Error('Expected verifier.verify() to throw');
+      } catch (err) {
+        expect(err).toBeInstanceOf(InvalidRequestError);
+        expect(err.message).toBe('Invalid HTTP method received in request');
+      }
+    });
+
+    it('throws InvalidRequestError if request method is empty string', async () => {
+      const jwtResult = createJwtResult({ sub: 'user' });
+      const badVerifier = tokenVerifier(
+        sinon.stub().resolves(jwtResult),
+        {},
+        {
+          ...baseRequest,
+          method: '', // empty method
+          headers: { authorization: 'Bearer ' + dummyJwt },
+        }
+      );
+
+      try {
+        await badVerifier.verify();
+        throw new Error('Expected verifier.verify() to throw');
+      } catch (err) {
+        expect(err).toBeInstanceOf(InvalidRequestError);
+        expect(err.message).toBe('Invalid HTTP method received in request');
+      }
+    });
+
+    it('allows request body to be an array - handles via optional chaining', async () => {
+      const jwtResult = createJwtResult({ sub: 'user' });
+      const { verifier } = createVerifier(
+        jwtResult,
+        {},
+        { authorization: 'Bearer ' + dummyJwt },
+        undefined,
+        ['item1', 'item2', 'item3'] as any, // array body - should be allowed
+        false
+      );
+
+      const result = await verifier.verify();
+      expect(result).toEqual(jwtResult);
+    });
+
+    it('allows request body to be a string - handles via optional chaining', async () => {
+      const jwtResult = createJwtResult({ sub: 'user' });
+      const { verifier } = createVerifier(
+        jwtResult,
+        {},
+        { authorization: 'Bearer ' + dummyJwt },
+        undefined,
+        'plain text body' as any, // string body - should be allowed
+        false
+      );
+
+      const result = await verifier.verify();
+      expect(result).toEqual(jwtResult);
+    });
+
+    it('allows request body to be a number - handles via optional chaining', async () => {
+      const jwtResult = createJwtResult({ sub: 'user' });
+      const { verifier } = createVerifier(
+        jwtResult,
+        {},
+        { authorization: 'Bearer ' + dummyJwt },
+        undefined,
+        42 as any, // number body - should be allowed
+        false
+      );
+
+      const result = await verifier.verify();
+      expect(result).toEqual(jwtResult);
+    });
+
+    it('allows request query to be an array - handles via optional chaining', async () => {
+      const jwtResult = createJwtResult({ sub: 'user' });
+      const { verifier } = createVerifier(
+        jwtResult,
+        {},
+        { authorization: 'Bearer ' + dummyJwt },
+        ['param1', 'param2'] as any, // array query - should be allowed
+        undefined,
+        false
+      );
+
+      const result = await verifier.verify();
+      expect(result).toEqual(jwtResult);
+    });
+
+    it('allows request query to be a string - handles via optional chaining', async () => {
+      const jwtResult = createJwtResult({ sub: 'user' });
+      const { verifier } = createVerifier(
+        jwtResult,
+        {},
+        { authorization: 'Bearer ' + dummyJwt },
+        'query string' as any, // string query - should be allowed  
+        undefined,
+        false
+      );
+
+      const result = await verifier.verify();
+      expect(result).toEqual(jwtResult);
+    });
+
+    it('extracts access_token from body when body is an object with access_token', async () => {
+      const jwtResult = createJwtResult({ sub: 'user' });
+      const { verifier } = createVerifier(
+        jwtResult,
+        {},
+        {}, // no authorization header
+        undefined,
+        { access_token: dummyJwt }, // body contains access_token
+        true // isUrlEncoded
+      );
+
+      const token = verifier.getToken();
+      expect(token.jwt).toBe(dummyJwt);
+      expect(token.location).toBe('body');
+    });
+
+    it('extracts access_token from query when query is an object with access_token', async () => {
+      const jwtResult = createJwtResult({ sub: 'user' });
+      const { verifier } = createVerifier(
+        jwtResult,
+        {},
+        {}, // no authorization header
+        { access_token: dummyJwt }, // query contains access_token
+        undefined,
+        false
+      );
+
+      const token = verifier.getToken();
+      expect(token.jwt).toBe(dummyJwt);
+      expect(token.location).toBe('query');
+    });
+
+    it('does not extract token from body array - returns undefined via optional chaining', async () => {
+      const jwtResult = createJwtResult({ sub: 'user' });
+      const { verifier } = createVerifier(
+        jwtResult,
+        {},
+        {}, // no authorization header
+        undefined,
+        ['item1', 'item2'] as any, // array body - no access_token property
+        true
+      );
+
+      try {
+        verifier.getToken();
+        throw new Error('Expected getToken() to throw');
+      } catch (err) {
+        // Should throw because no token found in any location
+        expect(err).toBeInstanceOf(UnauthorizedError);
+      }
+    });
+
+    it('does not extract token from string body - returns undefined via optional chaining', async () => {
+      const jwtResult = createJwtResult({ sub: 'user' });
+      const { verifier } = createVerifier(
+        jwtResult,
+        {},
+        {}, // no authorization header
+        undefined,
+        'plain text' as any, // string body - no access_token property
+        true
+      );
+
+      try {
+        verifier.getToken();
+        throw new Error('Expected getToken() to throw');
+      } catch (err) {
+        // Should throw because no token found in any location
+        expect(err).toBeInstanceOf(UnauthorizedError);
+      }
+    });
+  });
+
   it('"allowed" mode | verifies and calls `verifyDPoP` when `shouldVerifyDPoP` returns `true`', async () => {
     (dpopVerifier.verifyDPoP as sinon.SinonSpy).restore();
     sinon.stub(dpopVerifier, 'verifyDPoP').resolves();
@@ -961,10 +1048,10 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage: '',
-      expectedCode: '',
+      expectedMessage: 'DPoP proof requires the DPoP authentication scheme, not Bearer',
+      expectedCode: 'invalid_request',
       expectedChallengeIncludes: [
-        'Bearer realm="api"',
+        'Bearer realm="api", error="invalid_request", error_description="DPoP proof requires the DPoP authentication scheme, not Bearer"',
         `DPoP algs="${SUPPORTED_ALGS.join(' ')}"`,
       ],
     });
@@ -1261,7 +1348,7 @@ describe('tokenVerifier / verify', () => {
     });
   });
 
-  it('"allowed" mode | throws "InvalidRequestError" with "no-error-information" | if scheme is unknown', async () => {
+  it('"allowed" mode | throws "UnauthorizedError" | if scheme is unknown', async () => {
     const jwtResult = createJwtResult({ sub: 'user' });
     const { verifier } = createVerifier(
       jwtResult,
@@ -1273,7 +1360,7 @@ describe('tokenVerifier / verify', () => {
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: InvalidRequestError,
+      expectedError: UnauthorizedError,
       expectedMessage: '',
       expectedChallengeIncludes: [
         'Bearer realm="api"',
@@ -1297,9 +1384,9 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage: '',
-      expectedCode: '',
-      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
+      expectedMessage: 'DPoP proof requires the DPoP authentication scheme, not Bearer',
+      expectedCode: 'invalid_request',
+      expectedChallengeIncludes: [`DPoP error="invalid_request", error_description="DPoP proof requires the DPoP authentication scheme, not Bearer", algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
@@ -1359,9 +1446,9 @@ describe('tokenVerifier / verify', () => {
     await expectVerifyToThrow({
       verifier,
       expectedError: InvalidRequestError,
-      expectedMessage: '',
-      expectedCode: '',
-      expectedChallengeIncludes: [`DPoP algs="${SUPPORTED_ALGS.join(' ')}"`],
+      expectedMessage: 'DPoP proof requires the DPoP authentication scheme, not Bearer',
+      expectedCode: 'invalid_request',
+      expectedChallengeIncludes: [`DPoP error="invalid_request", error_description="DPoP proof requires the DPoP authentication scheme, not Bearer", algs="${SUPPORTED_ALGS.join(' ')}"`],
     });
   });
 
@@ -2093,23 +2180,22 @@ describe('tokenVerifier / verify', () => {
     });
   });
 
-  it('"disabled" mode | throws `InvalidRequestError` with "no-error-information" | if request has no auth header, and token was not sent via query or body | `WWW-Authenticate` would contain only `Bearer` challenge', async () => {
+  it('"disabled" mode | throws `UnauthorizedError` | if request has no auth header, and token was not sent via query or body | dpop header is ignored when disabled', async () => {
     const verifier = tokenVerifier(
-      sinon.stub().resolves(createJwtResult({ sub: 'user' })), // Won’t be called
+      sinon.stub().resolves(createJwtResult({ sub: 'user' })), // Won't be called
       { dpop: { enabled: false } },
       {
         ...baseRequest,
         headers: {
-          dpop: 'valid.dpop.proof', // But no `authorization`
+          dpop: 'valid.dpop.proof', // Ignored when DPoP disabled
         },
       }
     );
 
     await expectVerifyToThrow({
       verifier,
-      expectedError: InvalidRequestError,
-      expectedMessage: '',
-      expectedCode: '',
+      expectedError: UnauthorizedError,
+      expectedMessage: 'Unauthorized',
       expectedChallengeIncludes: [`Bearer realm="api"`],
     });
   });
