@@ -10,11 +10,10 @@ const discover = (
   cacheMaxAge = 600000
 ) => {
   const getDiscovery = discovery({
-    issuerBaseURL: uri,
     timeoutDuration,
     cacheMaxAge,
   });
-  return getDiscovery();
+  return getDiscovery(uri);
 };
 
 const mins = 60000;
@@ -212,14 +211,14 @@ describe('discover', () => {
       .reply(200, spy);
 
     const getDiscovery = discovery({
-      issuerBaseURL: 'https://op.example.com/.well-known/openid-configuration',
       timeoutDuration: 5000,
       cacheMaxAge: 600000,
     });
 
-    await getDiscovery();
-    await getDiscovery();
-    await getDiscovery();
+    const uri = 'https://op.example.com/.well-known/openid-configuration';
+    await getDiscovery(uri);
+    await getDiscovery(uri);
+    await getDiscovery(uri);
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
@@ -231,12 +230,12 @@ describe('discover', () => {
       .reply(200, spy);
 
     const getDiscovery = discovery({
-      issuerBaseURL: 'https://op.example.com/.well-known/openid-configuration',
       timeoutDuration: 5000,
       cacheMaxAge: 10 * mins,
     });
 
-    await Promise.all([getDiscovery(), getDiscovery(), getDiscovery()]);
+    const uri = 'https://op.example.com/.well-known/openid-configuration';
+    await Promise.all([getDiscovery(uri), getDiscovery(uri), getDiscovery(uri)]);
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
@@ -251,19 +250,19 @@ describe('discover', () => {
       .reply(200, spy);
 
     const getDiscovery = discovery({
-      issuerBaseURL: 'https://op.example.com/.well-known/openid-configuration',
       timeoutDuration: 5000,
       cacheMaxAge: 10 * mins,
     });
 
-    await getDiscovery();
+    const uri = 'https://op.example.com/.well-known/openid-configuration';
+    await getDiscovery(uri);
     expect(spy).toHaveBeenCalledTimes(1);
     clock.tick(5 * mins);
-    await getDiscovery();
+    await getDiscovery(uri);
     expect(spy).toHaveBeenCalledTimes(1);
 
     clock.tick(10 * mins);
-    await getDiscovery();
+    await getDiscovery(uri);
     expect(spy).toHaveBeenCalledTimes(2);
 
     clock.restore();
@@ -278,13 +277,13 @@ describe('discover', () => {
       .reply(200, () => success);
 
     const getDiscovery = discovery({
-      issuerBaseURL: 'https://op.example.com/.well-known/openid-configuration',
       timeoutDuration: 5000,
       cacheMaxAge: 600000,
     });
 
-    await expect(getDiscovery()).rejects.toThrowError();
-    await expect(getDiscovery()).resolves.toMatchObject(success);
+    const uri = 'https://op.example.com/.well-known/openid-configuration';
+    await expect(getDiscovery(uri)).rejects.toThrowError();
+    await expect(getDiscovery(uri)).resolves.toMatchObject(success);
   });
 
   it('should handle concurrent client calls with failures', async function () {
@@ -296,16 +295,16 @@ describe('discover', () => {
       .reply(200, () => success);
 
     const getDiscovery = discovery({
-      issuerBaseURL: 'https://op.example.com/.well-known/openid-configuration',
       timeoutDuration: 5000,
       cacheMaxAge: 600000,
     });
 
+    const uri = 'https://op.example.com/.well-known/openid-configuration';
     await Promise.all([
-      expect(getDiscovery()).rejects.toThrowError(),
-      expect(getDiscovery()).rejects.toThrowError(),
-      expect(getDiscovery()).rejects.toThrowError(),
+      expect(getDiscovery(uri)).rejects.toThrowError(),
+      expect(getDiscovery(uri)).rejects.toThrowError(),
+      expect(getDiscovery(uri)).rejects.toThrowError(),
     ]);
-    await expect(getDiscovery()).resolves.toMatchObject(success);
+    await expect(getDiscovery(uri)).resolves.toMatchObject(success);
   });
 });

@@ -1,0 +1,438 @@
+# Multiple Custom Domains (MCD) Guide
+
+So you need to accept JWT tokens from multiple Auth0 tenants or custom domains? You're in the right place.
+
+## What's this for?
+
+If you're building an API that needs to support:
+- Multiple Auth0 tenants (like different regions or customer segments)
+- Custom domains alongside your main Auth0 domain
+- Multi-tenant SaaS where each tenant has their own identity provider
+
+Then MCD support will make your life easier. Instead of running separate API instances or juggling different middleware configs, you can handle everything in one place.
+
+## How it works
+
+The key security principle here: **we validate the issuer BEFORE fetching any keys**. This prevents attackers from putting malicious URLs in the `iss` claim and making your server fetch from internal networks (that's called SSRF, and it's bad).
+
+Here's the flow:
+1. Extract the `iss` claim from the incoming JWT (without trusting it yet)
+2. Check if that issuer is in your allowed list
+3. If yes, fetch the JWKS from that issuer and verify the signature
+4. If no, reject the token immediately
+
+No wasted network calls, no security holes.
+
+## Three ways to configure it
+
+### Option 1: Single domain (what you probably already have)
+
+This is the standard setup. Nothing changes here:
+
+```javascript
+const { auth } = require('express-oauth2-jwt-bearer');
+
+app.use(auth({
+  issuerBaseURL: 'https://your-tenant.auth0.com',
+  audience: 'https://your-api.com'
+}));
+```
+
+Works exactly like before. No surprises.
+
+### Option 2: Static list of domains
+
+Got a fixed set of domains? Just list them:
+
+```javascript
+app.use(auth({
+  auth0MCD: {
+    issuers: [
+      'https://tenant1.auth0.com',
+      'https://tenant2.auth0.com',
+      'https://custom-domain.example.com'
+    ]
+  },
+  audience: 'https://your-api.com'
+}));
+```
+
+Tokens from any of these issuers will be accepted. Tokens from anywhere else get rejected.
+
+You can also pass detailed config objects if you need more control:
+
+```javascript
+app.use(auth({
+  auth0MCD: {
+    issuers: [
+      {
+        issuer: 'https://tenant1.auth0.com',
+        alg: 'RS256'  // Optional: specify algorithm
+      },
+      {
+        issuer: 'https://tenant2.auth0.com',
+        jwksUri: 'https://tenant2.auth0.com/custom-jwks'  // Optional: custom JWKS location
+      }
+    ]
+  },
+  audience: 'https://your-api.com'
+}));
+```
+
+Or if you have symmetric keys:
+
+```javascript
+app.use(auth({
+  auth0MCD: {
+    issuers: [
+      {
+        issuer: 'https://tenant1.auth0.com',
+        alg: 'HS256',
+        secret: 'your-shared-secret'
+      }
+    ]
+  },
+  audience: 'https://your-api.com'
+}));
+```
+
+### Option 3: Dynamic validation (for multi-tenant apps)
+
+This is where it gets interesting. If you have a database of tenants and each tenant has their own allowed issuers, use a resolver function:
+
+```javascript
+app.use(auth({
+  auth0MCD: {
+    issuers: async (context) => {
+      // context gives you:
+      // - url: the incoming request URL
+      // - headers: the request headers
+      // - tokenClaims: the unverified JWT payload
+
+      // Example: check which tenant this request is for
+      const tenantId = context.headers['x-tenant-id'];
+
+      // Look up their config (from your database, cache, whatever)
+      const tenant = await db.getTenant(tenantId);
+
+      // Return their allowed issuers
+      return tenant.allowedIssuers;
+    }
+  },
+  audience: 'https://your-api.com'
+}));
+```
+
+The resolver can return:
+- A single issuer string: `'https://tenant.auth0.com'`
+- An array of issuers: `['https://tenant1.auth0.com', 'https://tenant2.auth0.com']`
+- Config objects: `[{ issuer: 'https://...', alg: 'RS256' }]`
+
+Here's a more complete example showing different patterns:
+
+```javascript
+// Tenant database (in reality, this would be your actual database)
+const tenants = {
+  'acme-corp': {
+    allowedIssuers: ['https://acme.auth0.com', 'https://auth.acme.com']
+  },
+  'globex-inc': {
+    allowedIssuers: ['https://globex.auth0.com']
+  }
+};
+
+app.use(auth({
+  auth0MCD: {
+    issuers: async (context) => {
+      const tenantId = context.headers['x-tenant-id'];
+
+      if (!tenantId) {
+        return []; // No tenant = reject all
+      }
+
+      const tenant = tenants[tenantId];
+      if (!tenant) {
+        return []; // Unknown tenant = reject all
+      }
+
+      // You can also check the token claims
+      const orgId = context.tokenClaims?.org_id;
+      if (orgId !== tenantId) {
+        return []; // Mismatched org = reject
+      }
+
+      return tenant.allowedIssuers;
+    }
+  },
+  audience: 'https://your-api.com'
+}));
+```
+
+## Caching
+
+By default, three things get cached:
+
+**OIDC Discovery** (per issuer, 10 minutes)
+- The `.well-known/openid-configuration` responses
+- Each issuer's discovery doc is cached separately
+
+**JWKS Keys** (per issuer, 10 minutes with 30-second cooldown)
+- The public keys used to verify signatures
+- Each issuer's JWKS is cached independently
+
+You can adjust the cache TTL:
+
+```javascript
+app.use(auth({
+  auth0MCD: {
+    issuers: ['https://tenant1.auth0.com'],
+    cacheTTL: 300000  // 5 minutes instead of 10
+  },
+  audience: 'https://your-api.com',
+  cacheMaxAge: 300000  // Also affects JWKS and discovery
+}));
+```
+
+## Security features
+
+### Symmetric algorithm rejection
+
+If a token is signed with HS256/HS384/HS512 (symmetric algorithms) but you haven't configured a secret, the token gets rejected immediately. This prevents attackers from tricking your server into fetching JWKS for symmetric tokens (which doesn't make sense anyway).
+
+If you DO have symmetric tokens, just configure them properly:
+
+```javascript
+app.use(auth({
+  auth0MCD: {
+    issuers: [
+      {
+        issuer: 'https://tenant.auth0.com',
+        alg: 'HS256',
+        secret: process.env.JWT_SECRET
+      }
+    ]
+  },
+  audience: 'https://your-api.com'
+}));
+```
+
+### Discovery validation
+
+When we fetch OIDC discovery metadata, we verify that the `issuer` field in the metadata matches the issuer from the token. This prevents redirect attacks where an attacker might try to get you to fetch discovery from one domain but use keys from another.
+
+### URL normalization
+
+We normalize issuer URLs before comparing them:
+- Lowercase the hostname
+- Remove default ports (443 for https, 80 for http)
+- Handle trailing slashes consistently
+
+So `https://TENANT.AUTH0.COM:443/` matches `https://tenant.auth0.com`.
+
+## Common patterns
+
+### Migrating from one domain to another
+
+During a migration, accept tokens from both domains:
+
+```javascript
+app.use(auth({
+  auth0MCD: {
+    issuers: [
+      'https://old-domain.auth0.com',  // Old domain (being phased out)
+      'https://new-domain.auth0.com'   // New domain
+    ]
+  },
+  audience: 'https://your-api.com'
+}));
+```
+
+Once migration is done, just remove the old domain from the array.
+
+### Regional Auth0 tenants
+
+Accept tokens from different regions:
+
+```javascript
+app.use(auth({
+  auth0MCD: {
+    issuers: [
+      'https://your-app-us.auth0.com',
+      'https://your-app-eu.auth0.com',
+      'https://your-app-au.auth0.com'
+    ]
+  },
+  audience: 'https://your-api.com'
+}));
+```
+
+### Custom domains with fallback
+
+Support custom domains but keep the main Auth0 domain as fallback:
+
+```javascript
+app.use(auth({
+  auth0MCD: {
+    issuers: [
+      'https://auth.yourdomain.com',     // Primary custom domain
+      'https://your-tenant.auth0.com'    // Fallback to Auth0 domain
+    ]
+  },
+  audience: 'https://your-api.com'
+}));
+```
+
+### Per-tenant feature flags
+
+Use the token claims to make decisions:
+
+```javascript
+app.use(auth({
+  auth0MCD: {
+    issuers: async (context) => {
+      const tenantId = context.tokenClaims?.tenant_id;
+      const tenant = await getTenant(tenantId);
+
+      // Only allow MCD for premium tenants
+      if (tenant.plan === 'premium') {
+        return tenant.allowedIssuers;
+      }
+
+      // Free tier: single issuer only
+      return ['https://your-app.auth0.com'];
+    }
+  },
+  audience: 'https://your-api.com'
+}));
+```
+
+## Testing it
+
+The easiest way to test without real tokens:
+
+```javascript
+const express = require('express');
+const { auth } = require('express-oauth2-jwt-bearer');
+
+const app = express();
+
+app.use(auth({
+  auth0MCD: {
+    issuers: [
+      'https://tenant1.auth0.com',
+      'https://tenant2.auth0.com'
+    ]
+  },
+  audience: 'https://your-api.com'
+}));
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+app.get('/protected', (req, res) => {
+  res.json({
+    message: 'You made it!',
+    issuer: req.auth.payload.iss,
+    audience: req.auth.payload.aud
+  });
+});
+
+app.listen(3000, () => {
+  console.log('Server running on http://localhost:3000');
+  console.log('Try: curl http://localhost:3000/health');
+  console.log('Try: curl http://localhost:3000/protected');
+});
+```
+
+Run it, and you'll see:
+- `/health` returns 200 OK (no auth required)
+- `/protected` returns 401 Unauthorized (auth required, no token provided)
+
+To test with real tokens, you need to get a token from Auth0:
+1. Create a free Auth0 account
+2. Create an API with identifier `https://your-api.com`
+3. Get a test token from the API's Test tab
+4. Use it: `curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:3000/protected`
+
+## Troubleshooting
+
+**"Issuer 'https://...' is not allowed"**
+
+The token's `iss` claim doesn't match any of your configured issuers. Check:
+- Is the issuer URL spelled correctly?
+- Does it have the right protocol (https vs http)?
+- Are you handling trailing slashes consistently?
+- If using a resolver, is it returning the right issuers?
+
+**"Token missing required 'iss' claim"**
+
+The JWT doesn't have an `iss` claim. This is required for MCD to work. Make sure your tokens are properly formed.
+
+**"Symmetric algorithms (HS256, HS384, HS512) are not supported..."**
+
+You're receiving a symmetric token but haven't configured a secret. Either:
+- Add the secret to your issuer config
+- Or switch to asymmetric tokens (RS256 is the Auth0 default)
+
+**"Discovery metadata issuer '...' does not match token issuer '...'"**
+
+The issuer's discovery document claims to be a different issuer than what's in the token. This usually means:
+- Misconfigured discovery endpoint
+- MITM attack (unlikely but possible)
+- Issuer URL doesn't match between token and discovery
+
+**Dynamic resolver not being called**
+
+Make sure you're NOT mixing patterns:
+- Can't use both `auth0MCD` and `issuerBaseURL`
+- Resolver function should be async or return a Promise
+- Check for errors in your resolver (they'll show up in console)
+
+## What about...?
+
+**DPoP tokens?**
+
+Still work. MCD doesn't affect DPoP validation.
+
+**Custom validators?**
+
+Still work. Add them alongside MCD config:
+
+```javascript
+app.use(auth({
+  auth0MCD: {
+    issuers: ['https://tenant.auth0.com']
+  },
+  audience: 'https://your-api.com',
+  validators: {
+    org_id: (org, claims) => org === 'expected-org'
+  }
+}));
+```
+
+**Rate limiting the resolver?**
+
+That's on you. The resolver function is called for each request (unless the result is cached via internal mechanisms). If you're doing database lookups, consider:
+- Adding your own caching layer
+- Using a fast cache like Redis
+- Pre-loading tenant configs on startup
+
+**What about backwards compatibility?**
+
+Everything works exactly as before. The old single-issuer pattern (`issuerBaseURL`) is unchanged. Only add `auth0MCD` if you need multi-issuer support.
+
+## Next steps
+
+1. Pick the pattern that fits your needs:
+   - Fixed set of domains? → Static array
+   - Dynamic multi-tenant? → Resolver function
+   - Single domain? → Keep using `issuerBaseURL`
+
+2. Test it locally first (server will reject tokens but show it's working)
+
+3. Deploy and monitor logs to confirm issuers are being validated correctly
+
+4. Consider caching strategy if using dynamic resolver
+
+That's it. You're ready to handle tokens from multiple domains securely.

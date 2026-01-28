@@ -19,22 +19,28 @@ export default ({
   cacheMaxAge,
   secret
 }: JWKSOptions) => {
-  let getKeyFn: GetKeyFn;
-  let prevjwksUri: string;
+  // Support multiple issuers by caching getKeyFn per jwksUri
+  const keyFnCache = new Map<string, GetKeyFn>();
 
   const secretKey = secret && createSecretKey(Buffer.from(secret));
 
   return (jwksUri: string) => {
     if (secretKey) return () => secretKey;
-    if (!getKeyFn || prevjwksUri !== jwksUri) {
-      prevjwksUri = jwksUri;
+
+    // Check if we have a cached getKeyFn for this jwksUri
+    let getKeyFn = keyFnCache.get(jwksUri);
+
+    if (!getKeyFn) {
+      // Create new getKeyFn for this jwksUri and cache it
       getKeyFn = createRemoteJWKSet(new URL(jwksUri), {
         agent,
         cooldownDuration,
         timeoutDuration,
         cacheMaxAge,
       });
+      keyFnCache.set(jwksUri, getKeyFn);
     }
+
     return getKeyFn;
   };
 };

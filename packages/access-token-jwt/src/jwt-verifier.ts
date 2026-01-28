@@ -1,12 +1,51 @@
 import { strict as assert } from 'assert';
+import { TextEncoder } from 'util';
+import { Buffer } from 'buffer';
 import { Agent as HttpAgent } from 'http';
 import { Agent as HttpsAgent } from 'https';
-import { jwtVerify } from 'jose';
+import { jwtVerify, decodeJwt } from 'jose';
 import type { JWTPayload, JWSHeaderParameters } from 'jose';
 import { InvalidTokenError } from 'oauth2-bearer';
 import discovery from './discovery';
 import getKeyFn from './get-key-fn';
 import validate, { defaultValidators, Validators } from './validate';
+
+// MCD Types
+export interface AsymmetricIssuerConfig {
+  issuer: string;
+  alg?: string;
+  jwksUri?: string;
+}
+
+export interface SymmetricIssuerConfig {
+  issuer: string;
+  alg: string;
+  secret: string;
+}
+
+export type IssuerConfig = AsymmetricIssuerConfig | SymmetricIssuerConfig;
+
+export interface IssuerResolverContext {
+  url: URL;
+  headers: Record<string, string | string[] | undefined>;
+  tokenClaims?: { iss?: string; aud?: string | string[]; [key: string]: unknown };
+}
+
+export type IssuerResolverResult = string | string[] | IssuerConfig[];
+
+export type IssuerResolverFunction = (
+  context: IssuerResolverContext
+) => Promise<IssuerResolverResult> | IssuerResolverResult;
+
+export interface Auth0MCDOptions {
+  issuers: string | string[] | IssuerConfig[] | IssuerResolverFunction;
+  cacheTTL?: number;
+}
+
+export interface RequestContext {
+  url: string;
+  headers: Record<string, string | string[] | undefined>;
+}
 
 export interface JwtVerifierOptions {
   /**
@@ -125,6 +164,20 @@ export interface JwtVerifierOptions {
    * PS512, ES256, ES256K, ES384, ES512 or EdDSA (case-sensitive).
    */
   tokenSigningAlg?: string;
+
+  /**
+   * MCD (Multiple Custom Domains) Support:
+   * Configure multiple issuers for JWT validation.
+   * When present, the SDK operates in MCD mode.
+   *
+   * Examples:
+   * - Static issuers: { issuers: ['https://tenant1.auth0.com', 'https://tenant2.auth0.com'] }
+   * - With config: { issuers: [{ issuer: 'https://...', alg: 'RS256' }] }
+   * - Dynamic resolver: { issuers: async (context) => [...] }
+   *
+   * Cannot be used with issuerBaseURL.
+   */
+  auth0MCD?: Auth0MCDOptions;
 }
 
 export interface VerifyJwtResult {
@@ -142,7 +195,10 @@ export interface VerifyJwtResult {
   token: string;
 }
 
-export type VerifyJwt = (jwt: string) => Promise<VerifyJwtResult>;
+export type VerifyJwt = (
+  jwt: string,
+  requestContext?: RequestContext
+) => Promise<VerifyJwtResult>;
 
 export const ASYMMETRIC_ALGS = [
   'RS256',
@@ -166,6 +222,7 @@ const jwtVerifier = ({
   audience = process.env.AUDIENCE as string,
   secret = process.env.SECRET as string,
   tokenSigningAlg = process.env.TOKEN_SIGNING_ALG as string,
+  auth0MCD,
   agent,
   cooldownDuration = 30000,
   timeoutDuration = 5000,
@@ -178,9 +235,14 @@ const jwtVerifier = ({
   let validators: Validators;
   let allowedSigningAlgs: string[] | undefined;
 
+  // Validation: Ensure proper configuration
   assert(
-    issuerBaseURL || (issuer && jwksUri) || (issuer && secret),
-    "You must provide an 'issuerBaseURL', an 'issuer' and 'jwksUri' or an 'issuer' and 'secret'"
+    auth0MCD || issuerBaseURL || (issuer && (jwksUri || secret)),
+    "You must provide 'auth0MCD', 'issuerBaseURL', or both 'issuer' and ('jwksUri' or 'secret')"
+  );
+  assert(
+    !(auth0MCD && issuerBaseURL),
+    "You must not provide both 'auth0MCD' and 'issuerBaseURL'"
   );
   assert(
     !(secret && jwksUri),
@@ -204,8 +266,12 @@ const jwtVerifier = ({
     )} for 'tokenSigningAlg' to validate symmetrically signed tokens`
   );
 
+  // MCD Support: Validate auth0MCD configuration
+  if (auth0MCD) {
+    assert(auth0MCD.issuers, "Invalid MCD configuration: 'issuers' is required");
+  }
+
   const getDiscovery = discovery({
-    issuerBaseURL,
     agent,
     timeoutDuration,
     cacheMaxAge,
@@ -219,19 +285,187 @@ const jwtVerifier = ({
     secret,
   });
 
-  return async (jwt: string) => {
+  // Helper: Normalize issuer URL
+  const normalizeIssuerUrl = (url: string): string => {
     try {
+      const parsed = new URL(url);
+      // Lowercase hostname, remove default ports, ensure no trailing slash
+      let normalized = `${parsed.protocol.toLowerCase()}//${parsed.hostname.toLowerCase()}`;
+      if (
+        (parsed.protocol === 'https:' && parsed.port && parsed.port !== '443') ||
+        (parsed.protocol === 'http:' && parsed.port && parsed.port !== '80')
+      ) {
+        normalized += `:${parsed.port}`;
+      }
+      if (parsed.pathname && parsed.pathname !== '/') {
+        normalized += parsed.pathname.replace(/\/$/, '');
+      }
+      return normalized;
+    } catch {
+      return url;
+    }
+  };
+
+  // Helper: Normalize issuer config
+  const normalizeIssuerConfig = (
+    config: string | IssuerConfig
+  ): IssuerConfig => {
+    if (typeof config === 'string') {
+      return { issuer: normalizeIssuerUrl(config) } as AsymmetricIssuerConfig;
+    }
+    return { ...config, issuer: normalizeIssuerUrl(config.issuer) };
+  };
+
+  return async (jwt: string, requestContext?: RequestContext) => {
+    try {
+      // MCD Mode: Handle multiple issuers
+      if (auth0MCD) {
+        // STEP 1: Decode token (unverified) to extract issuer claim and algorithm
+        const unverifiedPayload = decodeJwt(jwt);
+        const tokenIssuer = unverifiedPayload.iss;
+
+        if (!tokenIssuer) {
+          throw new Error("Token missing required 'iss' claim");
+        }
+
+        const normalizedTokenIssuer = normalizeIssuerUrl(tokenIssuer);
+
+        // STEP 2: Resolve issuers (static or dynamic)
+        let resolvedIssuers: (string | IssuerConfig)[];
+
+        if (typeof auth0MCD.issuers === 'function') {
+          // Dynamic resolver with real request context
+          const context: IssuerResolverContext = {
+            url: requestContext?.url
+              ? new URL(requestContext.url)
+              : new URL('http://localhost'),
+            headers: requestContext?.headers || {},
+            tokenClaims: unverifiedPayload,
+          };
+          const result = await auth0MCD.issuers(context);
+          resolvedIssuers = Array.isArray(result) ? result : [result];
+        } else {
+          // Static configuration
+          resolvedIssuers = Array.isArray(auth0MCD.issuers)
+            ? auth0MCD.issuers
+            : [auth0MCD.issuers];
+        }
+
+        // STEP 3: Normalize and match issuer
+        const normalizedConfigs = resolvedIssuers.map(normalizeIssuerConfig);
+        const matchedConfig = normalizedConfigs.find(
+          (config) => config.issuer === normalizedTokenIssuer
+        );
+
+        if (!matchedConfig) {
+          throw new Error(`Issuer '${tokenIssuer}' is not allowed`);
+        }
+
+        // STEP 3a: Reject symmetric algorithms if no secret configured
+        // This prevents SSRF attacks by ensuring we never fetch JWKS for symmetric tokens
+        const hasSecret = 'secret' in matchedConfig && matchedConfig.secret;
+        if (!hasSecret) {
+          const { alg } = JSON.parse(
+            Buffer.from(jwt.split('.')[0], 'base64').toString()
+          );
+          if (alg && typeof alg === 'string' && alg.startsWith('HS')) {
+            throw new Error(
+              'Symmetric algorithms (HS256, HS384, HS512) are not supported for JWKS-based verification. Configure a secret if you want to verify symmetric tokens.'
+            );
+          }
+        }
+
+        // STEP 4: Get JWKS URI and configure verification
+        let finalJwksUri: string | undefined;
+        let finalSecret: string | undefined;
+        let finalAlg: string | undefined;
+
+        if (hasSecret) {
+          // Symmetric algorithm
+          finalSecret = (matchedConfig as SymmetricIssuerConfig).secret;
+          finalAlg = matchedConfig.alg;
+        } else {
+          // Asymmetric algorithm
+          finalAlg = (matchedConfig as AsymmetricIssuerConfig).alg;
+
+          if ((matchedConfig as AsymmetricIssuerConfig).jwksUri) {
+            // Custom JWKS URI provided
+            finalJwksUri = (matchedConfig as AsymmetricIssuerConfig).jwksUri;
+          } else {
+            // Perform discovery
+            const {
+              jwks_uri: discoveredJwksUri,
+              issuer: discoveredIssuer,
+              id_token_signing_alg_values_supported:
+                idTokenSigningAlgValuesSupported,
+            } = await getDiscovery(tokenIssuer);
+
+            // STEP 4a: Double-validate that discovery metadata's issuer matches token's iss
+            if (discoveredIssuer !== tokenIssuer) {
+              throw new Error(
+                `Discovery metadata issuer '${discoveredIssuer}' does not match token issuer '${tokenIssuer}'`
+              );
+            }
+
+            finalJwksUri = discoveredJwksUri;
+            issuer = discoveredIssuer;
+            allowedSigningAlgs = idTokenSigningAlgValuesSupported;
+          }
+        }
+
+        // STEP 5: Setup validators
+        validators ||= {
+          ...defaultValidators(
+            tokenIssuer, // Use original issuer for validation, not normalized
+            audience,
+            clockTolerance,
+            maxTokenAge,
+            strict,
+            allowedSigningAlgs,
+            finalAlg
+          ),
+          ...customValidators,
+        };
+
+        // STEP 6: Verify JWT
+        let payload: JWTPayload;
+        let header: JWSHeaderParameters;
+
+        if (finalSecret) {
+          const keyFn = new TextEncoder().encode(finalSecret);
+          const result = await jwtVerify(jwt, keyFn, { clockTolerance });
+          payload = result.payload;
+          header = result.protectedHeader;
+        } else if (finalJwksUri) {
+          const result = await jwtVerify(jwt, getKeyFnGetter(finalJwksUri), {
+            clockTolerance,
+          });
+          payload = result.payload;
+          header = result.protectedHeader;
+        } else {
+          throw new Error('No JWKS URI or secret available for verification');
+        }
+
+        // STEP 7: Validate claims
+        await validate(payload, header, validators);
+
+        return { payload, header, token: jwt };
+      }
+
+      // Single Issuer Mode with Discovery
       if (issuerBaseURL) {
         const {
           jwks_uri: discoveredJwksUri,
           issuer: discoveredIssuer,
           id_token_signing_alg_values_supported:
             idTokenSigningAlgValuesSupported,
-        } = await getDiscovery();
+        } = await getDiscovery(issuerBaseURL);
         jwksUri = jwksUri || discoveredJwksUri;
         issuer = issuer || discoveredIssuer;
         allowedSigningAlgs = idTokenSigningAlgValuesSupported;
       }
+
+      // Setup validators for single issuer
       validators ||= {
         ...defaultValidators(
           issuer,
@@ -244,12 +478,17 @@ const jwtVerifier = ({
         ),
         ...customValidators,
       };
+
+      // Verify JWT with single issuer config
       const { payload, protectedHeader: header } = await jwtVerify(
         jwt,
         getKeyFnGetter(jwksUri),
         { clockTolerance }
       );
+
+      // Validate claims
       await validate(payload, header, validators);
+
       return { payload, header, token: jwt };
     } catch (e) {
       throw new InvalidTokenError(e.message);

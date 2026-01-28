@@ -14,6 +14,14 @@ export {
   VerifyJwtResult,
   JWTPayload,
   JWSHeaderParameters as JWTHeader,
+  Auth0MCDOptions,
+  AsymmetricIssuerConfig,
+  SymmetricIssuerConfig,
+  IssuerConfig,
+  IssuerResolverContext,
+  IssuerResolverResult,
+  IssuerResolverFunction,
+  RequestContext,
 } from './jwt-verifier';
 export {
   InvalidTokenError,
