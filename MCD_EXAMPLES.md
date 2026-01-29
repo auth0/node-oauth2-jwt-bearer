@@ -131,7 +131,7 @@ The resolver can return:
 Here's a more complete example showing different patterns:
 
 ```javascript
-// Tenant database (in reality, this would be your actual database)
+// Tenant database (actual database)
 const tenants = {
   'acme-corp': {
     allowedIssuers: ['https://acme.auth0.com', 'https://auth.acme.com']
@@ -306,55 +306,6 @@ app.use(auth({
 }));
 ```
 
-## Testing it
-
-The easiest way to test without real tokens:
-
-```javascript
-const express = require('express');
-const { auth } = require('express-oauth2-jwt-bearer');
-
-const app = express();
-
-app.use(auth({
-  auth0MCD: {
-    issuers: [
-      'https://tenant1.auth0.com',
-      'https://tenant2.auth0.com'
-    ]
-  },
-  audience: 'https://your-api.com'
-}));
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
-
-app.get('/protected', (req, res) => {
-  res.json({
-    message: 'You made it!',
-    issuer: req.auth.payload.iss,
-    audience: req.auth.payload.aud
-  });
-});
-
-app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
-  console.log('Try: curl http://localhost:3000/health');
-  console.log('Try: curl http://localhost:3000/protected');
-});
-```
-
-Run it, and you'll see:
-- `/health` returns 200 OK (no auth required)
-- `/protected` returns 401 Unauthorized (auth required, no token provided)
-
-To test with real tokens, you need to get a token from Auth0:
-1. Create a free Auth0 account
-2. Create an API with identifier `https://your-api.com`
-3. Get a test token from the API's Test tab
-4. Use it: `curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:3000/protected`
-
 ## Troubleshooting
 
 **"Issuer 'https://...' is not allowed"**
@@ -422,17 +373,19 @@ That's on you. The resolver function is called for each request (unless the resu
 
 Everything works exactly as before. The old single-issuer pattern (`issuerBaseURL`) is unchanged. Only add `auth0MCD` if you need multi-issuer support.
 
-## Next steps
+## Getting started
 
-1. Pick the pattern that fits your needs:
+1. **Choose your configuration pattern:**
    - Fixed set of domains? → Static array
    - Dynamic multi-tenant? → Resolver function
    - Single domain? → Keep using `issuerBaseURL`
 
-2. Test it locally first (server will reject tokens but show it's working)
+2. **Configure your issuers** with the actual Auth0 tenant URLs or custom domains
 
-3. Deploy and monitor logs to confirm issuers are being validated correctly
+3. **Deploy** - all security validations are built-in
 
-4. Consider caching strategy if using dynamic resolver
+4. **Monitor logs** to confirm tokens are being accepted from the expected issuers
+
+5. **Consider caching** if using a dynamic resolver with database lookups
 
 That's it. You're ready to handle tokens from multiple domains securely.
