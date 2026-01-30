@@ -63,20 +63,27 @@ const discover = async ({
   throw new Error('Failed to fetch authorization server metadata');
 };
 
-export default (opts: DiscoverOptions) => {
-  let discovery: Promise<IssuerMetadata> | undefined;
-  let timestamp = 0;
+export default (opts: Omit<DiscoverOptions, 'issuerBaseURL'>) => {
+  // Support multiple issuers by caching discovery per issuerBaseURL
+  const discoveryCache = new Map<
+    string,
+    { promise: Promise<IssuerMetadata>; timestamp: number }
+  >();
 
-  return () => {
+  return (issuerBaseURL: string) => {
     const now = Date.now();
+    const cached = discoveryCache.get(issuerBaseURL);
 
-    if (!discovery || now > timestamp + opts.cacheMaxAge) {
-      timestamp = now;
-      discovery = discover(opts).catch((e) => {
-        discovery = undefined;
+    if (!cached || now > cached.timestamp + opts.cacheMaxAge) {
+      const timestamp = now;
+      const promise = discover({ ...opts, issuerBaseURL }).catch((e) => {
+        discoveryCache.delete(issuerBaseURL);
         throw e;
       });
+      discoveryCache.set(issuerBaseURL, { promise, timestamp });
+      return promise;
     }
-    return discovery;
+
+    return cached.promise;
   };
 };

@@ -206,6 +206,14 @@ export {
   Validators,
   JWTHeader,
   JSONPrimitive,
+  Auth0MCDOptions,
+  AsymmetricIssuerConfig,
+  SymmetricIssuerConfig,
+  IssuerConfig,
+  IssuerResolverContext,
+  IssuerResolverResult,
+  IssuerResolverFunction,
+  RequestContext,
 } from 'access-token-jwt';
 export {
   UnauthorizedError,
