@@ -168,6 +168,68 @@ app.use(auth({
 }));
 ```
 
+## Configuration Rules
+
+### You must choose ONE configuration pattern
+
+The SDK will throw a configuration error if you try to mix single-issuer and multi-issuer patterns:
+
+**❌ This will fail:**
+```javascript
+app.use(auth({
+  issuerBaseURL: 'https://tenant1.auth0.com',  // Single-issuer pattern
+  auth0MCD: {                                    // Multi-issuer pattern
+    issuers: ['https://tenant2.auth0.com']
+  },
+  audience: 'https://your-api.com'
+}));
+// Error: "You must not provide both 'auth0MCD' and 'issuerBaseURL'"
+```
+
+**❌ This will also fail:**
+```javascript
+app.use(auth({
+  issuer: 'https://tenant1.auth0.com',         // Root-level issuer config
+  jwksUri: 'https://tenant1.auth0.com/.well-known/jwks.json',
+  auth0MCD: {                                    // MCD config
+    issuers: ['https://tenant2.auth0.com']
+  },
+  audience: 'https://your-api.com'
+}));
+// Error: "You must not provide both 'auth0MCD' and 'issuer'"
+```
+
+### Why these errors?
+
+These configuration patterns are **mutually exclusive**. Allowing both would create ambiguity:
+- Which configuration takes precedence?
+- Is `tenant1.auth0.com` allowed or not?
+- Should the configs merge or override?
+
+The error forces you to be explicit about your choice, preventing subtle bugs and confusion.
+
+### Migration path
+
+**If you're migrating from single-issuer to multi-issuer:**
+
+```javascript
+// Before (single issuer)
+app.use(auth({
+  issuerBaseURL: 'https://tenant1.auth0.com',
+  audience: 'https://your-api.com'
+}));
+
+// After (multi-issuer)
+app.use(auth({
+  auth0MCD: {
+    issuers: ['https://tenant1.auth0.com']  // Move issuer here
+  },
+  audience: 'https://your-api.com'
+}));
+```
+
+Just remove the old config and add `auth0MCD`. Clean and simple.
+
 ## Caching
 
 By default, three things get cached:
@@ -308,6 +370,14 @@ app.use(auth({
 
 ## Troubleshooting
 
+**"You must not provide both 'auth0MCD' and 'issuerBaseURL'" (or 'issuer' or 'jwksUri')**
+
+You're mixing single-issuer and multi-issuer configuration patterns. Choose one:
+- For single issuer: Use `issuerBaseURL` (or `issuer` + `jwksUri`)
+- For multiple issuers: Use `auth0MCD` only
+
+See the [Configuration Rules](#configuration-rules) section for migration guidance.
+
 **"Issuer 'https://...' is not allowed"**
 
 The token's `iss` claim doesn't match any of your configured issuers. Check:
@@ -335,8 +405,8 @@ The issuer's discovery document claims to be a different issuer than what's in t
 
 **Dynamic resolver not being called**
 
-Make sure you're NOT mixing patterns:
-- Can't use both `auth0MCD` and `issuerBaseURL`
+Make sure you're NOT mixing patterns (see [Configuration Rules](#configuration-rules)):
+- Can't use both `auth0MCD` and `issuerBaseURL` (or `issuer` or `jwksUri`)
 - Resolver function should be async or return a Promise
 - Check for errors in your resolver (they'll show up in console)
 

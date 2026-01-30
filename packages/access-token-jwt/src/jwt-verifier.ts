@@ -245,6 +245,14 @@ const jwtVerifier = ({
     "You must not provide both 'auth0MCD' and 'issuerBaseURL'"
   );
   assert(
+    !(auth0MCD && issuer),
+    "You must not provide both 'auth0MCD' and 'issuer'. Use 'auth0MCD' for multi-issuer mode."
+  );
+  assert(
+    !(auth0MCD && jwksUri),
+    "You must not provide both 'auth0MCD' and 'jwksUri'. Use 'auth0MCD' for multi-issuer mode."
+  );
+  assert(
     !(secret && jwksUri),
     "You must not provide both a 'secret' and 'jwksUri'"
   );

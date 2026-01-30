@@ -260,6 +260,35 @@ describe('jwt-verifier', () => {
       ).toThrowError("Invalid MCD configuration: 'issuers' is required");
     });
 
+    it('should throw when both auth0MCD and issuer are provided', () => {
+      expect(() =>
+        jwtVerifier({
+          auth0MCD: {
+            issuers: ['https://tenant1.auth0.com'],
+          },
+          issuer: 'https://tenant1.auth0.com',
+          jwksUri: 'https://tenant1.auth0.com/.well-known/jwks.json',
+          audience: 'https://api/',
+        })
+      ).toThrowError(
+        "You must not provide both 'auth0MCD' and 'issuer'. Use 'auth0MCD' for multi-issuer mode."
+      );
+    });
+
+    it('should throw when both auth0MCD and jwksUri are provided', () => {
+      expect(() =>
+        jwtVerifier({
+          auth0MCD: {
+            issuers: ['https://tenant1.auth0.com'],
+          },
+          jwksUri: 'https://tenant1.auth0.com/.well-known/jwks.json',
+          audience: 'https://api/',
+        })
+      ).toThrowError(
+        "You must not provide both 'auth0MCD' and 'jwksUri'. Use 'auth0MCD' for multi-issuer mode."
+      );
+    });
+
     it('should verify token with MCD static issuer (string)', async () => {
       const jwt = await createJwt({
         issuer: 'https://tenant1.example.com/',
