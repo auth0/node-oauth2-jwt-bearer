@@ -430,7 +430,11 @@ function tokenVerifier(
       }
     }
 
-    const verifiedJwt = await verifyJwt(jwt);
+    // Pass request context to JWT verifier for MCD issuer resolution
+    const verifiedJwt = await verifyJwt(jwt, {
+      url: requestOptions.url,
+      headers: headers as Record<string, string | string[] | undefined>,
+    });
     const accessTokenClaims = verifiedJwt.payload as DPoPJWTPayload;
 
     if (

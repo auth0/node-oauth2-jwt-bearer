@@ -2,6 +2,7 @@ import { URL } from 'url';
 import fetch from './fetch';
 import { strict as assert } from 'assert';
 import { JwtVerifierOptions } from './jwt-verifier';
+import { LRUCache } from './lru-cache';
 
 const OIDC_DISCOVERY = '/.well-known/openid-configuration';
 const OAUTH2_DISCOVERY = '/.well-known/oauth-authorization-server';
@@ -17,15 +18,15 @@ const assertIssuer = (data: IssuerMetadata) =>
   assert(data.issuer, `'issuer' not found in authorization server metadata`);
 
 export type DiscoverOptions = Required<
-  Pick<JwtVerifierOptions, 'issuerBaseURL' | 'timeoutDuration' | 'cacheMaxAge'>
+  Pick<JwtVerifierOptions, 'timeoutDuration' | 'cacheMaxAge'>
 > &
-  Pick<JwtVerifierOptions, 'agent'>;
+  Pick<JwtVerifierOptions, 'agent' | 'cache'>;
 
-const discover = async ({
-  issuerBaseURL: uri,
-  agent,
-  timeoutDuration,
-}: DiscoverOptions): Promise<IssuerMetadata> => {
+const discover = async (
+  uri: string,
+  opts: Pick<DiscoverOptions, 'agent' | 'timeoutDuration'>
+): Promise<IssuerMetadata> => {
+  const { agent, timeoutDuration } = opts;
   const url = new URL(uri);
 
   if (url.pathname.includes('/.well-known/')) {
@@ -63,20 +64,32 @@ const discover = async ({
   throw new Error('Failed to fetch authorization server metadata');
 };
 
-export default (opts: DiscoverOptions) => {
-  let discovery: Promise<IssuerMetadata> | undefined;
-  let timestamp = 0;
+export default (opts: Omit<DiscoverOptions, 'issuerBaseURL'>) => {
+  // Create LRU cache for discovery metadata
+  // Use cache.discovery options if provided, otherwise fall back to cacheMaxAge (deprecated)
+  const cacheOptions = {
+    maxEntries: opts.cache?.discovery?.maxEntries ?? 100,
+    // Note: cacheMaxAge is always defined (has default value), so final fallback never reached
+    ttl: /* istanbul ignore next */ opts.cache?.discovery?.ttl ?? opts.cacheMaxAge ?? 600000,
+  };
 
-  return () => {
-    const now = Date.now();
+  const discoveryCache = new LRUCache<Promise<IssuerMetadata>>(cacheOptions);
 
-    if (!discovery || now > timestamp + opts.cacheMaxAge) {
-      timestamp = now;
-      discovery = discover(opts).catch((e) => {
-        discovery = undefined;
-        throw e;
-      });
+  return (issuerBaseURL: string): Promise<IssuerMetadata> => {
+    // Check cache first
+    const cached = discoveryCache.get(issuerBaseURL);
+    if (cached) {
+      return cached;
     }
-    return discovery;
+
+    // Perform discovery and cache the promise
+    const promise = discover(issuerBaseURL, opts).catch((e) => {
+      // Remove failed request from cache so it can be retried
+      discoveryCache.delete(issuerBaseURL);
+      throw e;
+    });
+
+    discoveryCache.set(issuerBaseURL, promise);
+    return promise;
   };
 };
