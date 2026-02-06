@@ -104,8 +104,71 @@ export interface JwtVerifierOptions {
    * Maximum time (in milliseconds) between successful HTTP requests to the
    * JWKS and Discovery endpoint.
    * Default is 600000 (10 minutes).
+   * @deprecated Use cache.ttl instead for more granular control
    */
   cacheMaxAge?: number;
+
+  /**
+   * Cache configuration for OIDC discovery metadata and JWKS.
+   * Caching reduces network requests and improves performance, especially
+   * in MCD scenarios with multiple issuers.
+   *
+   * Default behavior (if not specified):
+   * - Discovery cache: 100 entries, 10 minute TTL
+   * - JWKS cache: 100 entries, 10 minute TTL
+   *
+   * Example:
+   * ```js
+   * {
+   *   cache: {
+   *     discovery: {
+   *       maxEntries: 50,   // Cache up to 50 different issuers
+   *       ttl: 300000       // 5 minutes
+   *     },
+   *     jwks: {
+   *       maxEntries: 50,
+   *       ttl: 300000
+   *     }
+   *   }
+   * }
+   * ```
+   */
+  cache?: {
+    /**
+     * OIDC discovery metadata cache configuration.
+     * Caches responses from /.well-known/openid-configuration endpoints.
+     */
+    discovery?: {
+      /**
+       * Maximum number of issuer discovery metadata to cache.
+       * When this limit is reached, least recently used entries are evicted.
+       * Default: 100
+       */
+      maxEntries?: number;
+      /**
+       * Time-to-live for cached discovery metadata in milliseconds.
+       * Default: 600000 (10 minutes)
+       */
+      ttl?: number;
+    };
+    /**
+     * JWKS (JSON Web Key Set) cache configuration.
+     * Caches responses from /.well-known/jwks.json endpoints.
+     */
+    jwks?: {
+      /**
+       * Maximum number of JWKS to cache.
+       * When this limit is reached, least recently used entries are evicted.
+       * Default: 100
+       */
+      maxEntries?: number;
+      /**
+       * Time-to-live for cached JWKS in milliseconds.
+       * Default: 600000 (10 minutes)
+       */
+      ttl?: number;
+    };
+  };
 
   /**
    * Pass in custom validators to override the existing validation behavior on
@@ -227,6 +290,7 @@ const jwtVerifier = ({
   cooldownDuration = 30000,
   timeoutDuration = 5000,
   cacheMaxAge = 600000,
+  cache,
   clockTolerance = 5,
   maxTokenAge,
   strict = false,
@@ -277,12 +341,57 @@ const jwtVerifier = ({
   // MCD Support: Validate auth0MCD configuration
   if (auth0MCD) {
     assert(auth0MCD.issuers, "Invalid MCD configuration: 'issuers' is required");
+
+    // Validate static issuer configurations at initialization
+    if (typeof auth0MCD.issuers !== 'function') {
+      const staticIssuers = Array.isArray(auth0MCD.issuers)
+        ? auth0MCD.issuers
+        : [auth0MCD.issuers];
+
+      staticIssuers.forEach((issuerConfig) => {
+        // Skip string-only configs (no algorithm specified)
+        if (typeof issuerConfig === 'string') return;
+
+        const hasSecret = 'secret' in issuerConfig && issuerConfig.secret;
+        const configuredAlg = issuerConfig.alg;
+
+        // Check if symmetric algorithm configured without secret
+        if (
+          configuredAlg &&
+          SYMMETRIC_ALGS.includes(configuredAlg) &&
+          !hasSecret
+        ) {
+          throw new Error(
+            `Configuration error: Issuer '${issuerConfig.issuer}' specifies symmetric algorithm '${configuredAlg}' but no secret provided. Either provide a secret or use an asymmetric algorithm (${ASYMMETRIC_ALGS.join(', ')}).`
+          );
+        }
+
+        // Check if secret provided with asymmetric algorithm
+        if (
+          hasSecret &&
+          configuredAlg &&
+          ASYMMETRIC_ALGS.includes(configuredAlg)
+        ) {
+          throw new Error(
+            `Configuration error: Issuer '${issuerConfig.issuer}' provides a secret but specifies asymmetric algorithm '${configuredAlg}'. Symmetric algorithms are: ${SYMMETRIC_ALGS.join(', ')}.`
+          );
+        }
+
+        // Check if secret provided without algorithm
+        if (hasSecret && !configuredAlg) {
+          throw new Error(
+            `Configuration error: Issuer '${issuerConfig.issuer}' provides a secret but no 'alg' specified. Specify one of: ${SYMMETRIC_ALGS.join(', ')}.`
+          );
+        }
+      });
+    }
   }
 
   const getDiscovery = discovery({
     agent,
     timeoutDuration,
     cacheMaxAge,
+    cache,
   });
 
   const getKeyFnGetter = getKeyFn({
@@ -291,12 +400,19 @@ const jwtVerifier = ({
     timeoutDuration,
     cacheMaxAge,
     secret,
+    cache,
   });
 
   // Helper: Normalize issuer URL
   const normalizeIssuerUrl = (url: string): string => {
     try {
-      const parsed = new URL(url);
+      // If URL doesn't start with a protocol, prepend https://
+      let urlToParse = url;
+      if (!url.match(/^https?:\/\//i)) {
+        urlToParse = `https://${url}`;
+      }
+
+      const parsed = new URL(urlToParse);
       // Lowercase hostname, remove default ports, ensure no trailing slash
       let normalized = `${parsed.protocol.toLowerCase()}//${parsed.hostname.toLowerCase()}`;
       if (
@@ -322,6 +438,80 @@ const jwtVerifier = ({
       return { issuer: normalizeIssuerUrl(config) } as AsymmetricIssuerConfig;
     }
     return { ...config, issuer: normalizeIssuerUrl(config.issuer) };
+  };
+
+  /**
+   * Helper: Verify and validate JWT signature and claims
+   *
+   * This helper consolidates the common verification logic used by both
+   * MCD (multi-issuer) and single issuer modes. It handles:
+   * 1. Setting up claim validators (iss, aud, exp, etc.)
+   * 2. Verifying the JWT signature (symmetric or asymmetric)
+   * 3. Validating all claims against configured rules
+   *
+   * @param jwt - The JWT token string to verify
+   * @param issuerValue - Expected issuer for 'iss' claim validation
+   * @param jwksUriValue - JWKS URI for asymmetric signature verification (RS256, ES256, etc.)
+   * @param secretValue - Secret for symmetric signature verification (HS256, HS384, HS512)
+   * @param algValue - Expected signing algorithm
+   * @param allowedSigningAlgsValue - List of allowed signing algorithms from discovery
+   * @returns Verified JWT payload, header, and original token
+   */
+  const verifyAndValidateJwt = async (
+    jwt: string,
+    issuerValue: string,
+    jwksUriValue: string | undefined,
+    secretValue: string | undefined,
+    algValue: string | undefined,
+    allowedSigningAlgsValue: string[] | undefined
+  ): Promise<VerifyJwtResult> => {
+    // Setup validators: Configure rules for validating JWT claims
+    // This combines default validators (iss, aud, exp, iat, etc.) with any custom ones
+    // The ||= operator ensures we only set validators once per request
+    validators ||= {
+      ...defaultValidators(
+        issuerValue,
+        audience,
+        clockTolerance,
+        maxTokenAge,
+        strict,
+        allowedSigningAlgsValue,
+        algValue
+      ),
+      ...customValidators,
+    };
+
+    // Verify JWT signature: The verification path depends on the algorithm type
+    let payload: JWTPayload;
+    let header: JWSHeaderParameters;
+
+    if (secretValue) {
+      // Symmetric algorithm verification (HS256, HS384, HS512)
+      // These use a shared secret known to both the issuer and verifier.
+      // Convert the secret string to a key that jose library can use.
+      const keyFn = new TextEncoder().encode(secretValue);
+      const result = await jwtVerify(jwt, keyFn, { clockTolerance });
+      payload = result.payload;
+      header = result.protectedHeader;
+    } else if (jwksUriValue) {
+      // Asymmetric algorithm verification (RS256, ES256, PS256, etc.)
+      // These use public/private key pairs. We fetch the public keys from the JWKS endpoint
+      // and use them to verify the signature. The getKeyFnGetter handles JWKS caching.
+      const result = await jwtVerify(jwt, getKeyFnGetter(jwksUriValue), {
+        clockTolerance,
+      });
+      payload = result.payload;
+      header = result.protectedHeader;
+    } else {
+      // This should never happen if configuration is valid, but we check defensively
+      throw new Error('No JWKS URI or secret available for verification');
+    }
+
+    // Validate claims: Check all JWT claims (iss, aud, exp, custom claims, etc.)
+    // against the configured validators. Throws if any validation fails.
+    await validate(payload, header, validators);
+
+    return { payload, header, token: jwt };
   };
 
   return async (jwt: string, requestContext?: RequestContext) => {
@@ -409,7 +599,8 @@ const jwtVerifier = ({
             } = await getDiscovery(tokenIssuer);
 
             // STEP 4a: Double-validate that discovery metadata's issuer matches token's iss
-            if (discoveredIssuer !== tokenIssuer) {
+            // Normalize both sides to handle trailing slash differences
+            if (normalizeIssuerUrl(discoveredIssuer) !== normalizedTokenIssuer) {
               throw new Error(
                 `Discovery metadata issuer '${discoveredIssuer}' does not match token issuer '${tokenIssuer}'`
               );
@@ -421,43 +612,19 @@ const jwtVerifier = ({
           }
         }
 
-        // STEP 5: Setup validators
-        validators ||= {
-          ...defaultValidators(
-            tokenIssuer, // Use original issuer for validation, not normalized
-            audience,
-            clockTolerance,
-            maxTokenAge,
-            strict,
-            allowedSigningAlgs,
-            finalAlg
-          ),
-          ...customValidators,
-        };
-
-        // STEP 6: Verify JWT
-        let payload: JWTPayload;
-        let header: JWSHeaderParameters;
-
-        if (finalSecret) {
-          const keyFn = new TextEncoder().encode(finalSecret);
-          const result = await jwtVerify(jwt, keyFn, { clockTolerance });
-          payload = result.payload;
-          header = result.protectedHeader;
-        } else if (finalJwksUri) {
-          const result = await jwtVerify(jwt, getKeyFnGetter(finalJwksUri), {
-            clockTolerance,
-          });
-          payload = result.payload;
-          header = result.protectedHeader;
-        } else {
-          throw new Error('No JWKS URI or secret available for verification');
-        }
-
-        // STEP 7: Validate claims
-        await validate(payload, header, validators);
-
-        return { payload, header, token: jwt };
+        // STEP 5-7: Verify signature and validate claims
+        // Now that we've identified the correct issuer config and obtained the JWKS URI
+        // (or secret), we can verify the JWT signature and validate all claims.
+        // Note: We use the original token issuer (not normalized) for validation to
+        // ensure the 'iss' claim check matches exactly what's in the token.
+        return await verifyAndValidateJwt(
+          jwt,
+          tokenIssuer, // Original issuer from token (not normalized)
+          finalJwksUri,
+          finalSecret,
+          finalAlg,
+          allowedSigningAlgs
+        );
       }
 
       // Single Issuer Mode with Discovery
@@ -473,31 +640,18 @@ const jwtVerifier = ({
         allowedSigningAlgs = idTokenSigningAlgValuesSupported;
       }
 
-      // Setup validators for single issuer
-      validators ||= {
-        ...defaultValidators(
-          issuer,
-          audience,
-          clockTolerance,
-          maxTokenAge,
-          strict,
-          allowedSigningAlgs,
-          tokenSigningAlg
-        ),
-        ...customValidators,
-      };
-
-      // Verify JWT with single issuer config
-      const { payload, protectedHeader: header } = await jwtVerify(
+      // Verify signature and validate claims for single issuer mode
+      // At this point we have everything we need: the issuer, JWKS URI (or secret),
+      // and algorithm configuration. The helper handles the actual signature verification
+      // and claim validation using the same logic as MCD mode.
+      return await verifyAndValidateJwt(
         jwt,
-        getKeyFnGetter(jwksUri),
-        { clockTolerance }
+        issuer,
+        jwksUri,
+        secret,
+        tokenSigningAlg,
+        allowedSigningAlgs
       );
-
-      // Validate claims
-      await validate(payload, header, validators);
-
-      return { payload, header, token: jwt };
     } catch (e) {
       throw new InvalidTokenError(e.message);
     }

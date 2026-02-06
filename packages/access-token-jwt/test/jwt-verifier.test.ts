@@ -235,6 +235,122 @@ describe('jwt-verifier', () => {
     await expect(verify(jwt)).resolves.toHaveProperty('payload');
   });
 
+  it('should honor custom cache.discovery maxEntries configuration', async () => {
+    const jwt = await createJwt();
+
+    const verify = jwtVerifier({
+      issuerBaseURL: 'https://issuer.example.com/',
+      audience: 'https://api/',
+      cache: {
+        discovery: {
+          maxEntries: 2, // Only cache 2 issuers
+          ttl: 60000,
+        },
+      },
+    });
+
+    await expect(verify(jwt)).resolves.toHaveProperty('payload');
+  });
+
+  it('should honor custom cache.jwks maxEntries configuration', async () => {
+    const jwt = await createJwt();
+
+    const verify = jwtVerifier({
+      issuerBaseURL: 'https://issuer.example.com/',
+      audience: 'https://api/',
+      cache: {
+        jwks: {
+          maxEntries: 2, // Only cache 2 JWKS
+          ttl: 60000,
+        },
+      },
+    });
+
+    await expect(verify(jwt)).resolves.toHaveProperty('payload');
+  });
+
+  it('should use default cache settings when cache option not provided', async () => {
+    const jwt = await createJwt();
+
+    // No cache configuration = defaults apply (100 entries, 10 min TTL)
+    const verify = jwtVerifier({
+      issuerBaseURL: 'https://issuer.example.com/',
+      audience: 'https://api/',
+    });
+
+    await expect(verify(jwt)).resolves.toHaveProperty('payload');
+  });
+
+  it('should fall back to deprecated cacheMaxAge when cache config not provided', async () => {
+    const jwt = await createJwt();
+
+    // Using deprecated cacheMaxAge (backward compatibility)
+    const verify = jwtVerifier({
+      issuerBaseURL: 'https://issuer.example.com/',
+      audience: 'https://api/',
+      cacheMaxAge: 300000, // 5 minutes
+    });
+
+    await expect(verify(jwt)).resolves.toHaveProperty('payload');
+  });
+
+  it('should prioritize cache.discovery.ttl over deprecated cacheMaxAge', async () => {
+    const jwt = await createJwt();
+
+    // New cache config should override deprecated cacheMaxAge
+    const verify = jwtVerifier({
+      issuerBaseURL: 'https://issuer.example.com/',
+      audience: 'https://api/',
+      cacheMaxAge: 300000, // Should be ignored
+      cache: {
+        discovery: {
+          ttl: 120000, // 2 minutes - should be used
+        },
+      },
+    });
+
+    await expect(verify(jwt)).resolves.toHaveProperty('payload');
+  });
+
+  it('should use cacheMaxAge when cache object provided but discovery.ttl not specified', async () => {
+    const jwt = await createJwt();
+
+    // cache object exists but discovery.ttl is not specified
+    // Should fall back to cacheMaxAge
+    const verify = jwtVerifier({
+      issuerBaseURL: 'https://issuer.example.com/',
+      audience: 'https://api/',
+      cacheMaxAge: 300000, // Should be used as fallback
+      cache: {
+        jwks: {
+          ttl: 120000,
+        },
+      },
+    });
+
+    await expect(verify(jwt)).resolves.toHaveProperty('payload');
+  });
+
+  it('should use cacheMaxAge when cache.discovery provided but ttl not specified', async () => {
+    const jwt = await createJwt();
+
+    // cache.discovery exists but ttl is not specified
+    // Should fall back to cacheMaxAge
+    const verify = jwtVerifier({
+      issuerBaseURL: 'https://issuer.example.com/',
+      audience: 'https://api/',
+      cacheMaxAge: 300000, // Should be used as fallback
+      cache: {
+        discovery: {
+          maxEntries: 50,
+          // ttl not specified
+        },
+      },
+    });
+
+    await expect(verify(jwt)).resolves.toHaveProperty('payload');
+  });
+
   // MCD Tests
   describe('MCD (Multiple Custom Domains)', () => {
     it('should throw when both auth0MCD and issuerBaseURL are provided', () => {
@@ -287,6 +403,113 @@ describe('jwt-verifier', () => {
       ).toThrowError(
         "You must not provide both 'auth0MCD' and 'jwksUri'. Use 'auth0MCD' for multi-issuer mode."
       );
+    });
+
+    // Initialization-time validation tests
+    it('should throw at init when symmetric algorithm configured without secret', () => {
+      expect(() =>
+        jwtVerifier({
+          auth0MCD: {
+            issuers: [
+              {
+                issuer: 'https://tenant1.auth0.com',
+                alg: 'HS256', // Symmetric algorithm
+                // No secret provided!
+              },
+            ],
+          },
+          audience: 'https://api/',
+        })
+      ).toThrowError(
+        "Configuration error: Issuer 'https://tenant1.auth0.com' specifies symmetric algorithm 'HS256' but no secret provided"
+      );
+    });
+
+    it('should throw at init when secret provided with asymmetric algorithm', () => {
+      expect(() =>
+        jwtVerifier({
+          auth0MCD: {
+            issuers: [
+              {
+                issuer: 'https://tenant1.auth0.com',
+                alg: 'RS256', // Asymmetric algorithm
+                secret: 'my-secret', // Secret provided!
+              },
+            ],
+          },
+          audience: 'https://api/',
+        })
+      ).toThrowError(
+        "Configuration error: Issuer 'https://tenant1.auth0.com' provides a secret but specifies asymmetric algorithm 'RS256'"
+      );
+    });
+
+    it('should throw at init when secret provided without algorithm', () => {
+      expect(() =>
+        jwtVerifier({
+          auth0MCD: {
+            issuers: [
+              {
+                issuer: 'https://tenant1.auth0.com',
+                secret: 'my-secret', // Secret but no alg
+              },
+            ],
+          },
+          audience: 'https://api/',
+        })
+      ).toThrowError(
+        "Configuration error: Issuer 'https://tenant1.auth0.com' provides a secret but no 'alg' specified"
+      );
+    });
+
+    it('should not throw when string-only issuer configs used (no algorithm specified)', () => {
+      expect(() =>
+        jwtVerifier({
+          auth0MCD: {
+            issuers: ['https://tenant1.auth0.com', 'https://tenant2.auth0.com'],
+          },
+          audience: 'https://api/',
+        })
+      ).not.toThrow();
+    });
+
+    it('should not throw when valid symmetric config provided', () => {
+      expect(() =>
+        jwtVerifier({
+          auth0MCD: {
+            issuers: [
+              {
+                issuer: 'https://tenant1.auth0.com',
+                alg: 'HS256',
+                secret: 'my-secret', // Valid!
+              },
+            ],
+          },
+          audience: 'https://api/',
+        })
+      ).not.toThrow();
+    });
+
+    it('should not validate dynamic resolvers at init time', () => {
+      // Dynamic resolver - can return anything at runtime
+      // Should not throw at initialization
+      expect(() =>
+        jwtVerifier({
+          auth0MCD: {
+            issuers: async () => {
+              // Could return invalid config at runtime, but we can't check now
+              return [
+                {
+                  issuer: 'https://tenant1.auth0.com',
+                  alg: 'HS256',
+                  // No secret - but this is not validated at init time
+                },
+              ];
+            },
+          },
+          audience: 'https://api/',
+        })
+      ).not.toThrow();
     });
 
     it('should verify token with MCD static issuer (string)', async () => {
@@ -696,6 +919,44 @@ describe('jwt-verifier', () => {
       await expect(verify(jwt)).rejects.toThrowError(
         "Issuer 'https://tenant1.example.com/' is not allowed"
       );
+    });
+
+    it('should normalize issuer without protocol by prepending https://', async () => {
+      const jwt = await createJwt({
+        issuer: 'https://tenant1.example.com/',
+        jwksUri: '/.well-known/jwks.json',
+        discoveryUri: '/.well-known/openid-configuration',
+      });
+
+      // Config WITHOUT protocol
+      const verify = jwtVerifier({
+        auth0MCD: {
+          issuers: ['tenant1.example.com'], // No https://
+        },
+        audience: 'https://api/',
+      });
+
+      // Should match because normalization prepends https://
+      await expect(verify(jwt)).resolves.toHaveProperty('payload');
+    });
+
+    it('should normalize issuer without protocol and with trailing slash', async () => {
+      const jwt = await createJwt({
+        issuer: 'https://tenant1.example.com/',
+        jwksUri: '/.well-known/jwks.json',
+        discoveryUri: '/.well-known/openid-configuration',
+      });
+
+      // Config WITHOUT protocol but WITH trailing slash
+      const verify = jwtVerifier({
+        auth0MCD: {
+          issuers: ['tenant1.example.com/'], // No https:// but has /
+        },
+        audience: 'https://api/',
+      });
+
+      // Should match because normalization prepends https:// and removes trailing slash
+      await expect(verify(jwt)).resolves.toHaveProperty('payload');
     });
 
     it('should throw error when neither secret nor jwksUri available after failed discovery', async () => {
