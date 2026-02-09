@@ -28,7 +28,6 @@ export type IssuerConfig = AsymmetricIssuerConfig | SymmetricIssuerConfig;
 export interface IssuerResolverContext {
   url: URL;
   headers: Record<string, string | string[] | undefined>;
-  tokenClaims?: { iss?: string; aud?: string | string[]; [key: string]: unknown };
 }
 
 export type IssuerResolverResult = string | string[] | IssuerConfig[];
@@ -116,22 +115,6 @@ export interface JwtVerifierOptions {
    * Default behavior (if not specified):
    * - Discovery cache: 100 entries, 10 minute TTL
    * - JWKS cache: 100 entries, 10 minute TTL
-   *
-   * Example:
-   * ```js
-   * {
-   *   cache: {
-   *     discovery: {
-   *       maxEntries: 50,   // Cache up to 50 different issuers
-   *       ttl: 300000       // 5 minutes
-   *     },
-   *     jwks: {
-   *       maxEntries: 50,
-   *       ttl: 300000
-   *     }
-   *   }
-   * }
-   * ```
    */
   cache?: {
     /**
@@ -538,7 +521,6 @@ const jwtVerifier = ({
               ? new URL(requestContext.url)
               : new URL('http://localhost'),
             headers: requestContext?.headers || {},
-            tokenClaims: unverifiedPayload,
           };
           const result = await auth0MCD.issuers(context);
           resolvedIssuers = Array.isArray(result) ? result : [result];

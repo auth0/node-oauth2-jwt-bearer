@@ -768,10 +768,8 @@ describe('jwt-verifier', () => {
 
       expect(resolverSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          tokenClaims: expect.objectContaining({
-            iss: 'https://tenant1.example.com/',
-            org_id: 'org123',
-          }),
+          url: expect.any(URL),
+          headers: expect.any(Object),
         })
       );
     });
@@ -1096,9 +1094,6 @@ describe('jwt-verifier', () => {
         expect.objectContaining({
           url: expect.any(URL), // Should be http://localhost
           headers: {}, // Should be empty object
-          tokenClaims: expect.objectContaining({
-            iss: 'https://tenant1.example.com/',
-          }),
         })
       );
     });
@@ -1132,9 +1127,6 @@ describe('jwt-verifier', () => {
         expect.objectContaining({
           url: new URL('https://api.example.com/resource'),
           headers: { 'x-tenant-id': 'tenant1', authorization: 'Bearer ...' },
-          tokenClaims: expect.objectContaining({
-            iss: 'https://tenant1.example.com/',
-          }),
         })
       );
     });
