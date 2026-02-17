@@ -107,7 +107,6 @@ app.use(auth({
       // context gives you:
       // - url: the incoming request URL
       // - headers: the request headers
-      // - tokenClaims: the unverified JWT payload
 
       // Example: check which tenant this request is for
       const tenantId = context.headers['x-tenant-id'];
@@ -124,7 +123,6 @@ app.use(auth({
 ```
 
 The resolver can return:
-- A single issuer string: `'https://tenant.auth0.com'`
 - An array of issuers: `['https://tenant1.auth0.com', 'https://tenant2.auth0.com']`
 - Config objects: `[{ issuer: 'https://...', alg: 'RS256' }]`
 
@@ -153,12 +151,6 @@ app.use(auth({
       const tenant = tenants[tenantId];
       if (!tenant) {
         return []; // Unknown tenant = reject all
-      }
-
-      // You can also check the token claims
-      const orgId = context.tokenClaims?.org_id;
-      if (orgId !== tenantId) {
-        return []; // Mismatched org = reject
       }
 
       return tenant.allowedIssuers;
@@ -247,8 +239,7 @@ You can adjust the cache TTL:
 ```javascript
 app.use(auth({
   auth0MCD: {
-    issuers: ['https://tenant1.auth0.com'],
-    cacheTTL: 300000  // 5 minutes instead of 10
+    issuers: ['https://tenant1.auth0.com']
   },
   audience: 'https://your-api.com',
   cacheMaxAge: 300000  // Also affects JWKS and discovery
