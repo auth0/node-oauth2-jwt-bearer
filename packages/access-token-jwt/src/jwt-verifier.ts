@@ -30,7 +30,7 @@ export interface IssuerResolverContext {
   headers: Record<string, string | string[] | undefined>;
 }
 
-export type IssuerResolverResult = string | string[] | IssuerConfig[];
+export type IssuerResolverResult = string[] | IssuerConfig[];
 
 export type IssuerResolverFunction = (
   context: IssuerResolverContext
@@ -38,7 +38,6 @@ export type IssuerResolverFunction = (
 
 export interface Auth0MCDOptions {
   issuers: string | string[] | IssuerConfig[] | IssuerResolverFunction;
-  cacheTTL?: number;
 }
 
 export interface RequestContext {
@@ -279,8 +278,6 @@ const jwtVerifier = ({
   strict = false,
   validators: customValidators,
 }: JwtVerifierOptions): VerifyJwt => {
-  let validators: Validators;
-  let allowedSigningAlgs: string[] | undefined;
 
   // Validation: Ensure proper configuration
   assert(
@@ -302,6 +299,12 @@ const jwtVerifier = ({
   assert(
     !(secret && jwksUri),
     "You must not provide both a 'secret' and 'jwksUri'"
+  );
+  assert(
+    !(auth0MCD && secret),
+    'Cannot use top-level "secret" with auth0MCD mode. ' +
+    'Specify secrets per-issuer in the issuer configuration: ' +
+    '{ issuer: "...", secret: "...", alg: "HS256" }'
   );
   assert(audience, "An 'audience' is required to validate the 'aud' claim");
   assert(
@@ -423,6 +426,31 @@ const jwtVerifier = ({
     return { ...config, issuer: normalizeIssuerUrl(config.issuer) };
   };
 
+  // Helper: Early algorithm validation
+  const validateAlgorithmEarly = (jwt: string, hasSecret: boolean) => {
+    const { alg } = JSON.parse(Buffer.from(jwt.split('.')[0], 'base64').toString());
+    
+    if (!alg || typeof alg !== 'string') {
+      throw new Error('Token header missing or invalid "alg" claim');
+    }
+    
+    if (hasSecret) {
+      // For secret-based verification, only allow symmetric algorithms
+      if (!SYMMETRIC_ALGS.includes(alg)) {
+        throw new Error(
+          `Unsupported algorithm "${alg}" for secret-based verification. Supported: ${SYMMETRIC_ALGS.join(', ')}`
+        );
+      }
+    } else {
+      // For JWKS-based verification, only allow asymmetric algorithms
+      if (!ASYMMETRIC_ALGS.includes(alg)) {
+        throw new Error(
+          `Unsupported algorithm "${alg}" for JWKS-based verification. Supported: ${ASYMMETRIC_ALGS.join(', ')}`
+        );
+      }
+    }
+  };
+
   /**
    * Helper: Verify and validate JWT signature and claims
    *
@@ -451,7 +479,7 @@ const jwtVerifier = ({
     // Setup validators: Configure rules for validating JWT claims
     // This combines default validators (iss, aud, exp, iat, etc.) with any custom ones
     // The ||= operator ensures we only set validators once per request
-    validators ||= {
+    const validators: Validators = {
       ...defaultValidators(
         issuerValue,
         audience,
@@ -498,6 +526,8 @@ const jwtVerifier = ({
   };
 
   return async (jwt: string, requestContext?: RequestContext) => {
+    let allowedSigningAlgs: string[] | undefined;
+
     try {
       // MCD Mode: Handle multiple issuers
       if (auth0MCD) {
@@ -523,12 +553,20 @@ const jwtVerifier = ({
             headers: requestContext?.headers || {},
           };
           const result = await auth0MCD.issuers(context);
-          resolvedIssuers = Array.isArray(result) ? result : [result];
+          
+          if (!Array.isArray(result)) {
+            throw new Error('Issuer resolver function must return an array of IssuerConfig objects');
+          }
+          
+          resolvedIssuers = result;
         } else {
-          // Static configuration
           resolvedIssuers = Array.isArray(auth0MCD.issuers)
             ? auth0MCD.issuers
             : [auth0MCD.issuers];
+        }
+
+        if (resolvedIssuers.length === 0) {
+          throw new Error('No issuers configured. At least one issuer must be provided in MCD mode.');
         }
 
         // STEP 3: Normalize and match issuer
@@ -544,16 +582,7 @@ const jwtVerifier = ({
         // STEP 3a: Reject symmetric algorithms if no secret configured
         // This prevents SSRF attacks by ensuring we never fetch JWKS for symmetric tokens
         const hasSecret = 'secret' in matchedConfig && matchedConfig.secret;
-        if (!hasSecret) {
-          const { alg } = JSON.parse(
-            Buffer.from(jwt.split('.')[0], 'base64').toString()
-          );
-          if (alg && typeof alg === 'string' && alg.startsWith('HS')) {
-            throw new Error(
-              'Symmetric algorithms (HS256, HS384, HS512) are not supported for JWKS-based verification. Configure a secret if you want to verify symmetric tokens.'
-            );
-          }
-        }
+        validateAlgorithmEarly(jwt, !!hasSecret);
 
         // STEP 4: Get JWKS URI and configure verification
         let finalJwksUri: string | undefined;
@@ -576,8 +605,7 @@ const jwtVerifier = ({
             const {
               jwks_uri: discoveredJwksUri,
               issuer: discoveredIssuer,
-              id_token_signing_alg_values_supported:
-                idTokenSigningAlgValuesSupported,
+              id_token_signing_alg_values_supported: idTokenSigningAlgValuesSupported,
             } = await getDiscovery(tokenIssuer);
 
             // STEP 4a: Double-validate that discovery metadata's issuer matches token's iss
@@ -611,12 +639,15 @@ const jwtVerifier = ({
 
       // Single Issuer Mode with Discovery
       if (issuerBaseURL) {
+        //early validation
+        validateAlgorithmEarly(jwt, !!secret);
+
         const {
           jwks_uri: discoveredJwksUri,
           issuer: discoveredIssuer,
-          id_token_signing_alg_values_supported:
-            idTokenSigningAlgValuesSupported,
+          id_token_signing_alg_values_supported: idTokenSigningAlgValuesSupported,
         } = await getDiscovery(issuerBaseURL);
+        
         jwksUri = jwksUri || discoveredJwksUri;
         issuer = issuer || discoveredIssuer;
         allowedSigningAlgs = idTokenSigningAlgValuesSupported;

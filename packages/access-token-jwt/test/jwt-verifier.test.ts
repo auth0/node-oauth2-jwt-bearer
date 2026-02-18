@@ -405,6 +405,22 @@ describe('jwt-verifier', () => {
       );
     });
 
+    it('should throw when both auth0MCD and secret are provided', () => {
+      expect(() =>
+        jwtVerifier({
+          auth0MCD: {
+            issuers: ['https://tenant1.auth0.com'],
+          },
+          secret: 'my-secret',
+          audience: 'https://api/',
+        })
+      ).toThrowError(
+        'Cannot use top-level "secret" with auth0MCD mode. ' +
+        'Specify secrets per-issuer in the issuer configuration: ' +
+        '{ issuer: "...", secret: "...", alg: "HS256" }'
+      );
+    });
+
     // Initialization-time validation tests
     it('should throw at init when symmetric algorithm configured without secret', () => {
       expect(() =>
@@ -694,7 +710,7 @@ describe('jwt-verifier', () => {
       const verify = jwtVerifier({
         auth0MCD: {
           issuers: async (context) => {
-            // Dynamic resolver that returns allowed issuers
+            // Dynamic resolver that returns allowed issuers as strings (currently supported)
             return ['https://tenant1.example.com/', 'https://tenant2.example.com/'];
           },
         },
@@ -714,13 +730,59 @@ describe('jwt-verifier', () => {
       const verify = jwtVerifier({
         auth0MCD: {
           issuers: async (context) => {
-            return 'https://tenant1.example.com/';
+            return ['https://tenant1.example.com/'];
           },
         },
         audience: 'https://api/',
       });
 
       await expect(verify(jwt)).resolves.toHaveProperty('payload');
+    });
+
+    it('should throw when empty issuers array provided at runtime', async () => {
+      // Manually create a token header for testing
+      const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+      const payload = Buffer.from(JSON.stringify({ 
+        iss: 'https://tenant1.example.com/',
+        aud: 'https://api/',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000)
+      })).toString('base64url');
+      const fakeJwt = `${header}.${payload}.fake-signature`;
+
+      const verify = jwtVerifier({
+        auth0MCD: {
+          issuers: async () => [], // Returns empty array
+        },
+        audience: 'https://api/',
+      });
+
+      await expect(verify(fakeJwt)).rejects.toThrowError(
+        'No issuers configured. At least one issuer must be provided in MCD mode.'
+      );
+    });
+
+    it('should reject algorithm "none" early', async () => {
+      // Manually create a token with alg: "none"
+      const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url');
+      const payload = Buffer.from(JSON.stringify({ 
+        iss: 'https://tenant1.example.com/',
+        aud: 'https://api/',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000)
+      })).toString('base64url');
+      const fakeJwt = `${header}.${payload}.`; // No signature for "none" alg
+
+      const verify = jwtVerifier({
+        auth0MCD: {
+          issuers: ['https://tenant1.example.com/'],
+        },
+        audience: 'https://api/',
+      });
+
+      await expect(verify(fakeJwt)).rejects.toThrowError(
+        'Unsupported algorithm "none" for JWKS-based verification'
+      );
     });
 
     it('should work with MCD dynamic resolver returning config objects', async () => {
@@ -1040,7 +1102,7 @@ describe('jwt-verifier', () => {
       });
 
       await expect(verify(jwt)).rejects.toThrowError(
-        'Symmetric algorithms (HS256, HS384, HS512) are not supported for JWKS-based verification'
+        'Unsupported algorithm "HS256" for JWKS-based verification. Supported: RS256, RS384, RS512, PS256, PS384, PS512, ES256, ES256K, ES384, ES512, EdDSA'
       );
     });
 
@@ -1129,6 +1191,42 @@ describe('jwt-verifier', () => {
           headers: { 'x-tenant-id': 'tenant1', authorization: 'Bearer ...' },
         })
       );
+    });
+
+    it('should throw when dynamic resolver returns non-array', async () => {
+      const jwt = await createJwt({
+        issuer: 'https://tenant1.example.com/',
+        jwksUri: '/.well-known/jwks.json',
+        discoveryUri: '/.well-known/openid-configuration',
+      });
+
+      const verify = jwtVerifier({
+        auth0MCD: {
+          issuers: async () => 'not-an-array' as any, // Returns string instead of array
+        },
+        audience: 'https://api/',
+      });
+
+      await expect(verify(jwt)).rejects.toThrowError(
+        'Issuer resolver function must return an array of IssuerConfig objects'
+      );
+    });
+
+    it('should work when dynamic resolver returns strings (backward compatibility)', async () => {
+      const jwt = await createJwt({
+        issuer: 'https://tenant1.example.com/',
+        jwksUri: '/.well-known/jwks.json',
+        discoveryUri: '/.well-known/openid-configuration',
+      });
+
+      const verify = jwtVerifier({
+        auth0MCD: {
+          issuers: async () => ['https://tenant1.example.com/'], // String arrays still supported
+        },
+        audience: 'https://api/',
+      });
+
+      await expect(verify(jwt)).resolves.toHaveProperty('payload');
     });
   });
 });
