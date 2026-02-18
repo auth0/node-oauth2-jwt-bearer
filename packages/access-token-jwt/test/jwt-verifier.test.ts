@@ -785,6 +785,78 @@ describe('jwt-verifier', () => {
       );
     });
 
+    it('should reject RS256 token when expecting symmetric algorithm with secret', async () => {
+      // Create an RS256 token
+      const jwt = await createJwt({
+        issuer: 'https://tenant1.example.com/',
+      });
+
+      const verify = jwtVerifier({
+        auth0MCD: {
+          issuers: [
+            {
+              issuer: 'https://tenant1.example.com/',
+              alg: 'HS256',
+              secret: 'my-secret', // Secret configured, so expects HS* algorithms
+            },
+          ],
+        },
+        audience: 'https://api/',
+      });
+
+      await expect(verify(jwt)).rejects.toThrowError(
+        'Unsupported algorithm "RS256" for secret-based verification. Supported: HS256, HS384, HS512'
+      );
+    });
+
+    it('should reject HS256 token when no secret configured', async () => {
+      const secret = 'my-secret-key';
+      // Create an HS256 token
+      const jwt = await createJwt({
+        issuer: 'https://tenant1.example.com/',
+        secret,
+      });
+
+      const verify = jwtVerifier({
+        auth0MCD: {
+          issuers: [
+            {
+              issuer: 'https://tenant1.example.com/',
+              // No secret configured, so expects asymmetric algorithms only
+            },
+          ],
+        },
+        audience: 'https://api/',
+      });
+
+      await expect(verify(jwt)).rejects.toThrowError(
+        'Unsupported algorithm "HS256" for JWKS-based verification. Supported: RS256, RS384, RS512, PS256, PS384, PS512, ES256, ES256K, ES384, ES512, EdDSA'
+      );
+    });
+
+    it('should reject token with missing alg header', async () => {
+      // Manually create a token header without 'alg' field
+      const headerWithoutAlg = Buffer.from(JSON.stringify({ typ: 'JWT' })).toString('base64url');
+      const payload = Buffer.from(JSON.stringify({ 
+        iss: 'https://tenant1.example.com/',
+        aud: 'https://api/',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+        iat: Math.floor(Date.now() / 1000)
+      })).toString('base64url');
+      const fakeJwt = `${headerWithoutAlg}.${payload}.fake-signature`;
+
+      const verify = jwtVerifier({
+        auth0MCD: {
+          issuers: ['https://tenant1.example.com/'],
+        },
+        audience: 'https://api/',
+      });
+
+      await expect(verify(fakeJwt)).rejects.toThrowError(
+        'Token header missing or invalid "alg" claim'
+      );
+    });
+
     it('should work with MCD dynamic resolver returning config objects', async () => {
       const jwt = await createJwt({
         issuer: 'https://tenant1.example.com/',
