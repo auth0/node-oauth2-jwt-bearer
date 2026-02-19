@@ -654,7 +654,7 @@ describe('jwt-verifier', () => {
       });
 
       await expect(verify(jwt)).rejects.toThrowError(
-        "Issuer 'https://unauthorized.example.com/' is not allowed"
+        "Token issuer is not allowed"
       );
     });
 
@@ -1049,7 +1049,7 @@ describe('jwt-verifier', () => {
 
       // Will fail to match because normalized token issuer won't match malformed config issuer
       await expect(verify(jwt)).rejects.toThrowError(
-        "Issuer 'https://tenant1.example.com/' is not allowed"
+        "Token issuer is not allowed"
       );
     });
 
@@ -1200,7 +1200,7 @@ describe('jwt-verifier', () => {
       });
 
       await expect(verify(jwt)).rejects.toThrowError(
-        "Discovery metadata issuer 'https://different-tenant.example.com/' does not match token issuer 'https://tenant1.example.com/'"
+        "Discovery metadata issuer does not match token issuer"
       );
     });
 

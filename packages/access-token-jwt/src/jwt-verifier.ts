@@ -576,7 +576,7 @@ const jwtVerifier = ({
         );
 
         if (!matchedConfig) {
-          throw new Error(`Issuer '${tokenIssuer}' is not allowed`);
+          throw new Error('Token issuer is not allowed');
         }
 
         // STEP 3a: Reject symmetric algorithms if no secret configured
@@ -612,7 +612,7 @@ const jwtVerifier = ({
             // Normalize both sides to handle trailing slash differences
             if (normalizeIssuerUrl(discoveredIssuer) !== normalizedTokenIssuer) {
               throw new Error(
-                `Discovery metadata issuer '${discoveredIssuer}' does not match token issuer '${tokenIssuer}'`
+                'Discovery metadata issuer does not match token issuer'
               );
             }
 
