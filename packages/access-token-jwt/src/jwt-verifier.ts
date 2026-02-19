@@ -5,7 +5,7 @@ import { Agent as HttpAgent } from 'http';
 import { Agent as HttpsAgent } from 'https';
 import { jwtVerify, decodeJwt } from 'jose';
 import type { JWTPayload, JWSHeaderParameters } from 'jose';
-import { InvalidTokenError } from 'oauth2-bearer';
+import { InvalidTokenError, InvalidRequestError } from 'oauth2-bearer';
 import discovery from './discovery';
 import getKeyFn from './get-key-fn';
 import validate, { defaultValidators, Validators } from './validate';
@@ -324,6 +324,69 @@ const jwtVerifier = ({
     )} for 'tokenSigningAlg' to validate symmetrically signed tokens`
   );
 
+  // Helper: Normalize issuer URL
+  const normalizeIssuerUrl = (url: string): string => {
+    try {
+      let urlToParse = url;
+      if (!url.match(/^https?:\/\//i)) {
+        urlToParse = `https://${url}`;
+      }
+
+      const parsed = new URL(urlToParse);
+      
+      // Security check: Warn about HTTP in production
+      if (parsed.protocol === 'http:' && process.env.NODE_ENV === 'production') {
+        throw new InvalidRequestError('HTTP issuer URL detected in production environment. Use HTTPS for security.');
+      }
+      
+      // Security check: Detect and warn about potentially sensitive URL components that will be stripped
+      const hasUserInfo = parsed.username || parsed.password;
+      const hasQuery = parsed.search;
+      const hasFragment = parsed.hash;
+      
+      if (hasUserInfo) {
+        throw new InvalidRequestError('Invalid issuer URL: URLs must not contain userinfo (username:password)');
+      }
+      if (hasQuery) {
+        throw new InvalidRequestError('Invalid issuer URL: URLs must not contain query parameters');
+      }
+      if (hasFragment) {
+        throw new InvalidRequestError('Invalid issuer URL: URLs must not contain fragments');
+      }
+      
+      // Normalize: lowercase hostname, remove default ports, ensure no trailing slash
+      // Note: parsed.origin automatically excludes userinfo, search, and hash
+      let normalized = `${parsed.protocol.toLowerCase()}//${parsed.hostname.toLowerCase()}`;
+      if (
+        (parsed.protocol === 'https:' && parsed.port && parsed.port !== '443') ||
+        (parsed.protocol === 'http:' && parsed.port && parsed.port !== '80')
+      ) {
+        normalized += `:${parsed.port}`;
+      }
+      if (parsed.pathname && parsed.pathname !== '/') {
+        normalized += parsed.pathname.replace(/\/$/, '');
+      }
+      return normalized;
+    } catch (error) {
+      // Re-throw security validation errors (InvalidRequestError)
+      if (error instanceof InvalidRequestError) {
+        throw error;
+      }
+      // Only catch URL parsing errors, return original URL
+      return url;
+    }
+  };
+
+  // Helper: Normalize issuer config
+  const normalizeIssuerConfig = (
+    config: string | IssuerConfig
+  ): IssuerConfig => {
+    if (typeof config === 'string') {
+      return { issuer: normalizeIssuerUrl(config) } as AsymmetricIssuerConfig;
+    }
+    return { ...config, issuer: normalizeIssuerUrl(config.issuer) };
+  };
+
   // MCD Support: Validate auth0MCD configuration
   if (auth0MCD) {
     assert(auth0MCD.issuers, "Invalid MCD configuration: 'issuers' is required");
@@ -335,6 +398,9 @@ const jwtVerifier = ({
         : [auth0MCD.issuers];
 
       staticIssuers.forEach((issuerConfig) => {
+        // Normalize and validate URL (this will throw errors for security issues)
+        normalizeIssuerConfig(issuerConfig);
+
         // Skip string-only configs (no algorithm specified)
         if (typeof issuerConfig === 'string') return;
 
@@ -389,62 +455,25 @@ const jwtVerifier = ({
     cache,
   });
 
-  // Helper: Normalize issuer URL
-  const normalizeIssuerUrl = (url: string): string => {
-    try {
-      // If URL doesn't start with a protocol, prepend https://
-      let urlToParse = url;
-      if (!url.match(/^https?:\/\//i)) {
-        urlToParse = `https://${url}`;
-      }
-
-      const parsed = new URL(urlToParse);
-      // Lowercase hostname, remove default ports, ensure no trailing slash
-      let normalized = `${parsed.protocol.toLowerCase()}//${parsed.hostname.toLowerCase()}`;
-      if (
-        (parsed.protocol === 'https:' && parsed.port && parsed.port !== '443') ||
-        (parsed.protocol === 'http:' && parsed.port && parsed.port !== '80')
-      ) {
-        normalized += `:${parsed.port}`;
-      }
-      if (parsed.pathname && parsed.pathname !== '/') {
-        normalized += parsed.pathname.replace(/\/$/, '');
-      }
-      return normalized;
-    } catch {
-      return url;
-    }
-  };
-
-  // Helper: Normalize issuer config
-  const normalizeIssuerConfig = (
-    config: string | IssuerConfig
-  ): IssuerConfig => {
-    if (typeof config === 'string') {
-      return { issuer: normalizeIssuerUrl(config) } as AsymmetricIssuerConfig;
-    }
-    return { ...config, issuer: normalizeIssuerUrl(config.issuer) };
-  };
-
   // Helper: Early algorithm validation
   const validateAlgorithmEarly = (jwt: string, hasSecret: boolean) => {
     const { alg } = JSON.parse(Buffer.from(jwt.split('.')[0], 'base64').toString());
     
     if (!alg || typeof alg !== 'string') {
-      throw new Error('Token header missing or invalid "alg" claim');
+      throw new InvalidTokenError('Token header missing or invalid "alg" claim');
     }
     
     if (hasSecret) {
       // For secret-based verification, only allow symmetric algorithms
       if (!SYMMETRIC_ALGS.includes(alg)) {
-        throw new Error(
+        throw new InvalidTokenError(
           `Unsupported algorithm "${alg}" for secret-based verification. Supported: ${SYMMETRIC_ALGS.join(', ')}`
         );
       }
     } else {
       // For JWKS-based verification, only allow asymmetric algorithms
       if (!ASYMMETRIC_ALGS.includes(alg)) {
-        throw new Error(
+        throw new InvalidTokenError(
           `Unsupported algorithm "${alg}" for JWKS-based verification. Supported: ${ASYMMETRIC_ALGS.join(', ')}`
         );
       }
@@ -515,7 +544,7 @@ const jwtVerifier = ({
       header = result.protectedHeader;
     } else {
       // This should never happen if configuration is valid, but we check defensively
-      throw new Error('No JWKS URI or secret available for verification');
+      throw new InvalidTokenError('No JWKS URI or secret available for verification');
     }
 
     // Validate claims: Check all JWT claims (iss, aud, exp, custom claims, etc.)
@@ -536,7 +565,7 @@ const jwtVerifier = ({
         const tokenIssuer = unverifiedPayload.iss;
 
         if (!tokenIssuer) {
-          throw new Error("Token missing required 'iss' claim");
+          throw new InvalidTokenError("Token missing required 'iss' claim");
         }
 
         const normalizedTokenIssuer = normalizeIssuerUrl(tokenIssuer);
@@ -555,7 +584,7 @@ const jwtVerifier = ({
           const result = await auth0MCD.issuers(context);
           
           if (!Array.isArray(result)) {
-            throw new Error('Issuer resolver function must return an array of IssuerConfig objects');
+            throw new InvalidRequestError('Issuer resolver function must return an array');
           }
           
           resolvedIssuers = result;
@@ -566,7 +595,7 @@ const jwtVerifier = ({
         }
 
         if (resolvedIssuers.length === 0) {
-          throw new Error('No issuers configured. At least one issuer must be provided in MCD mode.');
+          throw new InvalidTokenError('No issuers configured for token validation');
         }
 
         // STEP 3: Normalize and match issuer
@@ -576,7 +605,7 @@ const jwtVerifier = ({
         );
 
         if (!matchedConfig) {
-          throw new Error('Token issuer is not allowed');
+          throw new InvalidTokenError('Token issuer is not allowed');
         }
 
         // STEP 3a: Reject symmetric algorithms if no secret configured
@@ -611,7 +640,7 @@ const jwtVerifier = ({
             // STEP 4a: Double-validate that discovery metadata's issuer matches token's iss
             // Normalize both sides to handle trailing slash differences
             if (normalizeIssuerUrl(discoveredIssuer) !== normalizedTokenIssuer) {
-              throw new Error(
+              throw new InvalidTokenError(
                 'Discovery metadata issuer does not match token issuer'
               );
             }

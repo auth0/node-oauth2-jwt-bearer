@@ -758,7 +758,7 @@ describe('jwt-verifier', () => {
       });
 
       await expect(verify(fakeJwt)).rejects.toThrowError(
-        'No issuers configured. At least one issuer must be provided in MCD mode.'
+        'No issuers configured for token validation'
       );
     });
 
@@ -1280,7 +1280,7 @@ describe('jwt-verifier', () => {
       });
 
       await expect(verify(jwt)).rejects.toThrowError(
-        'Issuer resolver function must return an array of IssuerConfig objects'
+        'Issuer resolver function must return an array'
       );
     });
 
@@ -1300,5 +1300,100 @@ describe('jwt-verifier', () => {
 
       await expect(verify(jwt)).resolves.toHaveProperty('payload');
     });
-  });
+  });    describe('URL normalization security warnings', () => {
+      let consoleSpy: jest.SpyInstance;
+
+      beforeEach(() => {
+        consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+      });
+
+      afterEach(() => {
+        consoleSpy.mockRestore();
+      });
+
+      it('should throw error for userinfo in issuer URL', () => {
+        expect(() => {
+          jwtVerifier({
+            auth0MCD: {
+              issuers: ['https://user:pass@tenant1.example.com/'],
+            },
+            audience: 'https://api/',
+          });
+        }).toThrow('Invalid issuer URL: URLs must not contain userinfo (username:password)');
+      });
+
+      it('should throw error for query parameters in issuer URL', () => {
+        expect(() => {
+          jwtVerifier({
+            auth0MCD: {
+              issuers: ['https://tenant1.example.com/?debug=true&env=test'],
+            },
+            audience: 'https://api/',
+          });
+        }).toThrow('Invalid issuer URL: URLs must not contain query parameters');
+      });
+
+      it('should throw error for URL fragments in issuer URL', () => {
+        expect(() => {
+          jwtVerifier({
+            auth0MCD: {
+              issuers: ['https://tenant1.example.com/#section'],
+            },
+            audience: 'https://api/',
+          });
+        }).toThrow('Invalid issuer URL: URLs must not contain fragments');
+      });
+
+      it('should throw error for HTTP in production environment', () => {
+        const originalEnv = process.env.NODE_ENV;
+        process.env.NODE_ENV = 'production';
+
+        try {
+          expect(() => {
+            jwtVerifier({
+              auth0MCD: {
+                issuers: ['http://tenant1.example.com:8080/'],
+              },
+              audience: 'https://api/',
+            });
+          }).toThrow('HTTP issuer URL detected in production environment. Use HTTPS for security.');
+        } finally {
+          process.env.NODE_ENV = originalEnv;
+        }
+      });
+
+      it('should not throw error for HTTP in non-production environments', async () => {
+        const originalEnv = process.env.NODE_ENV;
+        process.env.NODE_ENV = 'development';
+
+        try {
+          const jwt = await createJwt({
+            issuer: 'http://tenant1.example.com:8080/',
+          });
+
+          const verify = jwtVerifier({
+            auth0MCD: {
+              issuers: ['http://tenant1.example.com:8080/'],
+            },
+            audience: 'https://api/',
+          });
+
+          // Should work fine in development
+          await verify(jwt);
+        } finally {
+          process.env.NODE_ENV = originalEnv;
+        }
+      });
+
+      it('should throw error for multiple security issues in same URL', () => {
+        expect(() => {
+          jwtVerifier({
+            auth0MCD: {
+              issuers: ['https://user:pass@tenant1.example.com/?debug=true#section'],
+            },
+            audience: 'https://api/',
+          });
+        }).toThrow('Invalid issuer URL: URLs must not contain userinfo (username:password)');
+      });
+    });
 });
