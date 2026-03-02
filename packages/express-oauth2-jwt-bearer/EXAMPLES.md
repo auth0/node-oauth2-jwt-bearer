@@ -7,6 +7,9 @@
   - [Customize DPoP validation behavior](#customize-dpop-validation-behavior)
   - [Hostname Resolution (`req.host` and `req.protocol`)](#hostname-resolution-reqhost-and-reqprotocol)
   - [DPoP jti Replay Prevention](#dpop-jti-replay-prevention)
+- [Multiple Custom Domains (MCD)](#multiple-custom-domains-mcd)
+  - [Static list of issuers](#static-list-of-issuers)
+  - [Dynamic resolver](#dynamic-resolver)
 - [Restrict access with scopes](#restrict-access-with-scopes)
 - [Restrict access with claims](#restrict-access-with-claims)
   - [Matching a specific value](#matching-a-specific-value)
@@ -260,6 +263,50 @@ app.use(validateDPoPJtiWithRedis);
 app.get('/api/protected', (req, res) => {
   res.json({ message: 'Access granted' });
 });
+```
+
+## Multiple Custom Domains (MCD)
+
+Use `auth0MCD` to accept JWT tokens from multiple Auth0 tenants or custom domains. `auth0MCD` and `issuerBaseURL` are mutually exclusive — use one or the other.
+
+### Static list of issuers
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+
+app.use(
+  auth({
+    auth0MCD: {
+      issuers: [
+        'https://tenant1.auth0.com',
+        'https://tenant2.auth0.com',
+        'https://custom-domain.example.com'
+      ]
+    },
+    audience: 'https://your-api.com'
+  })
+);
+```
+
+### Dynamic resolver
+
+For multi-tenant apps where each tenant has their own allowed issuers:
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+
+app.use(
+  auth({
+    auth0MCD: {
+      issuers: async (context) => {
+        const tenantId = context.headers['x-tenant-id'];
+        const tenant = await db.getTenant(tenantId);
+        return tenant.allowedIssuers; // e.g. ['https://tenant.auth0.com']
+      }
+    },
+    audience: 'https://your-api.com'
+  })
+);
 ```
 
 ## Restrict access with scopes
