@@ -1,9 +1,8 @@
 import { strict as assert } from 'assert';
 import { TextEncoder } from 'util';
-import { Buffer } from 'buffer';
 import { Agent as HttpAgent } from 'http';
 import { Agent as HttpsAgent } from 'https';
-import { jwtVerify, decodeJwt } from 'jose';
+import { jwtVerify, decodeJwt, decodeProtectedHeader } from 'jose';
 import type { JWTPayload, JWSHeaderParameters } from 'jose';
 import { InvalidTokenError, InvalidRequestError } from 'oauth2-bearer';
 import discovery from './discovery';
@@ -457,7 +456,7 @@ const jwtVerifier = ({
 
   // Helper: Early algorithm validation
   const validateAlgorithmEarly = (jwt: string, hasSecret: boolean) => {
-    const { alg } = JSON.parse(Buffer.from(jwt.split('.')[0], 'base64').toString());
+    const { alg } = decodeProtectedHeader(jwt);
     
     if (!alg || typeof alg !== 'string') {
       throw new InvalidTokenError('Token header missing or invalid "alg" claim');
@@ -612,6 +611,26 @@ const jwtVerifier = ({
         // This prevents SSRF attacks by ensuring we never fetch JWKS for symmetric tokens
         const hasSecret = 'secret' in matchedConfig && matchedConfig.secret;
         validateAlgorithmEarly(jwt, !!hasSecret);
+
+        // STEP 3b: Validate resolver-returned config is internally consistent.
+        // Dynamic resolvers bypass the upfront static-config checks, so we apply
+        // the same alg/secret consistency rules here at verification time.
+        const configAlg = matchedConfig.alg;
+        if (configAlg && SYMMETRIC_ALGS.includes(configAlg) && !hasSecret) {
+          throw new InvalidTokenError(
+            `Issuer specifies symmetric algorithm  but no secret provided`
+          );
+        }
+        if (hasSecret && configAlg && ASYMMETRIC_ALGS.includes(configAlg)) {
+          throw new InvalidTokenError(
+            `Issuer provides a secret but specifies asymmetric algorithm `
+          );
+        }
+        if (hasSecret && !configAlg) {
+          throw new InvalidTokenError(
+            `Issuer provides a secret but no 'alg' specified`
+          );
+        }
 
         // STEP 4: Get JWKS URI and configure verification
         let finalJwksUri: string | undefined;

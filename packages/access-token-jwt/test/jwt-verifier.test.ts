@@ -834,6 +834,25 @@ describe('jwt-verifier', () => {
       );
     });
 
+    it('should throw InvalidTokenError (not raw SyntaxError) for malformed JWT header', async () => {
+      // A JWT whose header segment is not valid base64url-encoded JSON.
+      // Previously JSON.parse threw SyntaxError and leaked the raw message; now
+      // decodeProtectedHeader from jose surfaces a clean, structured error instead.
+      const malformedJwt = '!!!notbase64!!!.payload.signature';
+
+      const verify = jwtVerifier({
+        auth0MCD: {
+          issuers: ['https://tenant1.example.com/'],
+        },
+        audience: 'https://api/',
+      });
+
+      await expect(verify(malformedJwt)).rejects.toBeInstanceOf(InvalidTokenError);
+      await expect(verify(malformedJwt)).rejects.not.toThrow(
+        expect.stringContaining('SyntaxError')
+      );
+    });
+
     it('should reject token with missing alg header', async () => {
       // Manually create a token header without 'alg' field
       const headerWithoutAlg = Buffer.from(JSON.stringify({ typ: 'JWT' })).toString('base64url');
@@ -1299,6 +1318,69 @@ describe('jwt-verifier', () => {
       });
 
       await expect(verify(jwt)).resolves.toHaveProperty('payload');
+    });
+
+    it('should reject when dynamic resolver returns config with symmetric alg but no secret', async () => {
+      // RS256-signed token so the token-level alg check passes; the config-level
+      // check must then catch the misconfigured HS256+no-secret combination.
+      const jwt = await createJwt({
+        issuer: 'https://tenant1.example.com/',
+      });
+
+      const verify = jwtVerifier({
+        auth0MCD: {
+          issuers: async () => [
+            { issuer: 'https://tenant1.example.com/', alg: 'HS256' }, // no secret
+          ],
+        },
+        audience: 'https://api/',
+      });
+
+      await expect(verify(jwt)).rejects.toThrowError(
+        'Issuer specifies symmetric algorithm  but no secret provided'
+      );
+    });
+
+    it('should reject when dynamic resolver returns config with secret but asymmetric alg', async () => {
+      const secret = randomBytes(32).toString('hex');
+      const jwt = await createJwt({
+        issuer: 'https://tenant1.example.com/',
+        secret, // HS256-signed token
+      });
+
+      const verify = jwtVerifier({
+        auth0MCD: {
+          issuers: async () => [
+            { issuer: 'https://tenant1.example.com/', alg: 'RS256', secret },
+          ],
+        },
+        audience: 'https://api/',
+      });
+
+      await expect(verify(jwt)).rejects.toThrowError(
+        'Issuer provides a secret but specifies asymmetric algorithm '
+      );
+    });
+
+    it('should reject when dynamic resolver returns config with secret but no alg', async () => {
+      const secret = randomBytes(32).toString('hex');
+      const jwt = await createJwt({
+        issuer: 'https://tenant1.example.com/',
+        secret, // HS256-signed token
+      });
+
+      const verify = jwtVerifier({
+        auth0MCD: {
+          issuers: async () => [
+            { issuer: 'https://tenant1.example.com/', secret } as any, // no alg
+          ],
+        },
+        audience: 'https://api/',
+      });
+
+      await expect(verify(jwt)).rejects.toThrowError(
+        "Issuer provides a secret but no 'alg' specified"
+      );
     });
   });    describe('URL normalization security warnings', () => {
       let consoleSpy: jest.SpyInstance;
