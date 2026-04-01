@@ -1337,7 +1337,7 @@ describe('jwt-verifier', () => {
       });
 
       await expect(verify(jwt)).rejects.toThrowError(
-        'Issuer specifies symmetric algorithm  but no secret provided'
+        'Issuer specifies symmetric algorithm but no secret provided'
       );
     });
 

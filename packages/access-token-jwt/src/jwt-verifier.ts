@@ -618,7 +618,7 @@ const jwtVerifier = ({
         const configAlg = matchedConfig.alg;
         if (configAlg && SYMMETRIC_ALGS.includes(configAlg) && !hasSecret) {
           throw new InvalidTokenError(
-            `Issuer specifies symmetric algorithm  but no secret provided`
+            `Issuer specifies symmetric algorithm but no secret provided`
           );
         }
         if (hasSecret && configAlg && ASYMMETRIC_ALGS.includes(configAlg)) {
