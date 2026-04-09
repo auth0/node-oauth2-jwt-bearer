@@ -267,7 +267,13 @@ app.get('/api/protected', (req, res) => {
 
 ## Multiple Custom Domains (MCD)
 
-Use `auth0MCD` to accept JWT tokens from multiple custom domains belonging to the **same Auth0 tenant** — for example, `brand-a.example.com` and `brand-b.example.com` both pointing at the same tenant. `auth0MCD` and `issuerBaseURL` are mutually exclusive — use one or the other.
+Use `auth0MCD` to accept JWT tokens from multiple custom domains belonging to the **same Auth0 tenant**. `auth0MCD` and `issuerBaseURL` are mutually exclusive — use one or the other.
+
+Common use cases:
+
+- **Multi-brand applications (B2C)** — each brand uses a different custom domain but shares the same API (e.g. `brand-a.example.com` and `brand-b.example.com`).
+- **Multiple frontend applications** — a single API serves multiple frontend apps, each with its own custom domain.
+- **Domain migration** — gradually migrating traffic from a canonical Auth0 domain to a new custom domain without breaking existing tokens.
 
 > **Note:** MCD is not a mechanism for accepting tokens from multiple Auth0 tenants. All configured issuers must belong to the same tenant.
 
