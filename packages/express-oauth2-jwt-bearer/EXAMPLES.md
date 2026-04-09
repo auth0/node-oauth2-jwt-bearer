@@ -7,6 +7,9 @@
   - [Customize DPoP validation behavior](#customize-dpop-validation-behavior)
   - [Hostname Resolution (`req.host` and `req.protocol`)](#hostname-resolution-reqhost-and-reqprotocol)
   - [DPoP jti Replay Prevention](#dpop-jti-replay-prevention)
+- [Multiple Custom Domains (MCD)](#multiple-custom-domains-mcd)
+  - [Static list of issuers](#static-list-of-issuers)
+  - [Dynamic resolver](#dynamic-resolver)
 - [Restrict access with scopes](#restrict-access-with-scopes)
 - [Restrict access with claims](#restrict-access-with-claims)
   - [Matching a specific value](#matching-a-specific-value)
@@ -260,6 +263,89 @@ app.use(validateDPoPJtiWithRedis);
 app.get('/api/protected', (req, res) => {
   res.json({ message: 'Access granted' });
 });
+```
+
+## Multiple Custom Domains (MCD)
+
+Use `auth0MCD` to accept JWT tokens from multiple custom domains belonging to the **same Auth0 tenant**. `auth0MCD` and `issuerBaseURL` are mutually exclusive — use one or the other.
+
+Common use cases:
+
+- **Multi-brand applications (B2C)** — each brand uses a different custom domain but shares the same API (e.g. `brand-a.example.com` and `brand-b.example.com`).
+- **Multiple frontend applications** — a single API serves multiple frontend apps, each with its own custom domain.
+- **Domain migration** — gradually migrating traffic from a canonical Auth0 domain to a new custom domain without breaking existing tokens.
+
+> **Note:** MCD is not a mechanism for accepting tokens from multiple Auth0 tenants. All configured issuers must belong to the same tenant.
+
+### Security requirements
+
+- **Use an allowlist.** The resolver must return only pre-approved issuer URLs. Never construct or look up discovery/JWKS URLs dynamically from request input.
+- **Do not trust request-derived values directly.** `context.headers` and `context.url` come from the incoming request. Use them only to *select* from a hard-coded allowlist, never as URLs themselves.
+- **Ensure HTTPS.** Custom `jwksUri` values in issuer configs must use HTTPS in production.
+- **Single-tenant only.** All configured issuers must belong to the same Auth0 tenant.
+
+### Static list of issuers
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+
+app.use(
+  auth({
+    auth0MCD: {
+      issuers: [
+        'https://brand-a.example.com',
+        'https://brand-b.example.com',
+      ]
+    },
+    audience: 'https://your-api.com'
+  })
+);
+```
+
+### Dynamic resolver
+
+For apps where different custom domains map to different allowed issuers, use a resolver function. The resolver receives request context and must return an array of allowed issuer URLs or issuer config objects.
+
+> **Security note:** `context.headers` and `context.url` are request-derived and must not be trusted directly. Use them only to select from a pre-approved allowlist. Ensure any header used for routing (e.g. `x-tenant-id`) is set by trusted upstream infrastructure such as your API gateway — never by the client.
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+
+// ALLOWED_ISSUERS is a hard-coded allowlist — never build this from request input.
+const ALLOWED_ISSUERS = {
+  'tenant-a': ['https://brand-a.example.com'],
+  'tenant-b': ['https://brand-b.example.com'],
+};
+
+app.use(
+  auth({
+    auth0MCD: {
+      issuers: async (context) => {
+        // x-tenant-id must be set by trusted upstream middleware, not the client.
+        const tenantId = context.headers['x-tenant-id'];
+        const issuers = ALLOWED_ISSUERS[tenantId];
+        if (!issuers) throw new Error('Unknown tenant');
+        return issuers;
+      }
+    },
+    audience: 'https://your-api.com'
+  })
+);
+```
+
+### Cache configuration
+
+By default the SDK caches OIDC discovery metadata and JWKS responses (100 entries, 10-minute TTL each). Override with the `cache` option:
+
+```js
+auth({
+  auth0MCD: { issuers: [...] },
+  audience: 'https://your-api.com',
+  cache: {
+    discovery: { maxEntries: 50, ttl: 300_000 }, // 5 minutes
+    jwks:      { maxEntries: 50, ttl: 300_000 },
+  }
+})
 ```
 
 ## Restrict access with scopes
