@@ -32,5 +32,4 @@ jobs:
       require-build: true
       release-directory: "./packages/express-oauth2-jwt-bearer"
     secrets:
-      npm-token: ${{ secrets.NPM_TOKEN }}
       github-token: ${{ secrets.GITHUB_TOKEN }}
