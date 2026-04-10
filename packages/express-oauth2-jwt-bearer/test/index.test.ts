@@ -118,7 +118,7 @@ describe('index', () => {
   it('should accept empty arguments and env vars', async () => {
     const env = process.env;
     await expect(auth).toThrowError(
-      "You must provide 'auth0MCD', 'issuerBaseURL', or both 'issuer' and ('jwksUri' or 'secret')"
+      "You must provide 'mcd', 'issuerBaseURL', or both 'issuer' and ('jwksUri' or 'secret')"
     );
     process.env = Object.assign({}, env, {
       ISSUER_BASE_URL: 'foo',

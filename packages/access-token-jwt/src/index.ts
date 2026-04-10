@@ -14,7 +14,7 @@ export {
   VerifyJwtResult,
   JWTPayload,
   JWSHeaderParameters as JWTHeader,
-  Auth0MCDOptions,
+  MCDOptions,
   AsymmetricIssuerConfig,
   SymmetricIssuerConfig,
   IssuerConfig,
