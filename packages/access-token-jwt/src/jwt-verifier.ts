@@ -35,7 +35,7 @@ export type IssuerResolverFunction = (
   context: IssuerResolverContext
 ) => Promise<IssuerResolverResult> | IssuerResolverResult;
 
-export interface Auth0MCDOptions {
+export interface MCDOptions {
   issuers: string | string[] | IssuerConfig[] | IssuerResolverFunction;
 }
 
@@ -221,7 +221,7 @@ export interface JwtVerifierOptions {
    *
    * Cannot be used with issuerBaseURL.
    */
-  auth0MCD?: Auth0MCDOptions;
+  mcd?: MCDOptions;
 }
 
 export interface VerifyJwtResult {
@@ -266,7 +266,7 @@ const jwtVerifier = ({
   audience = process.env.AUDIENCE as string,
   secret = process.env.SECRET as string,
   tokenSigningAlg = process.env.TOKEN_SIGNING_ALG as string,
-  auth0MCD,
+  mcd,
   agent,
   cooldownDuration = 30000,
   timeoutDuration = 5000,
@@ -280,28 +280,28 @@ const jwtVerifier = ({
 
   // Validation: Ensure proper configuration
   assert(
-    auth0MCD || issuerBaseURL || (issuer && (jwksUri || secret)),
-    "You must provide 'auth0MCD', 'issuerBaseURL', or both 'issuer' and ('jwksUri' or 'secret')"
+    mcd || issuerBaseURL || (issuer && (jwksUri || secret)),
+    "You must provide 'mcd', 'issuerBaseURL', or both 'issuer' and ('jwksUri' or 'secret')"
   );
   assert(
-    !(auth0MCD && issuerBaseURL),
-    "You must not provide both 'auth0MCD' and 'issuerBaseURL'"
+    !(mcd && issuerBaseURL),
+    "You must not provide both 'mcd' and 'issuerBaseURL'"
   );
   assert(
-    !(auth0MCD && issuer),
-    "You must not provide both 'auth0MCD' and 'issuer'. Use 'auth0MCD' for multi-issuer mode."
+    !(mcd && issuer),
+    "You must not provide both 'mcd' and 'issuer'. Use 'mcd' for multi-issuer mode."
   );
   assert(
-    !(auth0MCD && jwksUri),
-    "You must not provide both 'auth0MCD' and 'jwksUri'. Use 'auth0MCD' for multi-issuer mode."
+    !(mcd && jwksUri),
+    "You must not provide both 'mcd' and 'jwksUri'. Use 'mcd' for multi-issuer mode."
   );
   assert(
     !(secret && jwksUri),
     "You must not provide both a 'secret' and 'jwksUri'"
   );
   assert(
-    !(auth0MCD && secret),
-    'Cannot use top-level "secret" with auth0MCD mode. ' +
+    !(mcd && secret),
+    'Cannot use top-level "secret" with mcd mode. ' +
     'Specify secrets per-issuer in the issuer configuration: ' +
     '{ issuer: "...", secret: "...", alg: "HS256" }'
   );
@@ -386,15 +386,15 @@ const jwtVerifier = ({
     return { ...config, issuer: normalizeIssuerUrl(config.issuer) };
   };
 
-  // MCD Support: Validate auth0MCD configuration
-  if (auth0MCD) {
-    assert(auth0MCD.issuers, "Invalid MCD configuration: 'issuers' is required");
+  // MCD Support: Validate mcd configuration
+  if (mcd) {
+    assert(mcd.issuers, "Invalid MCD configuration: 'issuers' is required");
 
     // Validate static issuer configurations at initialization
-    if (typeof auth0MCD.issuers !== 'function') {
-      const staticIssuers = Array.isArray(auth0MCD.issuers)
-        ? auth0MCD.issuers
-        : [auth0MCD.issuers];
+    if (typeof mcd.issuers !== 'function') {
+      const staticIssuers = Array.isArray(mcd.issuers)
+        ? mcd.issuers
+        : [mcd.issuers];
 
       staticIssuers.forEach((issuerConfig) => {
         // Normalize and validate URL (this will throw errors for security issues)
@@ -558,7 +558,7 @@ const jwtVerifier = ({
 
     try {
       // MCD Mode: Handle multiple issuers
-      if (auth0MCD) {
+      if (mcd) {
         // STEP 1: Decode token (unverified) to extract issuer claim and algorithm
         const unverifiedPayload = decodeJwt(jwt);
         const tokenIssuer = unverifiedPayload.iss;
@@ -572,7 +572,7 @@ const jwtVerifier = ({
         // STEP 2: Resolve issuers (static or dynamic)
         let resolvedIssuers: (string | IssuerConfig)[];
 
-        if (typeof auth0MCD.issuers === 'function') {
+        if (typeof mcd.issuers === 'function') {
           // Dynamic resolver with real request context
           const context: IssuerResolverContext = {
             url: requestContext?.url
@@ -580,17 +580,17 @@ const jwtVerifier = ({
               : new URL('http://localhost'),
             headers: requestContext?.headers || {},
           };
-          const result = await auth0MCD.issuers(context);
-          
+          const result = await mcd.issuers(context);
+
           if (!Array.isArray(result)) {
             throw new InvalidRequestError('Issuer resolver function must return an array');
           }
-          
+
           resolvedIssuers = result;
         } else {
-          resolvedIssuers = Array.isArray(auth0MCD.issuers)
-            ? auth0MCD.issuers
-            : [auth0MCD.issuers];
+          resolvedIssuers = Array.isArray(mcd.issuers)
+            ? mcd.issuers
+            : [mcd.issuers];
         }
 
         if (resolvedIssuers.length === 0) {

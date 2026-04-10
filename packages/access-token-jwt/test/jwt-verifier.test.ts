@@ -14,7 +14,7 @@ describe('jwt-verifier', () => {
         audience: 'https://api/',
       })
     ).toThrowError(
-      "You must provide 'auth0MCD', 'issuerBaseURL', or both 'issuer' and ('jwksUri' or 'secret')"
+      "You must provide 'mcd', 'issuerBaseURL', or both 'issuer' and ('jwksUri' or 'secret')"
     );
   });
 
@@ -353,33 +353,33 @@ describe('jwt-verifier', () => {
 
   // MCD Tests
   describe('MCD (Multiple Custom Domains)', () => {
-    it('should throw when both auth0MCD and issuerBaseURL are provided', () => {
+    it('should throw when both mcd and issuerBaseURL are provided', () => {
       expect(() =>
         jwtVerifier({
-          auth0MCD: {
+          mcd: {
             issuers: ['https://tenant1.auth0.com'],
           },
           issuerBaseURL: 'https://tenant1.auth0.com',
           audience: 'https://api/',
         })
       ).toThrowError(
-        "You must not provide both 'auth0MCD' and 'issuerBaseURL'"
+        "You must not provide both 'mcd' and 'issuerBaseURL'"
       );
     });
 
-    it('should throw when auth0MCD is provided without issuers', () => {
+    it('should throw when mcd is provided without issuers', () => {
       expect(() =>
         jwtVerifier({
-          auth0MCD: {} as any,
+          mcd: {} as any,
           audience: 'https://api/',
         })
       ).toThrowError("Invalid MCD configuration: 'issuers' is required");
     });
 
-    it('should throw when both auth0MCD and issuer are provided', () => {
+    it('should throw when both mcd and issuer are provided', () => {
       expect(() =>
         jwtVerifier({
-          auth0MCD: {
+          mcd: {
             issuers: ['https://tenant1.auth0.com'],
           },
           issuer: 'https://tenant1.auth0.com',
@@ -387,35 +387,35 @@ describe('jwt-verifier', () => {
           audience: 'https://api/',
         })
       ).toThrowError(
-        "You must not provide both 'auth0MCD' and 'issuer'. Use 'auth0MCD' for multi-issuer mode."
+        "You must not provide both 'mcd' and 'issuer'. Use 'mcd' for multi-issuer mode."
       );
     });
 
-    it('should throw when both auth0MCD and jwksUri are provided', () => {
+    it('should throw when both mcd and jwksUri are provided', () => {
       expect(() =>
         jwtVerifier({
-          auth0MCD: {
+          mcd: {
             issuers: ['https://tenant1.auth0.com'],
           },
           jwksUri: 'https://tenant1.auth0.com/.well-known/jwks.json',
           audience: 'https://api/',
         })
       ).toThrowError(
-        "You must not provide both 'auth0MCD' and 'jwksUri'. Use 'auth0MCD' for multi-issuer mode."
+        "You must not provide both 'mcd' and 'jwksUri'. Use 'mcd' for multi-issuer mode."
       );
     });
 
-    it('should throw when both auth0MCD and secret are provided', () => {
+    it('should throw when both mcd and secret are provided', () => {
       expect(() =>
         jwtVerifier({
-          auth0MCD: {
+          mcd: {
             issuers: ['https://tenant1.auth0.com'],
           },
           secret: 'my-secret',
           audience: 'https://api/',
         })
       ).toThrowError(
-        'Cannot use top-level "secret" with auth0MCD mode. ' +
+        'Cannot use top-level "secret" with mcd mode. ' +
         'Specify secrets per-issuer in the issuer configuration: ' +
         '{ issuer: "...", secret: "...", alg: "HS256" }'
       );
@@ -425,7 +425,7 @@ describe('jwt-verifier', () => {
     it('should throw at init when symmetric algorithm configured without secret', () => {
       expect(() =>
         jwtVerifier({
-          auth0MCD: {
+          mcd: {
             issuers: [
               {
                 issuer: 'https://tenant1.auth0.com',
@@ -444,7 +444,7 @@ describe('jwt-verifier', () => {
     it('should throw at init when secret provided with asymmetric algorithm', () => {
       expect(() =>
         jwtVerifier({
-          auth0MCD: {
+          mcd: {
             issuers: [
               {
                 issuer: 'https://tenant1.auth0.com',
@@ -463,7 +463,7 @@ describe('jwt-verifier', () => {
     it('should throw at init when secret provided without algorithm', () => {
       expect(() =>
         jwtVerifier({
-          auth0MCD: {
+          mcd: {
             issuers: [
               {
                 issuer: 'https://tenant1.auth0.com',
@@ -481,7 +481,7 @@ describe('jwt-verifier', () => {
     it('should not throw when string-only issuer configs used (no algorithm specified)', () => {
       expect(() =>
         jwtVerifier({
-          auth0MCD: {
+          mcd: {
             issuers: ['https://tenant1.auth0.com', 'https://tenant2.auth0.com'],
           },
           audience: 'https://api/',
@@ -492,7 +492,7 @@ describe('jwt-verifier', () => {
     it('should not throw when valid symmetric config provided', () => {
       expect(() =>
         jwtVerifier({
-          auth0MCD: {
+          mcd: {
             issuers: [
               {
                 issuer: 'https://tenant1.auth0.com',
@@ -511,7 +511,7 @@ describe('jwt-verifier', () => {
       // Should not throw at initialization
       expect(() =>
         jwtVerifier({
-          auth0MCD: {
+          mcd: {
             issuers: async () => {
               // Could return invalid config at runtime, but we can't check now
               return [
@@ -536,7 +536,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: ['https://tenant1.example.com/'],
         },
         audience: 'https://api/',
@@ -559,7 +559,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: [
             'https://tenant1.example.com/',
             'https://tenant2.example.com/',
@@ -580,7 +580,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: [
             {
               issuer: 'https://tenant1.example.com/',
@@ -601,7 +601,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: [
             {
               issuer: 'https://tenant1.example.com/',
@@ -623,7 +623,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: [
             {
               issuer: 'https://tenant1.example.com/',
@@ -644,7 +644,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: [
             'https://tenant1.example.com/',
             'https://tenant2.example.com/',
@@ -670,7 +670,7 @@ describe('jwt-verifier', () => {
         .sign(privateKey);
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: ['https://tenant1.example.com/'],
         },
         audience: 'https://api/',
@@ -691,7 +691,7 @@ describe('jwt-verifier', () => {
 
       // Config with normalized URL
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: ['https://tenant1.example.com'],
         },
         audience: 'https://api/',
@@ -708,7 +708,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: async (context) => {
             // Dynamic resolver that returns allowed issuers as strings (currently supported)
             return ['https://tenant1.example.com/', 'https://tenant2.example.com/'];
@@ -728,7 +728,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: async (context) => {
             return ['https://tenant1.example.com/'];
           },
@@ -751,7 +751,7 @@ describe('jwt-verifier', () => {
       const fakeJwt = `${header}.${payload}.fake-signature`;
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: async () => [], // Returns empty array
         },
         audience: 'https://api/',
@@ -774,7 +774,7 @@ describe('jwt-verifier', () => {
       const fakeJwt = `${header}.${payload}.`; // No signature for "none" alg
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: ['https://tenant1.example.com/'],
         },
         audience: 'https://api/',
@@ -792,7 +792,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: [
             {
               issuer: 'https://tenant1.example.com/',
@@ -818,7 +818,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: [
             {
               issuer: 'https://tenant1.example.com/',
@@ -841,7 +841,7 @@ describe('jwt-verifier', () => {
       const malformedJwt = '!!!notbase64!!!.payload.signature';
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: ['https://tenant1.example.com/'],
         },
         audience: 'https://api/',
@@ -865,7 +865,7 @@ describe('jwt-verifier', () => {
       const fakeJwt = `${headerWithoutAlg}.${payload}.fake-signature`;
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: ['https://tenant1.example.com/'],
         },
         audience: 'https://api/',
@@ -884,7 +884,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: async (context) => {
             return [
               {
@@ -911,7 +911,7 @@ describe('jwt-verifier', () => {
       const resolverSpy = jest.fn().mockResolvedValue(['https://tenant1.example.com/']);
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: resolverSpy,
         },
         audience: 'https://api/',
@@ -935,7 +935,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: [
             'https://tenant1.example.com/',
             {
@@ -966,7 +966,7 @@ describe('jwt-verifier', () => {
         .reply(404);
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: [
             {
               issuer: 'https://tenant1.example.com/',
@@ -987,7 +987,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: ['https://tenant1.example.com:8443'],
         },
         audience: 'https://api/',
@@ -1004,7 +1004,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: ['http://tenant1.example.com:8080'],
         },
         audience: 'https://api/',
@@ -1021,7 +1021,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: 'https://tenant1.example.com/', // Single string, not array
         },
         audience: 'https://api/',
@@ -1038,7 +1038,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: ['https://tenant1.example.com/auth/tenant1'],
         },
         audience: 'https://api/',
@@ -1056,7 +1056,7 @@ describe('jwt-verifier', () => {
       // Use a resolver that returns a malformed URL
       // The normalization catch block will return it as-is
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: async () => {
             // This will trigger the catch block in normalizeIssuerUrl
             // because it's not a valid URL format
@@ -1081,7 +1081,7 @@ describe('jwt-verifier', () => {
 
       // Config WITHOUT protocol
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: ['tenant1.example.com'], // No https://
         },
         audience: 'https://api/',
@@ -1100,7 +1100,7 @@ describe('jwt-verifier', () => {
 
       // Config WITHOUT protocol but WITH trailing slash
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: ['tenant1.example.com/'], // No https:// but has /
         },
         audience: 'https://api/',
@@ -1126,7 +1126,7 @@ describe('jwt-verifier', () => {
         .reply(404);
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: [
             {
               issuer: 'https://tenant1.example.com/',
@@ -1157,7 +1157,7 @@ describe('jwt-verifier', () => {
         });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: [
             {
               issuer: 'https://tenant1.example.com/',
@@ -1181,7 +1181,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: [
             {
               issuer: 'https://tenant1.example.com/',
@@ -1212,7 +1212,7 @@ describe('jwt-verifier', () => {
         });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: ['https://tenant1.example.com/'],
         },
         audience: 'https://api/',
@@ -1233,7 +1233,7 @@ describe('jwt-verifier', () => {
       const resolverSpy = jest.fn().mockResolvedValue(['https://tenant1.example.com/']);
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: resolverSpy,
         },
         audience: 'https://api/',
@@ -1261,7 +1261,7 @@ describe('jwt-verifier', () => {
       const resolverSpy = jest.fn().mockResolvedValue(['https://tenant1.example.com/']);
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: resolverSpy,
         },
         audience: 'https://api/',
@@ -1292,7 +1292,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: async () => 'not-an-array' as any, // Returns string instead of array
         },
         audience: 'https://api/',
@@ -1311,7 +1311,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: async () => ['https://tenant1.example.com/'], // String arrays still supported
         },
         audience: 'https://api/',
@@ -1328,7 +1328,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: async () => [
             { issuer: 'https://tenant1.example.com/', alg: 'HS256' }, // no secret
           ],
@@ -1349,7 +1349,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: async () => [
             { issuer: 'https://tenant1.example.com/', alg: 'RS256', secret },
           ],
@@ -1370,7 +1370,7 @@ describe('jwt-verifier', () => {
       });
 
       const verify = jwtVerifier({
-        auth0MCD: {
+        mcd: {
           issuers: async () => [
             { issuer: 'https://tenant1.example.com/', secret } as any, // no alg
           ],
@@ -1396,7 +1396,7 @@ describe('jwt-verifier', () => {
       it('should throw error for userinfo in issuer URL', () => {
         expect(() => {
           jwtVerifier({
-            auth0MCD: {
+            mcd: {
               issuers: ['https://user:pass@tenant1.example.com/'],
             },
             audience: 'https://api/',
@@ -1407,7 +1407,7 @@ describe('jwt-verifier', () => {
       it('should throw error for query parameters in issuer URL', () => {
         expect(() => {
           jwtVerifier({
-            auth0MCD: {
+            mcd: {
               issuers: ['https://tenant1.example.com/?debug=true&env=test'],
             },
             audience: 'https://api/',
@@ -1418,7 +1418,7 @@ describe('jwt-verifier', () => {
       it('should throw error for URL fragments in issuer URL', () => {
         expect(() => {
           jwtVerifier({
-            auth0MCD: {
+            mcd: {
               issuers: ['https://tenant1.example.com/#section'],
             },
             audience: 'https://api/',
@@ -1433,7 +1433,7 @@ describe('jwt-verifier', () => {
         try {
           expect(() => {
             jwtVerifier({
-              auth0MCD: {
+              mcd: {
                 issuers: ['http://tenant1.example.com:8080/'],
               },
               audience: 'https://api/',
@@ -1454,7 +1454,7 @@ describe('jwt-verifier', () => {
           });
 
           const verify = jwtVerifier({
-            auth0MCD: {
+            mcd: {
               issuers: ['http://tenant1.example.com:8080/'],
             },
             audience: 'https://api/',
@@ -1470,7 +1470,7 @@ describe('jwt-verifier', () => {
       it('should throw error for multiple security issues in same URL', () => {
         expect(() => {
           jwtVerifier({
-            auth0MCD: {
+            mcd: {
               issuers: ['https://user:pass@tenant1.example.com/?debug=true#section'],
             },
             audience: 'https://api/',
