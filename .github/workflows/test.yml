@@ -60,7 +60,6 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
-          cache: npm
 
       - uses: actions/cache/restore@v4
         with:
@@ -83,7 +82,6 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
 
       - uses: actions/cache/restore@v4
         with:
