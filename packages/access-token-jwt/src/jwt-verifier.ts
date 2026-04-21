@@ -2,18 +2,33 @@ import { strict as assert } from 'assert';
 import { TextEncoder } from 'util';
 import { Agent as HttpAgent } from 'http';
 import { Agent as HttpsAgent } from 'https';
-import { jwtVerify, decodeJwt, decodeProtectedHeader } from 'jose';
-import type { JWTPayload, JWSHeaderParameters } from 'jose';
+import { jwtVerify, decodeJwt, decodeProtectedHeader, importSPKI, importJWK, createLocalJWKSet } from 'jose';
+import type { JWTPayload, JWSHeaderParameters, JWK, JSONWebKeySet, KeyLike } from 'jose';
 import { InvalidTokenError, InvalidRequestError } from 'oauth2-bearer';
 import discovery from './discovery';
 import getKeyFn from './get-key-fn';
 import validate, { defaultValidators, Validators } from './validate';
+
+/**
+ * A static public key for asymmetric JWT verification without discovery or a
+ * remote JWKS endpoint.  Accepted forms:
+ *
+ * - `string` – PEM-encoded SPKI public key (requires `tokenSigningAlg` or `alg`)
+ * - `JWK` – a single JWK object (`{ kty, n, e, … }`)
+ * - `JSONWebKeySet` – an inline JWK Set (`{ keys: [...] }`)
+ */
+export type PublicKeyInput = string | JWK | JSONWebKeySet;
 
 // MCD Types
 export interface AsymmetricIssuerConfig {
   issuer: string;
   alg?: string;
   jwksUri?: string;
+  /**
+   * A static public key used to verify tokens from this issuer without
+   * hitting a remote JWKS endpoint.  Mutually exclusive with `jwksUri`.
+   */
+  publicKey?: PublicKeyInput;
 }
 
 export interface SymmetricIssuerConfig {
@@ -201,6 +216,31 @@ export interface JwtVerifierOptions {
   secret?: string;
 
   /**
+   * A static public key for verifying an Access Token JWT signed with an
+   * asymmetric algorithm, without requiring OIDC discovery or a remote JWKS
+   * endpoint.
+   *
+   * Accepted formats:
+   * - PEM-encoded SPKI string — requires `tokenSigningAlg`
+   * - A JWK object `{ kty, n, e, … }` — `alg` field in the JWK or
+   *   `tokenSigningAlg` must identify the algorithm
+   * - An inline JWK Set `{ keys: [...] }` — key selection uses the token's
+   *   `kid` header and each key's own `alg` field
+   *
+   * Mutually exclusive with `secret`, `jwksUri`, and `issuerBaseURL`.
+   *
+   * ```js
+   * jwtVerifier({
+   *   issuer: 'https://issuer.example.com/',
+   *   audience: 'https://api/',
+   *   publicKey: '-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----',
+   *   tokenSigningAlg: 'RS256',
+   * })
+   * ```
+   */
+  publicKey?: PublicKeyInput;
+
+  /**
    * You must provide this if your tokens are signed with symmetric algorithms
    * and it must be one of HS256, HS384 or HS512.
    * You may provide this if your tokens are signed with asymmetric algorithms
@@ -265,6 +305,7 @@ const jwtVerifier = ({
   issuer = process.env.ISSUER as string,
   audience = process.env.AUDIENCE as string,
   secret = process.env.SECRET as string,
+  publicKey,
   tokenSigningAlg = process.env.TOKEN_SIGNING_ALG as string,
   mcd,
   agent,
@@ -280,8 +321,8 @@ const jwtVerifier = ({
 
   // Validation: Ensure proper configuration
   assert(
-    mcd || issuerBaseURL || (issuer && (jwksUri || secret)),
-    "You must provide 'mcd', 'issuerBaseURL', or both 'issuer' and ('jwksUri' or 'secret')"
+    mcd || issuerBaseURL || (issuer && (jwksUri || secret || publicKey)),
+    "You must provide 'mcd', 'issuerBaseURL', or both 'issuer' and ('jwksUri', 'secret', or 'publicKey')"
   );
   assert(
     !(mcd && issuerBaseURL),
@@ -300,10 +341,28 @@ const jwtVerifier = ({
     "You must not provide both a 'secret' and 'jwksUri'"
   );
   assert(
+    !(publicKey && jwksUri),
+    "You must not provide both a 'publicKey' and 'jwksUri'"
+  );
+  assert(
+    !(publicKey && secret),
+    "You must not provide both a 'publicKey' and 'secret'"
+  );
+  assert(
+    !(publicKey && issuerBaseURL),
+    "You must not provide both a 'publicKey' and 'issuerBaseURL'"
+  );
+  assert(
     !(mcd && secret),
     'Cannot use top-level "secret" with mcd mode. ' +
     'Specify secrets per-issuer in the issuer configuration: ' +
     '{ issuer: "...", secret: "...", alg: "HS256" }'
+  );
+  assert(
+    !(mcd && publicKey),
+    'Cannot use top-level "publicKey" with mcd mode. ' +
+    'Specify publicKey per-issuer in the issuer configuration: ' +
+    '{ issuer: "...", publicKey: "..." }'
   );
   assert(audience, "An 'audience' is required to validate the 'aud' claim");
   assert(
@@ -404,7 +463,23 @@ const jwtVerifier = ({
         if (typeof issuerConfig === 'string') return;
 
         const hasSecret = 'secret' in issuerConfig && issuerConfig.secret;
+        const hasPublicKey = 'publicKey' in issuerConfig && (issuerConfig as AsymmetricIssuerConfig).publicKey;
+        const hasJwksUri = 'jwksUri' in issuerConfig && (issuerConfig as AsymmetricIssuerConfig).jwksUri;
         const configuredAlg = issuerConfig.alg;
+
+        // publicKey and jwksUri are mutually exclusive per issuer
+        if (hasPublicKey && hasJwksUri) {
+          throw new Error(
+            `Configuration error: Issuer '${issuerConfig.issuer}' provides both 'publicKey' and 'jwksUri'. These are mutually exclusive.`
+          );
+        }
+
+        // publicKey and secret are mutually exclusive per issuer
+        if (hasPublicKey && hasSecret) {
+          throw new Error(
+            `Configuration error: Issuer '${issuerConfig.issuer}' provides both 'publicKey' and 'secret'. Use 'publicKey' for asymmetric and 'secret' for symmetric verification.`
+          );
+        }
 
         // Check if symmetric algorithm configured without secret
         if (
@@ -479,6 +554,7 @@ const jwtVerifier = ({
     }
   };
 
+
   /**
    * Helper: Verify and validate JWT signature and claims
    *
@@ -492,6 +568,7 @@ const jwtVerifier = ({
    * @param issuerValue - Expected issuer for 'iss' claim validation
    * @param jwksUriValue - JWKS URI for asymmetric signature verification (RS256, ES256, etc.)
    * @param secretValue - Secret for symmetric signature verification (HS256, HS384, HS512)
+   * @param publicKeyValue - Static public key for asymmetric verification without a remote JWKS
    * @param algValue - Expected signing algorithm
    * @param allowedSigningAlgsValue - List of allowed signing algorithms from discovery
    * @returns Verified JWT payload, header, and original token
@@ -501,6 +578,7 @@ const jwtVerifier = ({
     issuerValue: string,
     jwksUriValue: string | undefined,
     secretValue: string | undefined,
+    publicKeyValue: PublicKeyInput | undefined,
     algValue: string | undefined,
     allowedSigningAlgsValue: string[] | undefined
   ): Promise<VerifyJwtResult> => {
@@ -532,8 +610,35 @@ const jwtVerifier = ({
       const result = await jwtVerify(jwt, keyFn, { clockTolerance });
       payload = result.payload;
       header = result.protectedHeader;
+    } else if (publicKeyValue) {
+      // Static public key verification (RS256, ES256, PS256, etc.)
+      // The caller supplied the public key directly — no remote fetch needed.
+      if (typeof publicKeyValue === 'string') {
+        // PEM SPKI format — algorithm must be specified explicitly
+        if (!algValue) {
+          throw new InvalidRequestError(
+            "You must provide 'tokenSigningAlg' (or 'alg' in the issuer config) when using a PEM public key"
+          );
+        }
+        const importedKey = await importSPKI(publicKeyValue, algValue);
+        const result = await jwtVerify(jwt, importedKey, { clockTolerance });
+        payload = result.payload;
+        header = result.protectedHeader;
+      } else if ('keys' in publicKeyValue) {
+        // Inline JWK Set — createLocalJWKSet handles key selection by kid/alg
+        const keySet = createLocalJWKSet(publicKeyValue as JSONWebKeySet);
+        const result = await jwtVerify(jwt, keySet, { clockTolerance });
+        payload = result.payload;
+        header = result.protectedHeader;
+      } else {
+        // Single JWK — alg comes from the JWK's own `alg` field or algValue
+        const importedKey = await importJWK(publicKeyValue as JWK, algValue) as KeyLike;
+        const result = await jwtVerify(jwt, importedKey, { clockTolerance });
+        payload = result.payload;
+        header = result.protectedHeader;
+      }
     } else if (jwksUriValue) {
-      // Asymmetric algorithm verification (RS256, ES256, PS256, etc.)
+      // Asymmetric algorithm verification via remote JWKS (RS256, ES256, PS256, etc.)
       // These use public/private key pairs. We fetch the public keys from the JWKS endpoint
       // and use them to verify the signature. The getKeyFnGetter handles JWKS caching.
       const result = await jwtVerify(jwt, getKeyFnGetter(jwksUriValue), {
@@ -543,7 +648,7 @@ const jwtVerifier = ({
       header = result.protectedHeader;
     } else {
       // This should never happen if configuration is valid, but we check defensively
-      throw new InvalidTokenError('No JWKS URI or secret available for verification');
+      throw new InvalidTokenError('No JWKS URI, public key, or secret available for verification');
     }
 
     // Validate claims: Check all JWT claims (iss, aud, exp, custom claims, etc.)
@@ -607,15 +712,26 @@ const jwtVerifier = ({
           throw new InvalidTokenError('Token issuer is not allowed');
         }
 
-        // STEP 3a: Reject symmetric algorithms if no secret configured
-        // This prevents SSRF attacks by ensuring we never fetch JWKS for symmetric tokens
-        const hasSecret = 'secret' in matchedConfig && matchedConfig.secret;
-        validateAlgorithmEarly(jwt, !!hasSecret);
-
-        // STEP 3b: Validate resolver-returned config is internally consistent.
+        // STEP 3a: Validate resolver-returned config is internally consistent.
         // Dynamic resolvers bypass the upfront static-config checks, so we apply
         // the same alg/secret consistency rules here at verification time.
+        // These checks run BEFORE validateAlgorithmEarly so that conflicts like
+        // publicKey+secret are reported with a clear error before algorithm checks.
+        const hasSecret = 'secret' in matchedConfig && matchedConfig.secret;
+        const hasPublicKey = 'publicKey' in matchedConfig &&
+          !!(matchedConfig as AsymmetricIssuerConfig).publicKey;
         const configAlg = matchedConfig.alg;
+
+        if (hasPublicKey && hasSecret) {
+          throw new InvalidTokenError(
+            `Issuer provides both 'publicKey' and 'secret'. These are mutually exclusive.`
+          );
+        }
+        if (hasPublicKey && 'jwksUri' in matchedConfig && (matchedConfig as AsymmetricIssuerConfig).jwksUri) {
+          throw new InvalidTokenError(
+            `Issuer provides both 'publicKey' and 'jwksUri'. These are mutually exclusive.`
+          );
+        }
         if (configAlg && SYMMETRIC_ALGS.includes(configAlg) && !hasSecret) {
           throw new InvalidTokenError(
             `Issuer specifies symmetric algorithm but no secret provided`
@@ -632,9 +748,14 @@ const jwtVerifier = ({
           );
         }
 
+        // STEP 3b: Reject symmetric algorithms if no secret configured
+        // This prevents SSRF attacks by ensuring we never fetch JWKS for symmetric tokens
+        validateAlgorithmEarly(jwt, !!hasSecret);
+
         // STEP 4: Get JWKS URI and configure verification
         let finalJwksUri: string | undefined;
         let finalSecret: string | undefined;
+        let finalPublicKey: PublicKeyInput | undefined;
         let finalAlg: string | undefined;
 
         if (hasSecret) {
@@ -645,7 +766,10 @@ const jwtVerifier = ({
           // Asymmetric algorithm
           finalAlg = (matchedConfig as AsymmetricIssuerConfig).alg;
 
-          if ((matchedConfig as AsymmetricIssuerConfig).jwksUri) {
+          if (hasPublicKey) {
+            // Static public key provided — no discovery or remote JWKS needed
+            finalPublicKey = (matchedConfig as AsymmetricIssuerConfig).publicKey;
+          } else if ((matchedConfig as AsymmetricIssuerConfig).jwksUri) {
             // Custom JWKS URI provided
             finalJwksUri = (matchedConfig as AsymmetricIssuerConfig).jwksUri;
           } else {
@@ -671,8 +795,8 @@ const jwtVerifier = ({
         }
 
         // STEP 5-7: Verify signature and validate claims
-        // Now that we've identified the correct issuer config and obtained the JWKS URI
-        // (or secret), we can verify the JWT signature and validate all claims.
+        // Now that we've identified the correct issuer config and obtained the JWKS URI,
+        // static public key (or secret), we can verify the JWT signature and validate all claims.
         // Note: We use the original token issuer (not normalized) for validation to
         // ensure the 'iss' claim check matches exactly what's in the token.
         return await verifyAndValidateJwt(
@@ -680,6 +804,7 @@ const jwtVerifier = ({
           tokenIssuer, // Original issuer from token (not normalized)
           finalJwksUri,
           finalSecret,
+          finalPublicKey,
           finalAlg,
           allowedSigningAlgs
         );
@@ -695,21 +820,22 @@ const jwtVerifier = ({
           issuer: discoveredIssuer,
           id_token_signing_alg_values_supported: idTokenSigningAlgValuesSupported,
         } = await getDiscovery(issuerBaseURL);
-        
+
         jwksUri = jwksUri || discoveredJwksUri;
         issuer = issuer || discoveredIssuer;
         allowedSigningAlgs = idTokenSigningAlgValuesSupported;
       }
 
       // Verify signature and validate claims for single issuer mode
-      // At this point we have everything we need: the issuer, JWKS URI (or secret),
-      // and algorithm configuration. The helper handles the actual signature verification
-      // and claim validation using the same logic as MCD mode.
+      // At this point we have everything we need: the issuer, JWKS URI, static public key
+      // (or secret), and algorithm configuration. The helper handles the actual signature
+      // verification and claim validation using the same logic as MCD mode.
       return await verifyAndValidateJwt(
         jwt,
         issuer,
         jwksUri,
         secret,
+        publicKey,
         tokenSigningAlg,
         allowedSigningAlgs
       );

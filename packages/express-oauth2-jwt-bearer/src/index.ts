@@ -206,6 +206,7 @@ export {
   Validators,
   JWTHeader,
   JSONPrimitive,
+  PublicKeyInput,
   MCDOptions,
   AsymmetricIssuerConfig,
   SymmetricIssuerConfig,
