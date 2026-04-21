@@ -13,10 +13,10 @@ import {
   RequiredScopes,
   scopeIncludesAny as _scopeIncludesAny,
   VerifyJwtResult as AuthResult,
-  type JWTPayload,
-  type RequestLike,
-  type AuthOptions,
-  type DPoPOptions
+  JWTPayload,
+  RequestLike,
+  AuthOptions,
+  DPoPOptions
 } from 'access-token-jwt';
 import { resolveHost } from './resolve-host';
 
