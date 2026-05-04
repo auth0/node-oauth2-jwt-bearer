@@ -1588,6 +1588,23 @@ describe('jwt-verifier', () => {
       await expect(verify(jwt)).resolves.toHaveProperty('payload.iss', 'https://issuer.example.com/');
     });
 
+    it('should throw when a symmetric JWK (kty: "oct") is passed as publicKey', async () => {
+      // createJwtWithKey() produces an RS256-signed token; validateAlgorithmEarly passes.
+      // The symmetric JWK carries its own alg: 'HS256' so importJWK returns Uint8Array,
+      // which our guard catches and rejects with a clear error.
+      const { jwt } = await createJwtWithKey();
+      const symmetricJwk = { kty: 'oct', k: 'c2VjcmV0LWtleQ', alg: 'HS256' };
+      const verify = jwtVerifier({
+        issuer: 'https://issuer.example.com/',
+        audience: 'https://api/',
+        // tokenSigningAlg omitted — alg comes from the JWK's own field
+        publicKey: symmetricJwk as any,
+      });
+      await expect(verify(jwt)).rejects.toThrowError(
+        "'publicKey' must be an asymmetric key (RSA, EC, OKP). Use 'secret' for symmetric verification."
+      );
+    });
+
     it('should verify token using a JWK with alg field (no tokenSigningAlg needed)', async () => {
       const { jwt, publicKeyJwk } = await createJwtWithKey();
       // publicKeyJwk already has alg: 'RS256' set by createJwtWithKey
@@ -1725,8 +1742,10 @@ describe('jwt-verifier', () => {
               publicKey: publicKeyPem,
               alg: 'RS256',
             },
+            // @ts-expect-error — mixed array of AsymmetricIssuerConfig + string is valid at
+            // runtime but MCDOptions.issuers is typed as string[] | IssuerConfig[] (not mixed)
             'https://discovery.example.com/',
-          ] as any,
+          ],
         },
         audience: 'https://api/',
       });
@@ -1764,7 +1783,7 @@ describe('jwt-verifier', () => {
                 publicKey: '-----BEGIN PUBLIC KEY-----\nfake\n-----END PUBLIC KEY-----',
                 secret: 'my-secret',
                 alg: 'HS256',
-              } as any,
+              },
             ],
           },
           audience: 'https://api/',
@@ -1787,7 +1806,7 @@ describe('jwt-verifier', () => {
               publicKey: publicKeyPem,
               secret: 'my-secret',
               alg: 'HS256',
-            } as any,
+            },
           ],
         },
         audience: 'https://api/',

@@ -529,6 +529,15 @@ const jwtVerifier = ({
     cache,
   });
 
+  // Lazy public key import caches — key parsing is expensive; cache once per unique key.
+  // PEM strings are keyed by (pem + "\0" + alg) since the same PEM with a different
+  // algorithm would produce a different CryptoKey.
+  const _pemKeyCache = new Map<string, Promise<KeyLike>>();
+  // JWK and JWK Set objects are keyed by object identity via WeakMap so that they
+  // can be garbage-collected when the verifier itself is no longer referenced.
+  const _jwkKeyCache = new WeakMap<object, Promise<KeyLike>>();
+  const _jwkSetFnCache = new WeakMap<object, ReturnType<typeof createLocalJWKSet>>();
+
   // Helper: Early algorithm validation
   const validateAlgorithmEarly = (jwt: string, hasSecret: boolean) => {
     const { alg } = decodeProtectedHeader(jwt);
@@ -613,6 +622,8 @@ const jwtVerifier = ({
     } else if (publicKeyValue) {
       // Static public key verification (RS256, ES256, PS256, etc.)
       // The caller supplied the public key directly — no remote fetch needed.
+      // All three branches cache their result so the expensive key-import work
+      // is only performed once per unique key across all verification calls.
       if (typeof publicKeyValue === 'string') {
         // PEM SPKI format — algorithm must be specified explicitly
         if (!algValue) {
@@ -620,19 +631,41 @@ const jwtVerifier = ({
             "You must provide 'tokenSigningAlg' (or 'alg' in the issuer config) when using a PEM public key"
           );
         }
-        const importedKey = await importSPKI(publicKeyValue, algValue);
+        const cacheKey = `${publicKeyValue}\0${algValue}`;
+        if (!_pemKeyCache.has(cacheKey)) {
+          _pemKeyCache.set(cacheKey, importSPKI(publicKeyValue, algValue));
+        }
+        const importedKey = await _pemKeyCache.get(cacheKey)!;
         const result = await jwtVerify(jwt, importedKey, { clockTolerance });
         payload = result.payload;
         header = result.protectedHeader;
-      } else if ('keys' in publicKeyValue) {
-        // Inline JWK Set — createLocalJWKSet handles key selection by kid/alg
-        const keySet = createLocalJWKSet(publicKeyValue as JSONWebKeySet);
+      } else if ('keys' in publicKeyValue && Array.isArray((publicKeyValue as any).keys)) {
+        // Inline JWK Set — createLocalJWKSet handles key selection by kid/alg.
+        // createLocalJWKSet is synchronous so we cache the returned function directly.
+        if (!_jwkSetFnCache.has(publicKeyValue)) {
+          _jwkSetFnCache.set(publicKeyValue, createLocalJWKSet(publicKeyValue as JSONWebKeySet));
+        }
+        const keySet = _jwkSetFnCache.get(publicKeyValue)!;
         const result = await jwtVerify(jwt, keySet, { clockTolerance });
         payload = result.payload;
         header = result.protectedHeader;
       } else {
-        // Single JWK — alg comes from the JWK's own `alg` field or algValue
-        const importedKey = await importJWK(publicKeyValue as JWK, algValue) as KeyLike;
+        // Single JWK — alg comes from the JWK's own `alg` field or algValue.
+        // Reject symmetric JWKs (kty: "oct") before importing: a symmetric key passed
+        // as publicKey violates the option's asymmetric-only contract and would result
+        // in a confusing jose error rather than a clear configuration error.
+        if (!_jwkKeyCache.has(publicKeyValue)) {
+          _jwkKeyCache.set(publicKeyValue, (async () => {
+            if ((publicKeyValue as JWK).kty === 'oct') {
+              throw new InvalidRequestError(
+                "'publicKey' must be an asymmetric key (RSA, EC, OKP). Use 'secret' for symmetric verification."
+              );
+            }
+            const importedKey = await importJWK(publicKeyValue as JWK, algValue);
+            return importedKey as KeyLike;
+          })());
+        }
+        const importedKey = await _jwkKeyCache.get(publicKeyValue)!;
         const result = await jwtVerify(jwt, importedKey, { clockTolerance });
         payload = result.payload;
         header = result.protectedHeader;
@@ -824,6 +857,15 @@ const jwtVerifier = ({
         jwksUri = jwksUri || discoveredJwksUri;
         issuer = issuer || discoveredIssuer;
         allowedSigningAlgs = idTokenSigningAlgValuesSupported;
+      }
+
+      // For non-discovery paths (publicKey or jwksUri without issuerBaseURL), run early
+      // algorithm validation so that tokens with the wrong alg (e.g. "HS256" or "none")
+      // produce a clear SDK error rather than a confusing jose internal error.
+      // The issuerBaseURL path already calls validateAlgorithmEarly inside its own block
+      // above; MCD mode calls it during issuer matching (STEP 3b).
+      if (!issuerBaseURL && publicKey) {
+        validateAlgorithmEarly(jwt, false);
       }
 
       // Verify signature and validate claims for single issuer mode
