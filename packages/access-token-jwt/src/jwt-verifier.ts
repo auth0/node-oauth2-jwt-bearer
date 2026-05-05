@@ -87,7 +87,8 @@ export interface JwtVerifierOptions {
   /**
    * Url for the authorization server's JWKS to find the public key to verify
    * an Access Token JWT signed with an asymmetric algorithm.
-   * REQUIRED (if you don't include {@Link AuthOptions.issuerBaseURL})
+   * REQUIRED (if you don't include {@Link AuthOptions.issuerBaseURL} or
+   * {@Link AuthOptions.publicKey})
    * You can also provide the `JWKS_URI` environment variable.
    */
   jwksUri?: string;
