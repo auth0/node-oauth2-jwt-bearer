@@ -85,6 +85,42 @@ app.get('/api/messages', (req, res, next) => {
 });
 ```
 
+#### JWTs verified with a static public key (no discovery)
+
+Use this when you already have the issuer's public key and want to skip OIDC discovery or a remote JWKS endpoint entirely. Accepted formats: PEM-encoded SPKI string, a single JWK object, or an inline JWK Set.
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+
+// PEM-encoded SPKI public key
+app.use(
+  auth({
+    issuer: 'https://YOUR_ISSUER_DOMAIN',
+    audience: 'https://my-api.com',
+    publicKey: '-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----',
+    tokenSigningAlg: 'RS256',
+  })
+);
+
+// Inline JWK
+app.use(
+  auth({
+    issuer: 'https://YOUR_ISSUER_DOMAIN',
+    audience: 'https://my-api.com',
+    publicKey: { kty: 'EC', crv: 'P-256', x: '...', y: '...', alg: 'ES256' },
+  })
+);
+
+// Inline JWK Set
+app.use(
+  auth({
+    issuer: 'https://YOUR_ISSUER_DOMAIN',
+    audience: 'https://my-api.com',
+    publicKey: { keys: [{ kty: 'RSA', n: '...', e: 'AQAB', alg: 'RS256', kid: '...' }] },
+  })
+);
+```
+
 #### DPoP Authentication
 
 This SDK supports [DPoP (Demonstration of Proof-of-Possession)](https://datatracker.ietf.org/doc/html/rfc9449), which enhances access token security by requiring clients to prove possession of a private key associated with each request.

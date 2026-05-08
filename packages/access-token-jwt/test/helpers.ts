@@ -1,6 +1,7 @@
 import { Buffer } from 'buffer';
 import { createSecretKey } from 'crypto';
-import { SignJWT, generateKeyPair, exportJWK } from 'jose';
+import { SignJWT, generateKeyPair, exportJWK, exportSPKI } from 'jose';
+import type { JWK, JSONWebKeySet } from 'jose';
 import nock = require('nock');
 
 export const now = (Date.now() / 1000) | 0;
@@ -68,4 +69,48 @@ export const createJwt = async ({
     .setIssuedAt(iat)
     .setExpirationTime(exp)
     .sign(secretKey || privateKey);
+};
+
+export interface CreateJwtWithKeyResult {
+  jwt: string;
+  publicKeyJwk: JWK;
+  publicKeyJwkSet: JSONWebKeySet;
+  publicKeyPem: string;
+}
+
+/**
+ * Create a JWT signed with a freshly generated RS256 key pair and return the
+ * signed token together with the public key in several formats (JWK, JWK Set,
+ * PEM SPKI) so tests can exercise the `publicKey` option without needing a
+ * running JWKS endpoint.
+ */
+export const createJwtWithKey = async ({
+  payload = {},
+  issuer = 'https://issuer.example.com/',
+  subject = 'me',
+  audience = 'https://api/',
+  iat = now,
+  exp = now + 60 * 60 * 24,
+  kid = 'kid',
+}: Omit<CreateJWTOptions, 'jwksUri' | 'discoveryUri' | 'jwksSpy' | 'discoverSpy' | 'delay' | 'secret'> = {}): Promise<CreateJwtWithKeyResult> => {
+  const { publicKey, privateKey } = await generateKeyPair('RS256');
+  const jwk = await exportJWK(publicKey);
+  const publicKeyPem = await exportSPKI(publicKey);
+  const publicKeyJwk: JWK = { ...jwk, kid, alg: 'RS256' };
+
+  const jwt = await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'RS256', typ: 'JWT', kid })
+    .setIssuer(issuer)
+    .setSubject(subject)
+    .setAudience(audience)
+    .setIssuedAt(iat)
+    .setExpirationTime(exp)
+    .sign(privateKey);
+
+  return {
+    jwt,
+    publicKeyJwk,
+    publicKeyJwkSet: { keys: [publicKeyJwk] },
+    publicKeyPem,
+  };
 };

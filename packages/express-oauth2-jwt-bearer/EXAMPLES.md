@@ -10,6 +10,10 @@
 - [Multiple Custom Domains (MCD)](#multiple-custom-domains-mcd)
   - [Static list of issuers](#static-list-of-issuers)
   - [Dynamic resolver](#dynamic-resolver)
+- [Static Public Key Verification](#static-public-key-verification)
+  - [PEM-encoded SPKI string](#pem-encoded-spki-string)
+  - [Single JWK object](#single-jwk-object)
+  - [Inline JWK Set](#inline-jwk-set)
 - [Restrict access with scopes](#restrict-access-with-scopes)
 - [Restrict access with claims](#restrict-access-with-claims)
   - [Matching a specific value](#matching-a-specific-value)
@@ -346,6 +350,64 @@ auth({
     jwks:      { maxEntries: 50, ttl: 300_000 },
   }
 })
+```
+
+## Static Public Key Verification
+
+Use `publicKey` when you already have the issuer's public key and want to skip OIDC discovery and remote JWKS fetches entirely. This option is mutually exclusive with `issuerBaseURL`, `jwksUri`, and `secret`.
+
+### PEM-encoded SPKI string
+
+`tokenSigningAlg` is required when providing a PEM key, since the algorithm cannot be inferred from the key material alone.
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+
+app.use(
+  auth({
+    issuer: 'https://YOUR_ISSUER_DOMAIN',
+    audience: 'https://my-api.com',
+    publicKey: '-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----',
+    tokenSigningAlg: 'RS256',
+  })
+);
+```
+
+### Single JWK object
+
+The `alg` field in the JWK is used for algorithm selection. If omitted, provide `tokenSigningAlg`.
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+
+app.use(
+  auth({
+    issuer: 'https://YOUR_ISSUER_DOMAIN',
+    audience: 'https://my-api.com',
+    publicKey: { kty: 'EC', crv: 'P-256', x: '...', y: '...', alg: 'ES256' },
+  })
+);
+```
+
+### Inline JWK Set
+
+Key selection uses the token's `kid` header matched against each key's `kid` field. Useful when the issuer rotates keys.
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+
+app.use(
+  auth({
+    issuer: 'https://YOUR_ISSUER_DOMAIN',
+    audience: 'https://my-api.com',
+    publicKey: {
+      keys: [
+        { kty: 'RSA', n: '...', e: 'AQAB', alg: 'RS256', kid: 'key-1' },
+        { kty: 'RSA', n: '...', e: 'AQAB', alg: 'RS256', kid: 'key-2' },
+      ],
+    },
+  })
+);
 ```
 
 ## Restrict access with scopes
