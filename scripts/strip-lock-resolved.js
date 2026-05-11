@@ -19,8 +19,12 @@ try {
   const lock = JSON.parse(fs.readFileSync(fd, 'utf8'));
 
   // lockfile v2/v3 — flat packages map
+  // Preserve resolved on link:true entries — these are workspace symlinks pointing
+  // to local package paths, not registry URLs.
   if (lock.packages) {
-    Object.values(lock.packages).forEach(pkg => delete pkg.resolved);
+    Object.values(lock.packages).forEach(pkg => {
+      if (!pkg.link) delete pkg.resolved;
+    });
   }
 
   // lockfile v1 — nested dependencies
