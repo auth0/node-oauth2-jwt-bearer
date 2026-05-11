@@ -11,12 +11,20 @@
     "packages/examples"
   ],
   "scripts": {
+    "prepare": "husky",
     "lint": "npm run lint --workspaces",
     "test": "npm test --workspaces",
     "build": "npm run build --workspaces",
     "docs": "typedoc --options typedoc.js"
   },
+  "lint-staged": {
+    "package-lock.json": [
+      "node scripts/strip-lock-resolved.js"
+    ]
+  },
   "devDependencies": {
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
     "typedoc": "^0.24.6",
     "typescript": "^5.0.2"
   }
