@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.9.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.9.0) (2026-05-19)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.8.0...v1.9.0)
+
+**Added**
+- feat: add publicKey option for asymmetric verification without discovery [\#229](https://github.com/auth0/node-oauth2-jwt-bearer/pull/229) ([ankita10119](https://github.com/ankita10119))
+
 ## [v1.8.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.8.0) (2026-04-09)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.7.4...v1.8.0)
 
