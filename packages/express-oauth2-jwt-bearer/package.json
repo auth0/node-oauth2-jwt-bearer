@@ -18,7 +18,8 @@
   "homepage": "https://github.com/auth0/node-oauth2-jwt-bearer/tree/main/packages/express-oauth2-jwt-bearer",
   "license": "MIT",
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^13.3.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-typescript": "^11.1.6",
     "@tsconfig/node12": "^1.0.11",
     "@types/express": "^4.17.17",
     "@types/jest": "^27.5.2",
@@ -33,9 +34,8 @@
     "nock": "^13.3.0",
     "prettier": "~2.5.1",
     "rimraf": "^3.0.2",
-    "rollup": "^2.79.2",
-    "rollup-plugin-dts": "^4.2.3",
-    "rollup-plugin-typescript2": "^0.31.2",
+    "rollup": "^3.0.0",
+    "rollup-plugin-dts": "^5.3.1",
     "ts-jest": "^29.0.5",
     "tslib": "^2.5.0",
     "typescript": "^5.0.2"

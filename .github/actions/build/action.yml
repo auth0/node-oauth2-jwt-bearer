@@ -15,11 +15,18 @@ runs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ inputs.node }}
-        cache: npm
+
+    - name: Cache npm
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles('**/package.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm-
 
     - name: Install dependencies
       shell: bash
-      run: npm ci
+      run: npm install
       env:
         NODE_ENV: development
 

@@ -21,16 +21,23 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-        cache: 'npm'
         registry-url: 'https://registry.npmjs.org'
 
     - name: Update npm
       shell: bash
       run: npm install -g npm@11
 
+    - name: Cache npm
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-npm-${{ hashFiles('**/package.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm-
+
     - name: Install dependencies
       shell: bash
-      run: npm ci --include=dev
+      run: npm install --include=dev
 
     - name: Build package
       if: inputs.require-build == 'true'

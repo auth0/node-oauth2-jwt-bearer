@@ -3,3 +3,4 @@ dist
 coverage
 test-results
 *.code-workspace
+package-lock.json
