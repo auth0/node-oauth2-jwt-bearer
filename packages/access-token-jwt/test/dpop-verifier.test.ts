@@ -972,4 +972,24 @@ describe('verifyDPoP', () => {
     expect(proofHeader.kid).toBe('kid-xyz');
     expect((proofHeader as any)['x-extra']).toBe('hdr-ok');
   });
+
+  describe('normalizeUrl regression (no query/fragment rejection on request)', () => {
+    // UT-11: request URL with query is stripped, NOT rejected
+    it('UT-11: normalizeUrl strips query from request URL', () => {
+      const result = normalizeUrl('http://h.com/p?x=1', 'request');
+      expect(result).toBe('http://h.com/p');
+    });
+
+    // UT-12: request URL with fragment is stripped, NOT rejected
+    it('UT-12: normalizeUrl strips fragment from request URL', () => {
+      const result = normalizeUrl('http://h.com/p#f', 'request');
+      expect(result).toBe('http://h.com/p');
+    });
+
+    // UT-13: proof htu with query/fragment stripped (unchanged)
+    it('UT-13: normalizeUrl strips query and fragment from proof htu', () => {
+      const result = normalizeUrl('https://h.com/p?x=1#f', 'proof');
+      expect(result).toBe('https://h.com/p');
+    });
+  });
 });

@@ -82,8 +82,18 @@ export const auth = (opts: AuthOptions = {}): Handler => {
   return async (req: Request, res: Response, next: NextFunction) => {
     const { headers, query, body, method } = req;
 
-    // Construct the URL from the request object.
-    const url = `${req.protocol}://${resolveHost(req)}${req.originalUrl ?? req.url}`;
+    // Construct the URL from the request object. resolveHost validates the
+    // untrusted Host header and throws InvalidRequestError on a malformed value,
+    // so this runs before any verifier is constructed.
+    let url: string;
+    try {
+      url = `${req.protocol}://${resolveHost(req)}${req.originalUrl ?? req.url}`;
+    } catch (e) {
+      if (opts.authRequired === false) {
+        return next();
+      }
+      return next(e);
+    }
 
     // Get DPoP verifier instance with the provided options.
     const requestOptions: RequestLike = {

@@ -527,5 +527,53 @@ describe('index', () => {
     server.close();
   });
   
-  
+
+  describe('Host injection rejection (DPoP htu bypass fix)', () => {
+    // FT-1: attack ? variant rejected
+    test('FT-1: rejects GET with Host carrying injected path+query (?)', async () => {
+      const baseUrl = await setup({
+        dpop: { enabled: true, required: true },
+      });
+      await expectFailsWith(
+        got(baseUrl, {
+          headers: { host: 'localhost/intendedPath?' },
+          responseType: 'json',
+        }),
+        400,
+        'invalid_request'
+      );
+    });
+
+    // FT-2: attack # variant rejected
+    test('FT-2: rejects GET with Host carrying injected path+fragment (#)', async () => {
+      const baseUrl = await setup({
+        dpop: { enabled: true, required: true },
+      });
+      await expectFailsWith(
+        got(baseUrl, {
+          headers: { host: 'localhost/intendedPath#' },
+          responseType: 'json',
+        }),
+        400,
+        'invalid_request'
+      );
+    });
+
+    // FT-6: invalid host with authRequired:false proceeds
+    test('FT-6: invalid host with authRequired:false passes through', async () => {
+      const baseUrl = await setup({
+        authRequired: false,
+        dpop: { enabled: true },
+      });
+      const response = await got(baseUrl, {
+        headers: { host: 'resource.com/evil?' },
+        responseType: 'json',
+      });
+      // Should reach the downstream handler without throwing
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toBeFalsy(); // No auth, so req.auth is undefined
+    });
+
+  });
+
 });
