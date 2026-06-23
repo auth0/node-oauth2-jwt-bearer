@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.9.1](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.9.1) (2026-06-23)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.9.0...v1.9.1)
+
+**Security**
+- fix: reject malformed `Host`/`X-Forwarded-Host` headers before URL construction to close a DPoP `htu` cross-endpoint replay bypass ([tusharpandey13](https://github.com/tusharpandey13))
+
 ## [v1.9.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.9.0) (2026-05-19)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.8.0...v1.9.0)
 

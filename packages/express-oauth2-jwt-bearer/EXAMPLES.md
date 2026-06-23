@@ -140,6 +140,25 @@ This SDK uses `req.protocol` and `req.host` to construct the `htu` (HTTP URI) cl
     app.enable('trust proxy');
     ```
 
+#### Host Header Validation
+
+The SDK validates the `Host` header to prevent security issues before constructing the request URL. Any `Host` header containing invalid characters (`/`, `?`, `#`, `://`) or failing to match the hostname grammar will be rejected with a `400 invalid_request` response.
+
+This validation applies to all requests, not just DPoP requests. The hostname must conform to [RFC 7230](https://tools.ietf.org/html/rfc7230#section-2.7.1):
+
+Valid hostnames:
+- `example.com`
+- `example.com:8443`
+- `[::1]` (IPv6 literal)
+- `[::1]:3000`
+
+Invalid hostnames (will be rejected):
+- `example.com/path` (path embedded in host)
+- `example.com?query=value` (query in host)
+- `https://example.com` (scheme in host)
+
+This is a security control that prevents host-injection attacks and does not require any configuration. Standards-compliant clients always send valid `Host` headers and are not affected.
+
 ### DPoP jti Replay Prevention
 
 > [!WARNING]

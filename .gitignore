@@ -4,3 +4,5 @@ coverage
 test-results
 *.code-workspace
 package-lock.json
+# Forge workspace (local, do not commit upstream)
+.forge/

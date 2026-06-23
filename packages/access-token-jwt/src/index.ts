@@ -28,6 +28,7 @@ export {
   InvalidTokenError,
   UnauthorizedError,
   InsufficientScopeError,
+  InvalidRequestError,
 } from 'oauth2-bearer';
 export { default as discover, IssuerMetadata } from './discovery';
 export {
