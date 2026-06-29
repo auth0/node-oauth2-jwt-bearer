@@ -1,7 +1,31 @@
 import type { Request } from 'express';
+import { InvalidRequestError } from 'access-token-jwt';
+
+// Hostname grammar: a registered name (RFC 3986 reg-name unreserved chars,
+// including '_' and '~' used by Docker/internal DNS) or a bracketed IPv6
+// literal, with an optional :port bounded to the valid TCP range (0-65535).
+// Mirrors the host check used during DPoP htu normalization.
+const HOST_RE =
+  /^(?:[A-Za-z0-9._~-]+|\[[0-9A-Fa-f:.]+\])(?::(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))?$/;
+
+// Validate the raw, untrusted host value BEFORE it is concatenated into a URL.
+// Rejecting structural characters here prevents Host-header injection from
+// being laundered into the query/fragment by later URL parsing.
+function isValidHost(host: string | undefined): host is string {
+  return (
+    typeof host === 'string' &&
+    host.length > 0 &&
+    !host.includes('://') &&
+    !host.includes('/') &&
+    !host.includes('?') &&
+    !host.includes('#') &&
+    HOST_RE.test(host)
+  );
+}
 
 // Resolve host in a way that's compatible with both Express 4 and 5.
-export function resolveHost(req: Request): string | undefined {
+// Throws InvalidRequestError if the resolved host is missing or malformed.
+export function resolveHost(req: Request): string {
   // Extract the trust proxy function from the app settings
   const trust = req.app?.get?.('trust proxy fn');
 
@@ -16,15 +40,21 @@ export function resolveHost(req: Request): string | undefined {
     !host ||
     !(typeof trust === 'function' && trust(req.socket?.remoteAddress, 0))
   ) {
-    return get ? get('Host') : undefined;
+    host = get ? get('Host') : undefined;
+  } else {
+    // If XFH had multiple values, only keep the first one
+    const i = host.indexOf(',');
+    if (i !== -1) {
+      host = host.substring(0, i).trimEnd(); // trim spaces after the first value
+    }
   }
 
-  // If XFH had multiple values, only keep the first one
-  const i = host.indexOf(',');
-  if (i !== -1) {
-    host = host.substring(0, i).trimEnd(); // trim spaces after the first value
+  // Validate the untrusted host at the single return point, covering both the
+  // X-Forwarded-Host and Host paths. A single generic message is used for every
+  // reason so we don't signal which check failed.
+  if (!isValidHost(host)) {
+    throw new InvalidRequestError('Invalid Host header');
   }
 
-  // At this point host is either the first XFH value or a single host
-  return host || undefined;
+  return host;
 }

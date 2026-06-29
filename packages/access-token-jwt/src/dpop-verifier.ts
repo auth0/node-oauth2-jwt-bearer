@@ -79,7 +79,11 @@ function normalizePercentEncodings(s: string): string {
  * @throws {InvalidProofError}   When `source === 'proof'` and parsing/validation fails.
  */
 function normalizeUrl(input: string, source: 'request' | 'proof'): string {
-  const HOST_RE = /^(?:[A-Za-z0-9.-]+|\[[0-9A-Fa-f:.]+\])(?::\d{1,5})?$/;
+  // RFC 3986 reg-name unreserved chars (incl '_' and '~') or bracketed IPv6
+  // literal, optional :port bounded to the valid TCP range (0-65535). Kept in
+  // sync with the copy in express-oauth2-jwt-bearer/src/resolve-host.ts.
+  const HOST_RE =
+    /^(?:[A-Za-z0-9._~-]+|\[[0-9A-Fa-f:.]+\])(?::(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))?$/;
   const PROTOCOL_IN_PATH_RE = /^\/[a-z][a-z0-9+.-]*:\/\//i;
 
   try {

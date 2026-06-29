@@ -238,4 +238,15 @@ describe('index', () => {
       } as any)
     ).toThrow();
   });
+
+  describe('InvalidRequestError re-export', () => {
+    // UT-10: InvalidRequestError exported from access-token-jwt
+    it('UT-10: exports InvalidRequestError with correct statusCode', () => {
+      const { InvalidRequestError } = require('../src/index.ts');
+      expect(InvalidRequestError).toBeDefined();
+      const err = new InvalidRequestError('test message');
+      expect(err.statusCode).toBe(400);
+      expect(err.message).toBe('test message');
+    });
+  });
 });

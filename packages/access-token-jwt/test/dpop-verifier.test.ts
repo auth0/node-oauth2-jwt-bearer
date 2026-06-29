@@ -183,6 +183,13 @@ describe('normalizeUrl', () => {
     expect(normalizeUrl(raw, 'proof')).toBe(expected);
   });
 
+  it('accepts underscore in host (RFC 3986 reg-name; not a false reject)', () => {
+    const raw = 'http://my_service:8080/resource?foo=bar';
+    const expected = 'http://my_service:8080/resource';
+    expect(normalizeUrl(raw, 'request')).toBe(expected);
+    expect(normalizeUrl(raw, 'proof')).toBe(expected);
+  });
+
   it('throws InvalidRequestError if request URL is invalid', () => {
     const malformed = 'ht!tp:/broken-url';
     expect(() => normalizeUrl(malformed, 'request')).toThrow(
@@ -258,16 +265,28 @@ describe('normalizeUrl', () => {
     expect(actual).toBe(expected);
   });
 
-  it('host validation | rejects host with underscore (request)', () => {
+  it('host validation | accepts host with underscore (request)', () => {
+    // '_' is a valid RFC 3986 reg-name character (Docker/internal DNS); it must
+    // not be rejected. Previously this host was incorrectly 400'd.
     const input = 'https://bad_host.example/path';
+    expect(normalizeUrl(input, 'request')).toBe('https://bad_host.example/path');
+  });
+
+  it('host validation | accepts host with underscore (proof)', () => {
+    const input = 'https://bad_host.example/path';
+    expect(normalizeUrl(input, 'proof')).toBe('https://bad_host.example/path');
+  });
+
+  it('host validation | rejects host with illegal char (request)', () => {
+    const input = 'https://ho!st.example/path';
     expect(() => normalizeUrl(input, 'request')).toThrow(InvalidRequestError);
     expect(() => normalizeUrl(input, 'request')).toThrow(
       'Invalid request URL: Host contains illegal characters or format'
     );
   });
 
-  it('host validation | rejects host with underscore (proof)', () => {
-    const input = 'https://bad_host.example/path';
+  it('host validation | rejects host with illegal char (proof)', () => {
+    const input = 'https://ho!st.example/path';
     expect(() => normalizeUrl(input, 'proof')).toThrow(InvalidProofError);
     expect(() => normalizeUrl(input, 'proof')).toThrow(
       'Invalid htu claim URL: Host contains illegal characters or format'
@@ -971,5 +990,25 @@ describe('verifyDPoP', () => {
     // header extras
     expect(proofHeader.kid).toBe('kid-xyz');
     expect((proofHeader as any)['x-extra']).toBe('hdr-ok');
+  });
+
+  describe('normalizeUrl regression (no query/fragment rejection on request)', () => {
+    // UT-11: request URL with query is stripped, NOT rejected
+    it('UT-11: normalizeUrl strips query from request URL', () => {
+      const result = normalizeUrl('http://h.com/p?x=1', 'request');
+      expect(result).toBe('http://h.com/p');
+    });
+
+    // UT-12: request URL with fragment is stripped, NOT rejected
+    it('UT-12: normalizeUrl strips fragment from request URL', () => {
+      const result = normalizeUrl('http://h.com/p#f', 'request');
+      expect(result).toBe('http://h.com/p');
+    });
+
+    // UT-13: proof htu with query/fragment stripped (unchanged)
+    it('UT-13: normalizeUrl strips query and fragment from proof htu', () => {
+      const result = normalizeUrl('https://h.com/p?x=1#f', 'proof');
+      expect(result).toBe('https://h.com/p');
+    });
   });
 });
