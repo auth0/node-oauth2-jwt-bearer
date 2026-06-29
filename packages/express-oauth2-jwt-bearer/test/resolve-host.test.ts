@@ -324,6 +324,34 @@ describe('resolveHost (Express 4/5 compatible)', () => {
         })
       );
     });
+
+    // EC-4: underscore in host accepted (RFC 3986 reg-name; Docker/internal DNS)
+    test('EC-4: underscore host accepted (no false-positive 400 regression)', () => {
+      const req = mkReq({ host: 'my_service:8080', trustFn: () => true });
+      expect(resolveHost(req)).toBe('my_service:8080');
+    });
+
+    // EC-5: tilde in host accepted (RFC 3986 reg-name unreserved)
+    test('EC-5: tilde host accepted', () => {
+      const req = mkReq({ host: 'ho~st', trustFn: () => true });
+      expect(resolveHost(req)).toBe('ho~st');
+    });
+
+    // EC-6: max valid port accepted
+    test('EC-6: port 65535 accepted', () => {
+      const req = mkReq({ host: 'resource.com:65535', trustFn: () => true });
+      expect(resolveHost(req)).toBe('resource.com:65535');
+    });
+
+    // EC-7: out-of-range port rejected here, not downstream as a URL TypeError
+    test('EC-7: port above 65535 rejected', () => {
+      const req = mkReq({ host: 'resource.com:99999', trustFn: () => true });
+      expect(() => resolveHost(req)).toThrow(
+        expect.objectContaining({
+          message: 'Invalid Host header',
+        })
+      );
+    });
   });
 
   describe('Migration: Old contract -> New throwing contract', () => {

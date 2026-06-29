@@ -149,6 +149,7 @@ This validation applies to all requests, not just DPoP requests. The hostname mu
 Valid hostnames:
 - `example.com`
 - `example.com:8443`
+- `my_service:8080` (underscores are permitted per RFC 3986)
 - `[::1]` (IPv6 literal)
 - `[::1]:3000`
 
@@ -156,6 +157,7 @@ Invalid hostnames (will be rejected):
 - `example.com/path` (path embedded in host)
 - `example.com?query=value` (query in host)
 - `https://example.com` (scheme in host)
+- `example.com:99999` (port outside the valid 0–65535 range)
 
 This is a security control that prevents host-injection attacks and does not require any configuration. Standards-compliant clients always send valid `Host` headers and are not affected.
 

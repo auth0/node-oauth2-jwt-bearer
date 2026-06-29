@@ -183,6 +183,13 @@ describe('normalizeUrl', () => {
     expect(normalizeUrl(raw, 'proof')).toBe(expected);
   });
 
+  it('accepts underscore in host (RFC 3986 reg-name; not a false reject)', () => {
+    const raw = 'http://my_service:8080/resource?foo=bar';
+    const expected = 'http://my_service:8080/resource';
+    expect(normalizeUrl(raw, 'request')).toBe(expected);
+    expect(normalizeUrl(raw, 'proof')).toBe(expected);
+  });
+
   it('throws InvalidRequestError if request URL is invalid', () => {
     const malformed = 'ht!tp:/broken-url';
     expect(() => normalizeUrl(malformed, 'request')).toThrow(
@@ -258,16 +265,28 @@ describe('normalizeUrl', () => {
     expect(actual).toBe(expected);
   });
 
-  it('host validation | rejects host with underscore (request)', () => {
+  it('host validation | accepts host with underscore (request)', () => {
+    // '_' is a valid RFC 3986 reg-name character (Docker/internal DNS); it must
+    // not be rejected. Previously this host was incorrectly 400'd.
     const input = 'https://bad_host.example/path';
+    expect(normalizeUrl(input, 'request')).toBe('https://bad_host.example/path');
+  });
+
+  it('host validation | accepts host with underscore (proof)', () => {
+    const input = 'https://bad_host.example/path';
+    expect(normalizeUrl(input, 'proof')).toBe('https://bad_host.example/path');
+  });
+
+  it('host validation | rejects host with illegal char (request)', () => {
+    const input = 'https://ho!st.example/path';
     expect(() => normalizeUrl(input, 'request')).toThrow(InvalidRequestError);
     expect(() => normalizeUrl(input, 'request')).toThrow(
       'Invalid request URL: Host contains illegal characters or format'
     );
   });
 
-  it('host validation | rejects host with underscore (proof)', () => {
-    const input = 'https://bad_host.example/path';
+  it('host validation | rejects host with illegal char (proof)', () => {
+    const input = 'https://ho!st.example/path';
     expect(() => normalizeUrl(input, 'proof')).toThrow(InvalidProofError);
     expect(() => normalizeUrl(input, 'proof')).toThrow(
       'Invalid htu claim URL: Host contains illegal characters or format'

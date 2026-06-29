@@ -1,9 +1,12 @@
 import type { Request } from 'express';
 import { InvalidRequestError } from 'access-token-jwt';
 
-// Hostname grammar: a registered name or bracketed IPv6 literal, with an
-// optional :port. Mirrors the host check used during DPoP htu normalization.
-const HOST_RE = /^(?:[A-Za-z0-9.-]+|\[[0-9A-Fa-f:.]+\])(?::\d{1,5})?$/;
+// Hostname grammar: a registered name (RFC 3986 reg-name unreserved chars,
+// including '_' and '~' used by Docker/internal DNS) or a bracketed IPv6
+// literal, with an optional :port bounded to the valid TCP range (0-65535).
+// Mirrors the host check used during DPoP htu normalization.
+const HOST_RE =
+  /^(?:[A-Za-z0-9._~-]+|\[[0-9A-Fa-f:.]+\])(?::(?:[0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]))?$/;
 
 // Validate the raw, untrusted host value BEFORE it is concatenated into a URL.
 // Rejecting structural characters here prevents Host-header injection from
