@@ -1,0 +1,19 @@
+name: SCA
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snyk-cli:
+    uses: auth0/devsecops-tooling/.github/workflows/sca-scan.yml@e29f26478db18ff0bcbe4bc447a8fbd54fbeec9e # main
+    with:
+      pre-scan-commands: "npm install"
+      additional-arguments: "--all-projects --exclude=README.md,examples"
+      node-version: 24
+    secrets: inherit
