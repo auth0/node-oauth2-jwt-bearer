@@ -19,6 +19,10 @@
   - [Matching a specific value](#matching-a-specific-value)
   - [Matching multiple values](#matching-multiple-values)
   - [Matching custom logic](#matching-custom-logic)
+- [Anonymous Sessions](#anonymous-sessions)
+  - [Block all anonymous callers globally](#block-all-anonymous-callers-globally)
+  - [Block anonymous callers on specific routes](#block-anonymous-callers-on-specific-routes)
+  - [Accept anonymous callers and branch in the handler](#accept-anonymous-callers-and-branch-in-the-handler)
 
 
 ## DPoP Authentication
@@ -520,4 +524,60 @@ app.get('/api/admin/edit',
       // ...
    }
 );
+```
+
+## Anonymous Sessions
+
+> **Auth0-specific feature.** Requires the Anonymous Sessions add-on to be enabled on your Auth0 tenant.
+
+Auth0 Anonymous Sessions issues standard JWT Bearer tokens to unauthenticated users. These tokens are validated by this SDK exactly like any other access token. The only distinguishing characteristic is that `sub` starts with `anon@` (e.g. `anon@abc123def456`).
+
+By default, a valid anonymous token passes `auth()` just like an authenticated user's token. Use the patterns below to control access based on whether the caller is anonymous.
+
+### Block all anonymous callers globally
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+
+app.use(
+  auth({
+    issuerBaseURL: 'https://YOUR_DOMAIN',
+    audience: 'https://api.example.com',
+    validators: {
+      sub: (sub) => !sub.startsWith('anon@'),
+    },
+  })
+);
+```
+
+### Block anonymous callers on specific routes
+
+```js
+const { auth, claimCheck } = require('express-oauth2-jwt-bearer');
+
+app.use(auth({
+  issuerBaseURL: 'https://YOUR_DOMAIN',
+  audience: 'https://api.example.com',
+}));
+
+app.get('/checkout',
+  claimCheck((payload) => !payload.sub?.startsWith('anon@')),
+  (req, res) => { /* authenticated callers only */ }
+);
+```
+
+### Accept anonymous callers and branch in the handler
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+
+app.use(auth({
+  issuerBaseURL: 'https://YOUR_DOMAIN',
+  audience: 'https://api.example.com',
+}));
+
+app.get('/cart', (req, res) => {
+  const isAnonymous = req.auth.payload.sub?.startsWith('anon@');
+  // serve differently based on whether the caller is anonymous
+});
 ```

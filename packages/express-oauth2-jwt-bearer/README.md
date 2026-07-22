@@ -133,6 +133,12 @@ To learn how to:
 
 **See [DPoP examples in `EXAMPLES.md`](https://github.com/auth0/node-oauth2-jwt-bearer/blob/main/packages/express-oauth2-jwt-bearer/EXAMPLES.md#dpop-authentication-early-access)**
 
+#### Anonymous Sessions
+
+Auth0 Anonymous Sessions issues standard JWT Bearer tokens to unauthenticated users. The `sub` claim starts with `anon@`, which you can use to accept, reject, or branch on anonymous callers.
+
+**See [Anonymous Sessions examples in `EXAMPLES.md`](https://github.com/auth0/node-oauth2-jwt-bearer/blob/main/packages/express-oauth2-jwt-bearer/EXAMPLES.md#anonymous-sessions)**
+
 
 ### Security Headers
 
