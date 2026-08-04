@@ -45,8 +45,7 @@ function isDPoPBound(accessTokenClaims: DPoPJWTPayload): boolean {
  */
 function isMtlsBound(accessTokenClaims: DPoPJWTPayload): boolean {
   return (
-    isJsonObject(accessTokenClaims.cnf) &&
-    'x5t#S256' in (accessTokenClaims.cnf as unknown as Record<string, unknown>)
+    isJsonObject(accessTokenClaims.cnf) && 'x5t#S256' in accessTokenClaims.cnf!
   );
 }
 
@@ -617,6 +616,9 @@ function tokenVerifier(
     } else if (shouldVerifyMtls(accessTokenClaims)) {
       // Certificate-bound access token (RFC 8705). Validate that the certificate
       // presented on the TLS connection matches the token's cnf.x5t#S256 claim.
+      // DPoP is intentionally checked first and shadows mTLS: a token carries at
+      // most one confirmation method, and a DPoP proof header (if present) routes
+      // the request to the DPoP path above regardless of any cnf.x5t#S256 claim.
       await verifyMtls({ accessTokenClaims, clientCertificate });
     }
 

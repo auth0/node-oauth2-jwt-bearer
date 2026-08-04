@@ -1,5 +1,4 @@
 import { Handler, NextFunction, Request, Response } from 'express';
-import { Request as ExpressRequest } from 'express';
 import {
   jwtVerifier,
   tokenVerifier,
@@ -47,7 +46,7 @@ import { resolveHost } from './resolve-host';
  * }
  */
 export type GetCertificate = (
-  req: ExpressRequest
+  req: Request
 ) => ClientCertificate | undefined;
 
 export type AuthOptions = CoreAuthOptions & {
@@ -148,7 +147,7 @@ export const auth = (opts: AuthOptions = {}): Handler => {
       return next(e);
     }
 
-    // Get DPoP verifier instance with the provided options.
+    // Get the token verifier instance with the provided options.
     const requestOptions: RequestLike = {
       headers,
       url,
