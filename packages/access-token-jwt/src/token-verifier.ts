@@ -188,6 +188,15 @@ interface DPoPOptions {
  * - <u>Misconfiguration</u> (*`{ enabled: false, required: true }`*):
  *   Invalid — mTLS is disabled, so a binding cannot be required.
  *
+ * Interaction with DPoP:
+ * A token carries at most one confirmation method, so mTLS and DPoP are mutually
+ * exclusive per token. When both are enabled, DPoP is evaluated first and takes
+ * precedence: the mTLS verifier runs only for requests the DPoP path does not
+ * handle. As a result `required: true` is scoped to the mTLS path (it does not
+ * force a certificate binding on a request satisfied by a DPoP-bound token), and
+ * enabling `dpop.required` makes these options inert because every request is
+ * then routed to the DPoP path.
+ *
  * @see https://www.rfc-editor.org/rfc/rfc8705
  */
 interface MtlsOptions {
@@ -201,6 +210,10 @@ interface MtlsOptions {
   /**
    * Requires every access token to be certificate-bound. When `true`, a token
    * without a valid `cnf.x5t#S256` binding is rejected.
+   *
+   * Scoped to the mTLS path: when DPoP is also enabled, DPoP is evaluated first,
+   * so a DPoP-bound token is handled by the DPoP path and this requirement is
+   * not applied to it.
    *
    * @default false
    */

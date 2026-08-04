@@ -14,6 +14,7 @@
   - [Require every token to be certificate-bound](#require-every-token-to-be-certificate-bound)
   - [Disable mTLS validation](#disable-mtls-validation)
   - [mTLS Behavior Matrix](#mtls-behavior-matrix)
+  - [Using mTLS and DPoP together](#using-mtls-and-dpop-together)
 - [Multiple Custom Domains (MCD)](#multiple-custom-domains-mcd)
   - [Static list of issuers](#static-list-of-issuers)
   - [Dynamic resolver](#dynamic-resolver)
@@ -446,7 +447,18 @@ app.use(
 | `false`   | `false`    | `cnf.x5t#S256` claims are not validated. Tokens are accepted as plain Bearer JWTs.                                             |
 | `false`   | `true`     | Invalid configuration. `mtls` is disabled, so a binding cannot be required (throws on startup).                               |
 
-## Multiple Custom Domains (MCD)
+### Using mTLS and DPoP together
+
+An Auth0 Resource Server is configured with a single sender-constraining method, so in practice a token carries at most one confirmation claim (`cnf.jkt` for DPoP or `cnf.x5t#S256` for mTLS, never both). Both mechanisms are enabled by default, and each fires only for the tokens it applies to, so leaving both on is safe. If you do run both, it helps to know how the SDK routes a request when both are enabled.
+
+**DPoP is evaluated first and takes precedence.** For a given request the SDK runs at most one of the two verifiers. DPoP is checked first; mTLS validation runs only when the DPoP path does not apply. The DPoP path applies when the request uses the `DPoP` scheme, carries a `DPoP` proof header, has a `cnf.jkt` token, or DPoP is required. Otherwise the mTLS path applies to a `cnf.x5t#S256` token (or to every token when `mtls.required` is `true`).
+
+Two consequences are worth calling out:
+
+- **`mtls: { required: true }` is scoped to the mTLS path, not a global "every token must be certificate-bound" gate.** With DPoP also enabled, a valid DPoP-bound token is handled by the DPoP path and satisfies the request; the mTLS requirement is not applied to it. `mtls.required` rejects tokens that reach the mTLS path without a certificate binding, it does not override DPoP.
+- **`dpop: { required: true }` makes the `mtls` options inert.** When DPoP is required, every request is routed to the DPoP path, so the mTLS verifier never runs regardless of the `mtls` configuration. Setting both `dpop.required` and `mtls.required` to `true` is contradictory (a token cannot be bound by both methods at once); the SDK does not reject that combination at startup, but DPoP wins and no token will ever be accepted by the mTLS path. Enable exactly one `required` method to match how your Resource Server is configured.
+
+
 
 Use `mcd` to accept JWT tokens from multiple custom domains belonging to the **same Authorization Server**. `mcd` and `issuerBaseURL` are mutually exclusive — use one or the other.
 
