@@ -7,6 +7,13 @@
   - [Customize DPoP validation behavior](#customize-dpop-validation-behavior)
   - [Hostname Resolution (`req.host` and `req.protocol`)](#hostname-resolution-reqhost-and-reqprotocol)
   - [DPoP jti Replay Prevention](#dpop-jti-replay-prevention)
+- [mTLS Certificate-Bound Tokens](#mtls-certificate-bound-tokens)
+  - [Resolve the client certificate with `getCertificate`](#resolve-the-client-certificate-with-getcertificate)
+  - [Terminating TLS with a proxy](#terminating-tls-with-a-proxy)
+  - [Accept both cert-bound and regular Bearer tokens (default)](#accept-both-cert-bound-and-regular-bearer-tokens-default)
+  - [Require every token to be certificate-bound](#require-every-token-to-be-certificate-bound)
+  - [Disable mTLS validation](#disable-mtls-validation)
+  - [mTLS Behavior Matrix](#mtls-behavior-matrix)
 - [Multiple Custom Domains (MCD)](#multiple-custom-domains-mcd)
   - [Static list of issuers](#static-list-of-issuers)
   - [Dynamic resolver](#dynamic-resolver)
@@ -289,6 +296,155 @@ app.get('/api/protected', (req, res) => {
   res.json({ message: 'Access granted' });
 });
 ```
+
+## mTLS Certificate-Bound Tokens
+
+[mTLS](https://www.rfc-editor.org/rfc/rfc8705) (Mutual TLS, RFC 8705) sender-constrains an access token to the client certificate that was used to obtain it. The authorization server embeds a `cnf.x5t#S256` claim (the base64url-encoded SHA-256 thumbprint of the client certificate) into the token. This middleware validates that claim: it recomputes the thumbprint of the certificate presented on the current TLS connection and rejects the request if it does not match.
+
+Because APIs almost always run behind a TLS-terminating proxy (nginx, ALB, Cloudflare, etc.) that forwards the client certificate in a request header, the SDK cannot know where your certificate lives. You supply a `getCertificate` function that pulls it out of the request, and the SDK does the rest.
+
+> mTLS and DPoP are mutually exclusive per token: a token carries at most one confirmation method. If a token is DPoP-bound (`cnf.jkt`), the DPoP path handles it and mTLS validation is skipped.
+
+### Resolve the client certificate with `getCertificate`
+
+`getCertificate(req)` returns the client certificate for the current request, or `undefined` when none is present. It may return either the PEM text (what most proxies forward, usually URL-encoded) or the raw DER bytes.
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+
+app.use(
+  auth({
+    issuerBaseURL: 'https://YOUR_ISSUER_DOMAIN',
+    audience: 'https://my-api.com',
+    getCertificate: (req) => {
+      // nginx forwarding URL-encoded PEM in a header (see "Terminating TLS with a proxy" below):
+      const pem = req.headers['client-certificate'];
+      return typeof pem === 'string' ? decodeURIComponent(pem) : undefined;
+    },
+  })
+);
+```
+
+If your Node process terminates TLS directly instead of sitting behind a proxy, return the peer certificate's DER bytes:
+
+```js
+getCertificate: (req) => req.socket.getPeerCertificate()?.raw || undefined;
+```
+
+### Terminating TLS with a proxy
+
+Most deployments terminate TLS at a reverse proxy and forward the client certificate to the API in a request header. The header name and encoding are up to you; `getCertificate` just has to read it back out. For example, with nginx requesting the client certificate and forwarding it as URL-encoded PEM:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name api.example.com;
+
+    ssl_certificate     /path/to/server.crt;
+    ssl_certificate_key /path/to/server.key;
+
+    # Request the client certificate. Use `optional_no_ca` when the certificate
+    # is validated downstream (e.g. by Auth0 at token issuance) rather than by
+    # nginx; use `on` with `ssl_client_certificate` to have nginx verify a CA.
+    ssl_verify_client optional_no_ca;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        # $ssl_client_escaped_cert is the URL-encoded PEM of the presented cert.
+        proxy_set_header client-certificate $ssl_client_escaped_cert;
+    }
+}
+```
+
+The matching `getCertificate` reads that header and URL-decodes it, as shown in the example above.
+
+> Only trust a forwarded client-certificate header on connections that reach your app **through** the proxy. If the app is also reachable directly, a client could set the header itself and forge a binding. Bind the app to a private interface (or otherwise restrict it to the proxy), and have the proxy overwrite the header on every request so an inbound value cannot pass through.
+
+### Accept both cert-bound and regular Bearer tokens (default)
+
+By default mTLS is enabled but not required. A certificate-bound token is validated against the presented certificate; a token with no `cnf.x5t#S256` claim passes through as a regular Bearer token.
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+
+app.use(
+  auth({
+    issuerBaseURL: 'https://YOUR_ISSUER_DOMAIN',
+    audience: 'https://my-api.com',
+    getCertificate: (req) => {
+      const pem = req.headers['client-certificate'];
+      return typeof pem === 'string' ? decodeURIComponent(pem) : undefined;
+    },
+    mtls: {
+      enabled: true, // Validate cnf.x5t#S256 when present (default)
+      required: false, // Non-bound tokens are still accepted (default)
+    },
+  })
+);
+
+app.get('/api/resource', (req, res) => {
+  res.send('Access granted');
+});
+```
+
+### Require every token to be certificate-bound
+
+To reject any token that is not sender-constrained to a client certificate, set `required: true`. This matches an Auth0 Resource Server configured with **Token Sender-Constraining → mTLS → Always**.
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+
+app.use(
+  auth({
+    issuerBaseURL: 'https://YOUR_ISSUER_DOMAIN',
+    audience: 'https://my-api.com',
+    getCertificate: (req) => {
+      const pem = req.headers['client-certificate'];
+      return typeof pem === 'string' ? decodeURIComponent(pem) : undefined;
+    },
+    mtls: {
+      enabled: true,
+      required: true, // Reject tokens with no cnf.x5t#S256 binding
+    },
+  })
+);
+
+app.get('/api/secure-resource', (req, res) => {
+  res.send('Certificate-bound token validated');
+});
+```
+
+With `required: true` the SDK returns:
+
+- `400 invalid_request` when a cert-bound token arrives but no certificate was presented on the connection.
+- `401 invalid_token` when the presented certificate's thumbprint does not match the token's `cnf.x5t#S256`, or when the token carries no binding at all.
+
+### Disable mTLS validation
+
+To ignore `cnf.x5t#S256` claims entirely (for example while a certificate-bound token is still validated as a plain JWT):
+
+```js
+const { auth } = require('express-oauth2-jwt-bearer');
+
+app.use(
+  auth({
+    issuerBaseURL: 'https://YOUR_ISSUER_DOMAIN',
+    audience: 'https://my-api.com',
+    mtls: {
+      enabled: false, // cnf.x5t#S256 claims are not validated
+    },
+  })
+);
+```
+
+### mTLS Behavior Matrix
+
+| `enabled` | `required` | Behavior                                                                                                                      |
+| --------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `true`    | `false`    | **Default behavior**. Cert-bound tokens are validated against the presented certificate; tokens with no `cnf.x5t#S256` pass through. |
+| `true`    | `true`     | Every token must be certificate-bound. A missing certificate → `400 invalid_request`; a thumbprint mismatch or unbound token → `401 invalid_token`. |
+| `false`   | `false`    | `cnf.x5t#S256` claims are not validated. Tokens are accepted as plain Bearer JWTs.                                             |
+| `false`   | `true`     | Invalid configuration. `mtls` is disabled, so a binding cannot be required (throws on startup).                               |
 
 ## Multiple Custom Domains (MCD)
 
