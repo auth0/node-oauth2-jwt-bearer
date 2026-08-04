@@ -133,6 +133,18 @@ To learn how to:
 
 **See [DPoP examples in `EXAMPLES.md`](https://github.com/auth0/node-oauth2-jwt-bearer/blob/main/packages/express-oauth2-jwt-bearer/EXAMPLES.md#dpop-authentication-early-access)**
 
+#### mTLS Certificate-Bound Tokens
+
+This SDK supports [mTLS (Mutual TLS, RFC 8705)](https://www.rfc-editor.org/rfc/rfc8705) certificate-bound access tokens. It validates the token's `cnf.x5t#S256` claim against the client certificate presented on the TLS connection, which you resolve with a `getCertificate` function.
+
+To learn how to:
+- Resolve the client certificate from behind a TLS-terminating proxy with `getCertificate`
+- Accept both cert-bound and regular Bearer tokens (default)
+- Require every token to be certificate-bound
+- Disable mTLS validation
+
+**See [mTLS examples in `EXAMPLES.md`](https://github.com/auth0/node-oauth2-jwt-bearer/blob/main/packages/express-oauth2-jwt-bearer/EXAMPLES.md#mtls-certificate-bound-tokens)**
+
 
 ### Security Headers
 
