@@ -2484,5 +2484,31 @@ describe('tokenVerifier / mTLS', () => {
         true
       );
     });
+
+    it('does not apply mtls.required to a DPoP-bound token when DPoP is also enabled', async () => {
+      // DPoP is evaluated first and takes precedence: a DPoP-bound token is
+      // handled by the DPoP path and satisfies the request, so mtls.required
+      // does not reject it. mtls.required is scoped to the mTLS path.
+      (dpopVerifier.verifyDPoP as sinon.SinonSpy).restore?.();
+      sinon.stub(dpopVerifier, 'verifyDPoP').resolves();
+
+      const jwtResult = createJwtResult({ sub: 'user', cnf: { jkt: 'abc' } });
+      const { verifier } = createVerifier(
+        jwtResult,
+        { mtls: { required: true } },
+        {
+          headers: { authorization: 'DPoP ' + dummyJwt, dpop: 'proof.jwt' },
+          clientCertificate: CERT,
+        }
+      );
+
+      await expect(verifier.verify()).resolves.toEqual(jwtResult);
+      expect((dpopVerifier.verifyDPoP as sinon.SinonStub).calledOnce).toBe(
+        true
+      );
+      expect((mtlsVerifier.verifyMtls as sinon.SinonStub).notCalled).toBe(
+        true
+      );
+    });
   });
 });
