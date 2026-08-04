@@ -11,7 +11,7 @@ import { createHash } from 'crypto';
 import { execFileSync } from 'child_process';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { writeFileSync, rmSync, readFileSync, mkdirSync } from 'fs';
+import { rmSync, readFileSync, mkdirSync } from 'fs';
 
 // A real self-signed certificate generated once for the suite, plus a second,
 // unrelated certificate to exercise thumbprint mismatches.
