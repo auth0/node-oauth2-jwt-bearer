@@ -576,4 +576,183 @@ describe('index', () => {
 
   });
 
+  describe('mTLS (RFC 8705) certificate-bound tokens', () => {
+    const { execFileSync } = require('child_process');
+    const { createHash } = require('crypto');
+    const { tmpdir } = require('os');
+    const { join } = require('path');
+    const fs = require('fs');
+
+    let certPem: string;
+    let certThumbprint: string;
+
+    beforeAll(() => {
+      const dir = join(tmpdir(), `mtls-express-${process.pid}`);
+      fs.mkdirSync(dir, { recursive: true });
+      try {
+        const key = join(dir, 'client.key');
+        const crt = join(dir, 'client.crt');
+        execFileSync('openssl', [
+          'req', '-x509', '-newkey', 'rsa:2048',
+          '-keyout', key, '-out', crt,
+          '-days', '1', '-nodes', '-subj', '/CN=client',
+        ]);
+        certPem = fs.readFileSync(crt, 'utf8');
+      } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
+      const PEM_RE =
+        /-----BEGIN CERTIFICATE-----([A-Za-z0-9+/=\s]+?)-----END CERTIFICATE-----/;
+      const der = Buffer.from(
+        certPem.match(PEM_RE)![1].replace(/\s+/g, ''),
+        'base64'
+      );
+      certThumbprint = createHash('sha256')
+        .update(der)
+        .digest('base64url');
+    });
+
+    it('accepts a cert-bound token when the presented certificate matches', async () => {
+      const jwt = await createJwt({
+        payload: { cnf: { 'x5t#S256': certThumbprint } },
+      });
+      const baseUrl = await setup({
+        getCertificate: () => certPem,
+      });
+      const response = await got(baseUrl, {
+        headers: { authorization: `Bearer ${jwt}` },
+        responseType: 'json',
+      });
+      expect(response.statusCode).toBe(200);
+      expect((response.body as any).payload.cnf['x5t#S256']).toBe(
+        certThumbprint
+      );
+    });
+
+    it('rejects a cert-bound token when the certificate does not match', async () => {
+      const jwt = await createJwt({
+        payload: { cnf: { 'x5t#S256': 'not-the-real-thumbprint' } },
+      });
+      const baseUrl = await setup({
+        getCertificate: () => certPem,
+      });
+      await expectFailsWith(
+        got(baseUrl, {
+          headers: { authorization: `Bearer ${jwt}` },
+          responseType: 'json',
+        }),
+        401,
+        'invalid_token'
+      );
+    });
+
+    it('rejects a cert-bound token when no certificate is presented', async () => {
+      const jwt = await createJwt({
+        payload: { cnf: { 'x5t#S256': certThumbprint } },
+      });
+      const baseUrl = await setup({
+        getCertificate: () => undefined,
+      });
+      // A cert-bound token received without a presented certificate is a
+      // malformed request (InvalidRequestError -> 400 invalid_request), not an
+      // invalid token.
+      await expectFailsWith(
+        got(baseUrl, {
+          headers: { authorization: `Bearer ${jwt}` },
+          responseType: 'json',
+        }),
+        400,
+        'invalid_request'
+      );
+    });
+
+    it('accepts a plain bearer token unaffected when mTLS is not triggered', async () => {
+      const jwt = await createJwt({ payload: { foo: 'bar' } });
+      const baseUrl = await setup({
+        getCertificate: () => certPem,
+      });
+      const response = await got(baseUrl, {
+        headers: { authorization: `Bearer ${jwt}` },
+        responseType: 'json',
+      });
+      expect(response.statusCode).toBe(200);
+      expect((response.body as any).payload.foo).toBe('bar');
+    });
+
+    it('rejects a plain bearer token when mTLS is required', async () => {
+      const jwt = await createJwt({ payload: { foo: 'bar' } });
+      const baseUrl = await setup({
+        mtls: { required: true },
+        getCertificate: () => certPem,
+      });
+      await expectFailsWith(
+        got(baseUrl, {
+          headers: { authorization: `Bearer ${jwt}` },
+          responseType: 'json',
+        }),
+        401,
+        'invalid_token'
+      );
+    });
+
+    it('resolves the certificate from a proxy header via getCertificate', async () => {
+      const jwt = await createJwt({
+        payload: { cnf: { 'x5t#S256': certThumbprint } },
+      });
+      const baseUrl = await setup({
+        getCertificate: (req) => {
+          const header = req.headers['client-certificate'];
+          return typeof header === 'string'
+            ? decodeURIComponent(header)
+            : undefined;
+        },
+      });
+      const response = await got(baseUrl, {
+        headers: {
+          authorization: `Bearer ${jwt}`,
+          'client-certificate': encodeURIComponent(certPem),
+        },
+        responseType: 'json',
+      });
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('propagates an error thrown by getCertificate', async () => {
+      const jwt = await createJwt({
+        payload: { cnf: { 'x5t#S256': certThumbprint } },
+      });
+      const baseUrl = await setup({
+        getCertificate: () => {
+          throw new InvalidRequestError('bad proxy header');
+        },
+      });
+      await expectFailsWith(
+        got(baseUrl, {
+          headers: { authorization: `Bearer ${jwt}` },
+        }),
+        400,
+        'invalid_request',
+        'bad proxy header'
+      );
+    });
+
+    it('ignores an error thrown by getCertificate when authRequired is false', async () => {
+      const jwt = await createJwt({
+        payload: { cnf: { 'x5t#S256': certThumbprint } },
+      });
+      const baseUrl = await setup({
+        authRequired: false,
+        getCertificate: () => {
+          throw new Error('boom');
+        },
+      });
+      const response = await got(baseUrl, {
+        headers: { authorization: `Bearer ${jwt}` },
+        responseType: 'json',
+      });
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toBeFalsy();
+    });
+  });
+
 });

@@ -249,4 +249,20 @@ describe('index', () => {
       expect(err.message).toBe('test message');
     });
   });
+
+  describe('mTLS re-exports', () => {
+    it('exports the mTLS verifier helpers and options validator', () => {
+      const {
+        assertValidMtlsOptions,
+        verifyMtls,
+        calculateCertificateThumbprint,
+        assertCertificateConfirmation,
+      } = require('../src');
+
+      expect(typeof assertValidMtlsOptions).toBe('function');
+      expect(typeof verifyMtls).toBe('function');
+      expect(typeof calculateCertificateThumbprint).toBe('function');
+      expect(typeof assertCertificateConfirmation).toBe('function');
+    });
+  });
 });
