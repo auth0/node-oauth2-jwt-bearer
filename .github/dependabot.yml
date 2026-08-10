@@ -11,3 +11,13 @@ updates:
       codeql:
         patterns:
           - 'github/codeql-action/*'
+
+  - package-ecosystem: 'npm'
+    directories:
+      - '/'
+      - '/packages/access-token-jwt'
+      - '/packages/oauth2-bearer'
+      - '/packages/express-oauth2-jwt-bearer'
+      - '/packages/examples'
+    schedule:
+      interval: 'weekly'
