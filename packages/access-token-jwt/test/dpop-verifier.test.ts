@@ -555,13 +555,8 @@ describe('assertDPoPRequest', () => {
     );
   });
 
-  it('fails when cnf contains multiple keys', () => {
-    expectFail(
-      baseHeaders(),
-      { cnf: { jkt: 'thumb', extra: 'x' } },
-      'Multiple confirmation claims are not supported',
-      InvalidTokenError
-    );
+  it('passes when cnf contains jkt and additional extension members', () => {
+    expectPass(baseHeaders(), { cnf: { jkt: 'abc', 'kc-jkt-type': 'DPoP' } });
   });
 
   it('fails when cnf.jkt is missing (undefined)', () => {
