@@ -720,6 +720,17 @@ describe('verifyDPoP', () => {
     await expect(verifyDPoP(createOptions())).resolves.toBeUndefined();
   });
 
+  it('passes when cnf carries jkt plus additional extension members', async () => {
+    headers.dpop = await createProof();
+    await expect(
+      verifyDPoP(
+        createOptions({
+          accessTokenClaims: { cnf: { jkt: thumbprint, 'kc-jkt-type': 'DPoP' } },
+        })
+      )
+    ).resolves.toBeUndefined();
+  });
+
   it('fails when headers are invalid (delegates to assertDPoPRequest)', async () => {
     // No authorization or dpop -> assertDPoPRequest should throw
     const opts = createOptions({ headers: {} as any });
