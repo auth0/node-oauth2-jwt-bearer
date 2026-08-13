@@ -20,6 +20,7 @@ import {
   ASYMMETRIC_ALGS as SUPPORTED_ALGS,
 } from '../src/jwt-verifier';
 import sinon from 'sinon';
+import { AssertionError } from 'assert';
 import * as dpopVerifier from '../src/dpop-verifier';
 import * as mtlsVerifier from '../src/mtls-verifier';
 import { assertValidMtlsOptions } from '../src/token-verifier';
@@ -2276,6 +2277,9 @@ describe('assertValidMtlsOptions', () => {
   });
 
   it('throws when mtls is not an object', () => {
+    expect(() => assertValidMtlsOptions('nope' as any)).toThrow(
+      AssertionError
+    );
     expect(() =>
       assertValidMtlsOptions('nope' as any)
     ).toThrow('"mtls" must be an object');
@@ -2284,10 +2288,16 @@ describe('assertValidMtlsOptions', () => {
   it('throws when enabled is not a boolean', () => {
     expect(() =>
       assertValidMtlsOptions({ enabled: 'yes' as any })
+    ).toThrow(AssertionError);
+    expect(() =>
+      assertValidMtlsOptions({ enabled: 'yes' as any })
     ).toThrow('"enabled" must be a boolean');
   });
 
   it('throws when required is not a boolean', () => {
+    expect(() =>
+      assertValidMtlsOptions({ required: 1 as any })
+    ).toThrow(AssertionError);
     expect(() =>
       assertValidMtlsOptions({ required: 1 as any })
     ).toThrow('"required" must be a boolean');
@@ -2296,12 +2306,18 @@ describe('assertValidMtlsOptions', () => {
   it('throws when required is true but enabled is false', () => {
     expect(() =>
       assertValidMtlsOptions({ enabled: false, required: true })
+    ).toThrow(AssertionError);
+    expect(() =>
+      assertValidMtlsOptions({ enabled: false, required: true })
     ).toThrow(
       '"required" can only be set to true when "enabled" is also true'
     );
   });
 
   it('throws when required is true but enabled is not set (mTLS is opt-in)', () => {
+    expect(() => assertValidMtlsOptions({ required: true })).toThrow(
+      AssertionError
+    );
     expect(() => assertValidMtlsOptions({ required: true })).toThrow(
       '"required" can only be set to true when "enabled" is also true'
     );
