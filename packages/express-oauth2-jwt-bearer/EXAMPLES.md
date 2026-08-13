@@ -10,7 +10,7 @@
 - [mTLS Certificate-Bound Tokens](#mtls-certificate-bound-tokens)
   - [Resolve the client certificate with `getCertificate`](#resolve-the-client-certificate-with-getcertificate)
   - [Terminating TLS with a proxy](#terminating-tls-with-a-proxy)
-  - [Accept both cert-bound and regular Bearer tokens (default)](#accept-both-cert-bound-and-regular-bearer-tokens-default)
+  - [Accept both cert-bound and regular Bearer tokens (default once `getCertificate` is set)](#accept-both-cert-bound-and-regular-bearer-tokens-default-once-getcertificate-is-set)
   - [Require every token to be certificate-bound](#require-every-token-to-be-certificate-bound)
   - [Disable mTLS validation](#disable-mtls-validation)
   - [mTLS Behavior Matrix](#mtls-behavior-matrix)
@@ -308,6 +308,8 @@ app.get('/api/protected', (req, res) => {
 
 Because APIs almost always run behind a TLS-terminating proxy (nginx, ALB, Cloudflare, etc.) that forwards the client certificate in a request header, the SDK cannot know where your certificate lives. You supply a `getCertificate` function that pulls it out of the request, and the SDK does the rest.
 
+> mTLS is opt-in: unlike DPoP, it depends on a certificate resolver only you can supply, so it cannot safely default to on. Supplying `getCertificate` enables it automatically (`mtls.enabled` defaults to `true` once `getCertificate` is set); without `getCertificate`, `cnf.x5t#S256` claims are ignored entirely. Set `mtls: { enabled: false }` explicitly to keep mTLS off while still resolving certificates for your own use.
+
 > mTLS and DPoP are mutually exclusive per token: a token carries at most one confirmation method. If a token is DPoP-bound (`cnf.jkt`), the DPoP path handles it and mTLS validation is skipped.
 
 ### Resolve the client certificate with `getCertificate`
@@ -365,9 +367,9 @@ The matching `getCertificate` reads that header and URL-decodes it, as shown in 
 
 > Only trust a forwarded client-certificate header on connections that reach your app **through** the proxy. If the app is also reachable directly, a client could set the header itself and forge a binding. Bind the app to a private interface (or otherwise restrict it to the proxy), and have the proxy overwrite the header on every request so an inbound value cannot pass through.
 
-### Accept both cert-bound and regular Bearer tokens (default)
+### Accept both cert-bound and regular Bearer tokens (default once `getCertificate` is set)
 
-By default mTLS is enabled but not required. A certificate-bound token is validated against the presented certificate; a token with no `cnf.x5t#S256` claim passes through as a regular Bearer token.
+Once `getCertificate` is supplied, mTLS is enabled but not required by default. A certificate-bound token is validated against the presented certificate; a token with no `cnf.x5t#S256` claim passes through as a regular Bearer token.
 
 ```js
 const { auth } = require('express-oauth2-jwt-bearer');
@@ -444,16 +446,17 @@ app.use(
 
 ### mTLS Behavior Matrix
 
-| `enabled` | `required` | Behavior                                                                                                                      |
-| --------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `true`    | `false`    | **Default behavior**. Cert-bound tokens are validated against the presented certificate; tokens with no `cnf.x5t#S256` pass through. |
-| `true`    | `true`     | Every token must be certificate-bound. A missing certificate → `400 invalid_request`; a thumbprint mismatch or unbound token → `401 invalid_token`. |
-| `false`   | `false`    | `cnf.x5t#S256` claims are not validated. Tokens are accepted as plain Bearer JWTs.                                             |
-| `false`   | `true`     | Invalid configuration. `mtls` is disabled, so a binding cannot be required (throws on startup).                               |
+| `getCertificate` | `enabled`         | `required` | Behavior                                                                                                                      |
+| ----------------- | ----------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| not set            | not set            | `false`    | **Default**. mTLS is off; `cnf.x5t#S256` claims are ignored and tokens are accepted as plain Bearer JWTs.                     |
+| set                | not set (→ `true`) | `false`    | **Default once `getCertificate` is set**. Cert-bound tokens are validated against the presented certificate; tokens with no `cnf.x5t#S256` pass through. |
+| any                | `true`             | `true`     | Every token must be certificate-bound. A missing certificate → `400 invalid_request`; a thumbprint mismatch or unbound token → `401 invalid_token`. |
+| any                | `false`            | `false`    | `cnf.x5t#S256` claims are not validated. Tokens are accepted as plain Bearer JWTs.                                            |
+| any                | not `true`         | `true`     | Invalid configuration. `required` can only be `true` when `enabled` is also explicitly `true` (throws on startup).           |
 
 ### Using mTLS and DPoP together
 
-An Auth0 Resource Server is configured with a single sender-constraining method, so in practice a token carries at most one confirmation claim (`cnf.jkt` for DPoP or `cnf.x5t#S256` for mTLS, never both). Both mechanisms are enabled by default, and each fires only for the tokens it applies to, so leaving both on is safe. If you do run both, it helps to know how the SDK routes a request when both are enabled.
+An Auth0 Resource Server is configured with a single sender-constraining method, so in practice a token carries at most one confirmation claim (`cnf.jkt` for DPoP or `cnf.x5t#S256` for mTLS, never both). DPoP is enabled by default; mTLS is opt-in (see above). Each fires only for the tokens it applies to, so running both is safe. If you do run both, it helps to know how the SDK routes a request when both are enabled.
 
 **DPoP is evaluated first and takes precedence.** For a given request the SDK runs at most one of the two verifiers. DPoP is checked first; mTLS validation runs only when the DPoP path does not apply. The DPoP path applies when the request uses the `DPoP` scheme, carries a `DPoP` proof header, has a `cnf.jkt` token, or DPoP is required. Otherwise the mTLS path applies to a `cnf.x5t#S256` token (or to every token when `mtls.required` is `true`).
 

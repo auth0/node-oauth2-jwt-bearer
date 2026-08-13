@@ -2296,7 +2296,15 @@ describe('assertValidMtlsOptions', () => {
   it('throws when required is true but enabled is false', () => {
     expect(() =>
       assertValidMtlsOptions({ enabled: false, required: true })
-    ).toThrow('cannot set "required" to true when "enabled" is false');
+    ).toThrow(
+      '"required" can only be set to true when "enabled" is also true'
+    );
+  });
+
+  it('throws when required is true but enabled is not set (mTLS is opt-in)', () => {
+    expect(() => assertValidMtlsOptions({ required: true })).toThrow(
+      '"required" can only be set to true when "enabled" is also true'
+    );
   });
 });
 
@@ -2326,15 +2334,24 @@ describe('tokenVerifier / mTLS', () => {
     // Stub the actual certificate validation; these tests assert orchestration
     // (whether verifyMtls is invoked and with what), not the crypto itself.
     if (!(mtlsVerifier.verifyMtls as any).restore) {
-      sinon.stub(mtlsVerifier, 'verifyMtls').resolves();
+      sinon.stub(mtlsVerifier, 'verifyMtls').returns(undefined);
     }
   });
 
   afterEach(() => sinon.restore());
 
   describe('shouldVerifyMtls', () => {
-    it('returns true for a cert-bound token (cnf.x5t#S256) by default', () => {
+    it('returns false for a cert-bound token (cnf.x5t#S256) by default (mTLS is opt-in)', () => {
       const { verifier } = createVerifier(createJwtResult({ sub: 'user' }));
+      expect(
+        verifier.shouldVerifyMtls({ cnf: { 'x5t#S256': 'abc' } } as any)
+      ).toBe(false);
+    });
+
+    it('returns true for a cert-bound token when explicitly enabled', () => {
+      const { verifier } = createVerifier(createJwtResult({ sub: 'user' }), {
+        mtls: { enabled: true },
+      });
       expect(
         verifier.shouldVerifyMtls({ cnf: { 'x5t#S256': 'abc' } } as any)
       ).toBe(true);
@@ -2346,15 +2363,17 @@ describe('tokenVerifier / mTLS', () => {
     });
 
     it('returns false for a DPoP-bound token (cnf.jkt)', () => {
-      const { verifier } = createVerifier(createJwtResult({ sub: 'user' }));
+      const { verifier } = createVerifier(createJwtResult({ sub: 'user' }), {
+        mtls: { enabled: true },
+      });
       expect(verifier.shouldVerifyMtls({ cnf: { jkt: 'abc' } } as any)).toBe(
         false
       );
     });
 
-    it('returns true for any token when required', () => {
+    it('returns true for any token when enabled and required', () => {
       const { verifier } = createVerifier(createJwtResult({ sub: 'user' }), {
-        mtls: { required: true },
+        mtls: { enabled: true, required: true },
       });
       expect(verifier.shouldVerifyMtls({ sub: 'user' } as any)).toBe(true);
     });
@@ -2377,7 +2396,7 @@ describe('tokenVerifier / mTLS', () => {
       });
       const { verifier } = createVerifier(
         jwtResult,
-        {},
+        { mtls: { enabled: true } },
         {
           headers: { authorization: 'Bearer ' + dummyJwt },
           clientCertificate: CERT,
@@ -2425,11 +2444,11 @@ describe('tokenVerifier / mTLS', () => {
       expect((mtlsVerifier.verifyMtls as sinon.SinonStub).notCalled).toBe(true);
     });
 
-    it('calls verifyMtls for every token when required', async () => {
+    it('calls verifyMtls for every token when enabled and required', async () => {
       const jwtResult = createJwtResult({ sub: 'user' });
       const { verifier } = createVerifier(
         jwtResult,
-        { mtls: { required: true } },
+        { mtls: { enabled: true, required: true } },
         {
           headers: { authorization: 'Bearer ' + dummyJwt },
           clientCertificate: CERT,
@@ -2469,7 +2488,7 @@ describe('tokenVerifier / mTLS', () => {
       const jwtResult = createJwtResult({ sub: 'user', cnf: { jkt: 'abc' } });
       const { verifier } = createVerifier(
         jwtResult,
-        {},
+        { mtls: { enabled: true } },
         {
           headers: { authorization: 'DPoP ' + dummyJwt, dpop: 'proof.jwt' },
           clientCertificate: CERT,
@@ -2495,7 +2514,7 @@ describe('tokenVerifier / mTLS', () => {
       const jwtResult = createJwtResult({ sub: 'user', cnf: { jkt: 'abc' } });
       const { verifier } = createVerifier(
         jwtResult,
-        { mtls: { required: true } },
+        { mtls: { enabled: true, required: true } },
         {
           headers: { authorization: 'DPoP ' + dummyJwt, dpop: 'proof.jwt' },
           clientCertificate: CERT,

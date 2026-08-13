@@ -251,18 +251,22 @@ describe('index', () => {
   });
 
   describe('mTLS re-exports', () => {
-    it('exports the mTLS verifier helpers and options validator', () => {
+    it('exports the mTLS options validator', () => {
+      const { assertValidMtlsOptions } = require('../src');
+
+      expect(typeof assertValidMtlsOptions).toBe('function');
+    });
+
+    it('does not export mTLS verifier internals (verifyMtls is not part of the public surface)', () => {
       const {
-        assertValidMtlsOptions,
         verifyMtls,
         calculateCertificateThumbprint,
         assertCertificateConfirmation,
       } = require('../src');
 
-      expect(typeof assertValidMtlsOptions).toBe('function');
-      expect(typeof verifyMtls).toBe('function');
-      expect(typeof calculateCertificateThumbprint).toBe('function');
-      expect(typeof assertCertificateConfirmation).toBe('function');
+      expect(verifyMtls).toBeUndefined();
+      expect(calculateCertificateThumbprint).toBeUndefined();
+      expect(assertCertificateConfirmation).toBeUndefined();
     });
   });
 });

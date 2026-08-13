@@ -10,9 +10,6 @@ export {
   type MtlsOptions,
 } from './token-verifier'
 export {
-  verifyMtls,
-  calculateCertificateThumbprint,
-  assertCertificateConfirmation,
   type ClientCertificate,
   type MtlsJWTPayload,
 } from './mtls-verifier';

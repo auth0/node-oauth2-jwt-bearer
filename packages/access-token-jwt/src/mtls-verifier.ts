@@ -12,7 +12,7 @@ export interface MtlsConfirmationClaims {
   'x5t#S256': string;
 }
 
-interface MtlsJWTPayload extends JWTPayload {
+export interface MtlsJWTPayload extends JWTPayload {
   cnf?: MtlsConfirmationClaims;
 }
 
@@ -135,12 +135,12 @@ function assertCertificateConfirmation(accessTokenClaims: JWTPayload): string {
  * @throws {InvalidTokenError} If the confirmation claim is malformed or the
  *   thumbprint does not match the presented certificate.
  */
-async function verifyMtls(options: MtlsVerifierOptions): Promise<void> {
+function verifyMtls(options: MtlsVerifierOptions): void {
   const { accessTokenClaims, clientCertificate } = options;
 
   const expected = assertCertificateConfirmation(accessTokenClaims);
 
-  if (clientCertificate === undefined || clientCertificate === null) {
+  if (clientCertificate === undefined) {
     throw new InvalidRequestError(
       'A client certificate is required for this certificate-bound access token'
     );
@@ -159,4 +159,3 @@ export {
   assertCertificateConfirmation,
   verifyMtls,
 };
-export type { MtlsJWTPayload };

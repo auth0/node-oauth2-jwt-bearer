@@ -27,7 +27,7 @@ const DEFAULT_DPOP_ENABLED = true; // DPoP is enabled by default.
 const DEFAULT_DPOP_REQUIRED = false; // DPoP is allowed by default.
 const DEFAULT_IAT_OFFSET = 300; // 5 minutes.
 const DEFAULT_IAT_LEEWAY = 30; // 30 seconds.
-const DEFAULT_MTLS_ENABLED = true; // mTLS binding is validated by default.
+const DEFAULT_MTLS_ENABLED = false; // mTLS is opt-in: cnf.x5t#S256 is ignored unless enabled.
 const DEFAULT_MTLS_REQUIRED = false; // Certificate-bound tokens are allowed, not required.
 
 /**
@@ -172,21 +172,27 @@ interface DPoPOptions {
  * Express `auth()` middleware — and is then passed to this verifier as raw
  * PEM or DER.
  *
+ * mTLS is opt-in: unlike DPoP, it depends on a certificate resolver the
+ * caller must supply (see `getCertificate` on the Express `auth()`
+ * middleware), so it cannot safely default to on. The Express middleware
+ * enables it automatically when `getCertificate` is supplied, unless
+ * `enabled` is set explicitly.
+ *
  * Behavior matrix:
  *
- * - <u>Default</u> (*`{ enabled: true, required: false }`*):
+ * - <u>Default</u> (*`{ enabled: false }`*):
+ *   The `cnf.x5t#S256` claim is ignored and no certificate binding is checked.
+ *
+ * - <u>Enabled</u> (*`{ enabled: true, required: false }`*):
  *   Validates the certificate binding when the token carries `cnf.x5t#S256`;
  *   plain bearer tokens are accepted as-is.
- *
- * - <u>Disabled</u> (*`{ enabled: false }`*):
- *   The `cnf.x5t#S256` claim is ignored and no certificate binding is checked.
  *
  * - <u>Required</u> (*`{ enabled: true, required: true }`*):
  *   Every access token must be certificate-bound; a token without a valid
  *   `cnf.x5t#S256` binding is rejected.
  *
- * - <u>Misconfiguration</u> (*`{ enabled: false, required: true }`*):
- *   Invalid — mTLS is disabled, so a binding cannot be required.
+ * - <u>Misconfiguration</u> (*`{ required: true }`* without *`enabled: true`*):
+ *   Invalid — a binding cannot be required unless mTLS is explicitly enabled.
  *
  * Interaction with DPoP:
  * A token carries at most one confirmation method, so mTLS and DPoP are mutually
@@ -203,7 +209,11 @@ interface MtlsOptions {
   /**
    * Enables validation of certificate-bound (`cnf.x5t#S256`) access tokens.
    *
-   * @default true
+   * mTLS is opt-in. The Express `auth()` middleware sets this to `true`
+   * automatically when a `getCertificate` resolver is supplied, unless you
+   * set it explicitly.
+   *
+   * @default false
    */
   enabled?: boolean;
 
@@ -214,6 +224,9 @@ interface MtlsOptions {
    * Scoped to the mTLS path: when DPoP is also enabled, DPoP is evaluated first,
    * so a DPoP-bound token is handled by the DPoP path and this requirement is
    * not applied to it.
+   *
+   * Requires `enabled: true` to also be set explicitly; mTLS being opt-in
+   * means it cannot be turned on implicitly just by requiring it.
    *
    * @default false
    */
@@ -244,9 +257,13 @@ interface AuthOptions extends JwtVerifierOptions {
    * (RFC 8705). If not provided or set to `undefined`, the following default
    * values will be used:
    * {
-   *   enabled: true,
+   *   enabled: false,
    *   required: false,
    * }
+   *
+   * mTLS is opt-in: the Express `auth()` middleware sets `enabled: true`
+   * automatically when a `getCertificate` resolver is supplied, unless you
+   * set `enabled` explicitly.
    */
   mtls?: MtlsOptions;
 }
@@ -406,8 +423,8 @@ function assertValidMtlsOptions(mtlsOptions?: MtlsOptions): void {
   }
 
   assert(
-    !(enabled === false && required === true),
-    'Invalid mTLS configuration: cannot set "required" to true when "enabled" is false'
+    !(required === true && enabled !== true),
+    'Invalid mTLS configuration: "required" can only be set to true when "enabled" is also true'
   );
 }
 
@@ -632,7 +649,7 @@ function tokenVerifier(
       // DPoP is intentionally checked first and shadows mTLS: a token carries at
       // most one confirmation method, and a DPoP proof header (if present) routes
       // the request to the DPoP path above regardless of any cnf.x5t#S256 claim.
-      await verifyMtls({ accessTokenClaims, clientCertificate });
+      verifyMtls({ accessTokenClaims, clientCertificate });
     }
 
     return verifiedJwt;

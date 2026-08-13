@@ -150,48 +150,48 @@ describe('assertCertificateConfirmation', () => {
 });
 
 describe('verifyMtls', () => {
-  it('resolves when the presented certificate matches the binding', async () => {
-    await expect(
+  it('returns undefined when the presented certificate matches the binding', () => {
+    expect(
       verifyMtls({
         accessTokenClaims: { cnf: { 'x5t#S256': thumbprint } },
         clientCertificate: certPem,
       })
-    ).resolves.toBeUndefined();
+    ).toBeUndefined();
   });
 
-  it('accepts a DER Buffer as the presented certificate', async () => {
-    await expect(
+  it('accepts a DER Buffer as the presented certificate', () => {
+    expect(
       verifyMtls({
         accessTokenClaims: { cnf: { 'x5t#S256': thumbprint } },
         clientCertificate: certDer,
       })
-    ).resolves.toBeUndefined();
+    ).toBeUndefined();
   });
 
-  it('throws InvalidRequestError when no certificate is presented', async () => {
-    await expect(
+  it('throws InvalidRequestError when no certificate is presented', () => {
+    expect(() =>
       verifyMtls({
         accessTokenClaims: { cnf: { 'x5t#S256': thumbprint } },
         clientCertificate: undefined,
       })
-    ).rejects.toThrow(InvalidRequestError);
+    ).toThrow(InvalidRequestError);
   });
 
-  it('throws InvalidTokenError when the thumbprint does not match', async () => {
-    await expect(
+  it('throws InvalidTokenError when the thumbprint does not match', () => {
+    expect(() =>
       verifyMtls({
         accessTokenClaims: { cnf: { 'x5t#S256': otherThumbprint } },
         clientCertificate: certPem,
       })
-    ).rejects.toThrow('JWT Access Token confirmation mismatch');
+    ).toThrow('JWT Access Token confirmation mismatch');
   });
 
-  it('throws InvalidTokenError when the token has no cnf claim', async () => {
-    await expect(
+  it('throws InvalidTokenError when the token has no cnf claim', () => {
+    expect(() =>
       verifyMtls({
         accessTokenClaims: {},
         clientCertificate: certPem,
       })
-    ).rejects.toThrow(InvalidTokenError);
+    ).toThrow(InvalidTokenError);
   });
 });

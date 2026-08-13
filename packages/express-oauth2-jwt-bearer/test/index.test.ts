@@ -612,6 +612,33 @@ describe('index', () => {
         .digest('base64url');
     });
 
+    it('passes through a cert-bound token unvalidated when getCertificate is not configured (mTLS is opt-in)', async () => {
+      const jwt = await createJwt({
+        payload: { cnf: { 'x5t#S256': certThumbprint } },
+      });
+      const baseUrl = await setup({});
+      const response = await got(baseUrl, {
+        headers: { authorization: `Bearer ${jwt}` },
+        responseType: 'json',
+      });
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('does not validate mTLS when explicitly disabled, even with getCertificate configured', async () => {
+      const jwt = await createJwt({
+        payload: { cnf: { 'x5t#S256': 'not-the-real-thumbprint' } },
+      });
+      const baseUrl = await setup({
+        mtls: { enabled: false },
+        getCertificate: () => certPem,
+      });
+      const response = await got(baseUrl, {
+        headers: { authorization: `Bearer ${jwt}` },
+        responseType: 'json',
+      });
+      expect(response.statusCode).toBe(200);
+    });
+
     it('accepts a cert-bound token when the presented certificate matches', async () => {
       const jwt = await createJwt({
         payload: { cnf: { 'x5t#S256': certThumbprint } },
@@ -717,7 +744,27 @@ describe('index', () => {
       expect(response.statusCode).toBe(200);
     });
 
-    it('propagates an error thrown by getCertificate', async () => {
+    it('does not skip JWT verification for a plain bearer token when getCertificate throws', async () => {
+      // getCertificate failing must not short-circuit verification for tokens
+      // that never needed a certificate in the first place.
+      const jwt = await createJwt({ payload: { foo: 'bar' } });
+      const baseUrl = await setup({
+        getCertificate: () => {
+          throw new InvalidRequestError('bad proxy header');
+        },
+      });
+      const response = await got(baseUrl, {
+        headers: { authorization: `Bearer ${jwt}` },
+        responseType: 'json',
+      });
+      expect(response.statusCode).toBe(200);
+      expect((response.body as any).payload.foo).toBe('bar');
+    });
+
+    it('rejects a cert-bound token for a missing certificate when getCertificate throws', async () => {
+      // The resolver's own error is not propagated: the certificate is simply
+      // treated as unresolved, and the cert-bound token is rejected the same
+      // way it would be with no getCertificate configured at all.
       const jwt = await createJwt({
         payload: { cnf: { 'x5t#S256': certThumbprint } },
       });
@@ -732,7 +779,7 @@ describe('index', () => {
         }),
         400,
         'invalid_request',
-        'bad proxy header'
+        'A client certificate is required for this certificate-bound access token'
       );
     });
 
