@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.9.2](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.9.2) (2026-08-13)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.9.1...v1.9.2)
+
+**Fixed**
+- fix: allow extra `cnf` members alongside `jkt` for DPoP validation, fixing false rejection of tokens from issuers (e.g. Keycloak) that include additional confirmation metadata [\#258](https://github.com/auth0/node-oauth2-jwt-bearer/pull/258) ([cschetan77](https://github.com/cschetan77))
+
 ## [v1.9.1](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.9.1) (2026-06-23)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.9.0...v1.9.1)
 
