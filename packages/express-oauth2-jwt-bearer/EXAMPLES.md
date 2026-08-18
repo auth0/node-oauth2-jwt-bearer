@@ -465,7 +465,7 @@ Two consequences are worth calling out:
 - **`mtls: { required: true }` is scoped to the mTLS path, not a global "every token must be certificate-bound" gate.** With DPoP also enabled, a valid DPoP-bound token is handled by the DPoP path and satisfies the request; the mTLS requirement is not applied to it. `mtls.required` rejects tokens that reach the mTLS path without a certificate binding, it does not override DPoP.
 - **`dpop: { required: true }` makes the `mtls` options inert.** When DPoP is required, every request is routed to the DPoP path, so the mTLS verifier never runs regardless of the `mtls` configuration. Setting both `dpop.required` and `mtls.required` to `true` is contradictory (a token cannot be bound by both methods at once); the SDK does not reject that combination at startup, but DPoP wins and no token will ever be accepted by the mTLS path. Enable exactly one `required` method to match how your Resource Server is configured.
 
-
+## Multiple Custom Domains (MCD)
 
 Use `mcd` to accept JWT tokens from multiple custom domains belonging to the **same Authorization Server**. `mcd` and `issuerBaseURL` are mutually exclusive — use one or the other.
 
