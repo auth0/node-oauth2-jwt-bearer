@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.10.0](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.10.0) (2026-08-18)
+[Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.9.2...v1.10.0)
+
+**Added**
+- feat: add mTLS certificate-bound access token validation (RFC 8705) [\#257](https://github.com/auth0/node-oauth2-jwt-bearer/pull/257) ([jd3vi1](https://github.com/jd3vi1))
+
 ## [v1.9.2](https://github.com/auth0/node-oauth2-jwt-bearer/tree/v1.9.2) (2026-08-13)
 [Full Changelog](https://github.com/auth0/node-oauth2-jwt-bearer/compare/v1.9.1...v1.9.2)
 
