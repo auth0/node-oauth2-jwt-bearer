@@ -1,12 +1,18 @@
 export {
   default as tokenVerifier,
   assertValidDPoPOptions,
+  assertValidMtlsOptions,
   type DPoPJWTPayload,
   type RequestLike,
   type HeadersLike,
   type AuthOptions,
   type DPoPOptions,
+  type MtlsOptions,
 } from './token-verifier'
+export {
+  type ClientCertificate,
+  type MtlsJWTPayload,
+} from './mtls-verifier';
 export {
   default as jwtVerifier,
   JwtVerifierOptions,

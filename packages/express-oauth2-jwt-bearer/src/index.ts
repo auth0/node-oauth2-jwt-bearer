@@ -3,6 +3,7 @@ import {
   jwtVerifier,
   tokenVerifier,
   assertValidDPoPOptions,
+  assertValidMtlsOptions,
   claimCheck as _claimCheck,
   ClaimCheck,
   claimEquals as _claimEquals,
@@ -15,10 +16,54 @@ import {
   VerifyJwtResult as AuthResult,
   JWTPayload,
   RequestLike,
-  AuthOptions,
-  DPoPOptions
+  AuthOptions as CoreAuthOptions,
+  DPoPOptions,
+  MtlsOptions,
+  ClientCertificate
 } from 'access-token-jwt';
 import { resolveHost } from './resolve-host';
+
+/**
+ * Resolves the client certificate presented on the TLS connection for the
+ * current request, used to validate certificate-bound (mTLS, RFC 8705) access
+ * tokens.
+ *
+ * APIs typically run behind a TLS-terminating proxy (nginx, ALB, Cloudflare,
+ * etc.) that forwards the client certificate in a request header (commonly as
+ * URL-encoded PEM). Because the header name and encoding vary by deployment,
+ * you supply this function to extract the certificate from wherever your proxy
+ * places it, returning the PEM text or DER bytes. For a process terminating TLS
+ * directly, return `req.socket.getPeerCertificate().raw`.
+ *
+ * Return `undefined` when no certificate is present; a certificate-bound token
+ * received without one is rejected.
+ *
+ * Supplying this resolver also opts the request into mTLS validation: it sets
+ * `mtls.enabled` to `true` by default (see {@Link AuthOptions.getCertificate}).
+ * Set `mtls: { enabled: false }` explicitly to keep mTLS off while still
+ * resolving certificates for your own use.
+ *
+ * @example
+ * // nginx forwarding URL-encoded PEM in a header:
+ * getCertificate: (req) => {
+ *   const pem = req.headers['client-certificate'];
+ *   return typeof pem === 'string' ? decodeURIComponent(pem) : undefined;
+ * }
+ */
+export type GetCertificate = (
+  req: Request
+) => ClientCertificate | undefined;
+
+export type AuthOptions = CoreAuthOptions & {
+  /**
+   * Resolves the client certificate for mTLS certificate-bound access token
+   * validation (RFC 8705), for use behind a TLS-terminating proxy.
+   *
+   * mTLS is opt-in: supplying this resolver enables it (sets `mtls.enabled`
+   * to `true`) unless `mtls.enabled` is set explicitly.
+   */
+  getCertificate?: GetCertificate;
+};
 
 declare global {
   namespace Express {
@@ -76,8 +121,17 @@ declare global {
  *
  */
 export const auth = (opts: AuthOptions = {}): Handler => {
-  const verifyJwt = jwtVerifier(opts);
-  assertValidDPoPOptions(opts.dpop);
+  // mTLS is opt-in. Supplying `getCertificate` signals intent to use it, so
+  // it enables mTLS by default unless the caller sets `mtls.enabled` explicitly.
+  const mtls: MtlsOptions | undefined =
+    opts.getCertificate && opts.mtls?.enabled === undefined
+      ? { ...opts.mtls, enabled: true }
+      : opts.mtls;
+  const resolvedOpts: AuthOptions = { ...opts, mtls };
+
+  const verifyJwt = jwtVerifier(resolvedOpts);
+  assertValidDPoPOptions(resolvedOpts.dpop);
+  assertValidMtlsOptions(resolvedOpts.mtls);
 
   return async (req: Request, res: Response, next: NextFunction) => {
     const { headers, query, body, method } = req;
@@ -95,7 +149,20 @@ export const auth = (opts: AuthOptions = {}): Handler => {
       return next(e);
     }
 
-    // Get DPoP verifier instance with the provided options.
+    // Resolve the client certificate for mTLS certificate-bound tokens, if a
+    // resolver was supplied. A resolver failure does not skip JWT verification:
+    // it just leaves the certificate unresolved. A plain Bearer token still
+    // verifies normally; a certificate-bound token then fails with the same
+    // "certificate required" error verifyMtls already raises when no resolver
+    // is configured at all, going through the usual authRequired handling below.
+    let clientCertificate: ClientCertificate | undefined;
+    try {
+      clientCertificate = opts.getCertificate?.(req);
+    } catch {
+      clientCertificate = undefined;
+    }
+
+    // Get the token verifier instance with the provided options.
     const requestOptions: RequestLike = {
       headers,
       url,
@@ -103,10 +170,11 @@ export const auth = (opts: AuthOptions = {}): Handler => {
       query,
       body,
       isUrlEncoded: !!req.is('urlencoded'),
+      clientCertificate,
     };
 
     // Verify both JWT and DPoP token claims.
-    const verifier = tokenVerifier(verifyJwt, opts, requestOptions);
+    const verifier = tokenVerifier(verifyJwt, resolvedOpts, requestOptions);
 
     try {
       req.auth = await verifier.verify();
@@ -209,7 +277,13 @@ export const requiredScopes: RequiredScopes<Handler> = (...args) =>
 export const scopeIncludesAny: RequiredScopes<Handler> = (...args) =>
   toHandler(_scopeIncludesAny(...args));
 
-export { AuthResult, JWTPayload, AuthOptions, DPoPOptions };
+export {
+  AuthResult,
+  JWTPayload,
+  DPoPOptions,
+  MtlsOptions,
+  ClientCertificate,
+};
 export {
   FunctionValidator,
   Validator,
