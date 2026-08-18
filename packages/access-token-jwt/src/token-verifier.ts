@@ -21,33 +21,10 @@ import {
   DPoPJWTPayload,
 } from './dpop-verifier';
 
-import { verifyMtls, ClientCertificate } from './mtls-verifier';
-
 const DEFAULT_DPOP_ENABLED = true; // DPoP is enabled by default.
 const DEFAULT_DPOP_REQUIRED = false; // DPoP is allowed by default.
 const DEFAULT_IAT_OFFSET = 300; // 5 minutes.
 const DEFAULT_IAT_LEEWAY = 30; // 30 seconds.
-const DEFAULT_MTLS_ENABLED = false; // mTLS is opt-in: cnf.x5t#S256 is ignored unless enabled.
-const DEFAULT_MTLS_REQUIRED = false; // Certificate-bound tokens are allowed, not required.
-
-/**
- * Returns true if the access token is DPoP-bound (carries a `cnf.jkt` claim).
- */
-function isDPoPBound(accessTokenClaims: DPoPJWTPayload): boolean {
-  return (
-    isJsonObject(accessTokenClaims.cnf) && 'jkt' in accessTokenClaims.cnf!
-  );
-}
-
-/**
- * Returns true if the access token is certificate-bound per RFC 8705
- * (carries a `cnf.x5t#S256` claim).
- */
-function isMtlsBound(accessTokenClaims: DPoPJWTPayload): boolean {
-  return (
-    isJsonObject(accessTokenClaims.cnf) && 'x5t#S256' in accessTokenClaims.cnf!
-  );
-}
 
 /**
  * Options that control Demonstration of Proof-of-Possession (DPoP) handling.
@@ -155,84 +132,6 @@ interface DPoPOptions {
   iatLeeway?: number;
 }
 
-/**
- * Options that control mutual-TLS certificate-bound access token validation
- * (RFC 8705 §3).
- *
- * @remarks
- * When a client authenticates to the authorization server with a TLS client
- * certificate, the issued access token carries a `cnf.x5t#S256` claim: the
- * base64url-encoded SHA-256 thumbprint of that certificate. This SDK validates,
- * on each request, that the certificate presented on the TLS connection matches
- * the thumbprint in the token.
- *
- * Because APIs commonly run behind a TLS-terminating proxy (nginx, ALB,
- * Cloudflare, etc.), the SDK cannot read the TLS socket directly. The client
- * certificate must be supplied by the caller — see `getCertificate` on the
- * Express `auth()` middleware — and is then passed to this verifier as raw
- * PEM or DER.
- *
- * mTLS is opt-in: unlike DPoP, it depends on a certificate resolver the
- * caller must supply (see `getCertificate` on the Express `auth()`
- * middleware), so it cannot safely default to on. The Express middleware
- * enables it automatically when `getCertificate` is supplied, unless
- * `enabled` is set explicitly.
- *
- * Behavior matrix:
- *
- * - <u>Default</u> (*`{ enabled: false }`*):
- *   The `cnf.x5t#S256` claim is ignored and no certificate binding is checked.
- *
- * - <u>Enabled</u> (*`{ enabled: true, required: false }`*):
- *   Validates the certificate binding when the token carries `cnf.x5t#S256`;
- *   plain bearer tokens are accepted as-is.
- *
- * - <u>Required</u> (*`{ enabled: true, required: true }`*):
- *   Every access token must be certificate-bound; a token without a valid
- *   `cnf.x5t#S256` binding is rejected.
- *
- * - <u>Misconfiguration</u> (*`{ required: true }`* without *`enabled: true`*):
- *   Invalid — a binding cannot be required unless mTLS is explicitly enabled.
- *
- * Interaction with DPoP:
- * A token carries at most one confirmation method, so mTLS and DPoP are mutually
- * exclusive per token. When both are enabled, DPoP is evaluated first and takes
- * precedence: the mTLS verifier runs only for requests the DPoP path does not
- * handle. As a result `required: true` is scoped to the mTLS path (it does not
- * force a certificate binding on a request satisfied by a DPoP-bound token), and
- * enabling `dpop.required` makes these options inert because every request is
- * then routed to the DPoP path.
- *
- * @see https://www.rfc-editor.org/rfc/rfc8705
- */
-interface MtlsOptions {
-  /**
-   * Enables validation of certificate-bound (`cnf.x5t#S256`) access tokens.
-   *
-   * mTLS is opt-in. The Express `auth()` middleware sets this to `true`
-   * automatically when a `getCertificate` resolver is supplied, unless you
-   * set it explicitly.
-   *
-   * @default false
-   */
-  enabled?: boolean;
-
-  /**
-   * Requires every access token to be certificate-bound. When `true`, a token
-   * without a valid `cnf.x5t#S256` binding is rejected.
-   *
-   * Scoped to the mTLS path: when DPoP is also enabled, DPoP is evaluated first,
-   * so a DPoP-bound token is handled by the DPoP path and this requirement is
-   * not applied to it.
-   *
-   * Requires `enabled: true` to also be set explicitly; mTLS being opt-in
-   * means it cannot be turned on implicitly just by requiring it.
-   *
-   * @default false
-   */
-  required?: boolean;
-}
-
 interface AuthOptions extends JwtVerifierOptions {
   /**
    * True if a valid Access Token JWT should be required for all routes.
@@ -251,21 +150,6 @@ interface AuthOptions extends JwtVerifierOptions {
    * }
    */
   dpop?: DPoPOptions;
-
-  /**
-   * Options to configure mTLS certificate-bound access token validation
-   * (RFC 8705). If not provided or set to `undefined`, the following default
-   * values will be used:
-   * {
-   *   enabled: false,
-   *   required: false,
-   * }
-   *
-   * mTLS is opt-in: the Express `auth()` middleware sets `enabled: true`
-   * automatically when a `getCertificate` resolver is supplied, unless you
-   * set `enabled` explicitly.
-   */
-  mtls?: MtlsOptions;
 }
 export interface AuthError extends UnauthorizedError {
   code?: string;
@@ -291,7 +175,6 @@ type RequestLike = Record<string, unknown> & {
   query?: QueryLike;
   body?: BodyLike;
   isUrlEncoded?: boolean; // true if the request's Content-Type is `application/x-www-form-urlencoded`
-  clientCertificate?: ClientCertificate; // the client certificate presented on the TLS connection, resolved by the caller (mTLS, RFC 8705)
 };
 
 // Normalize headers to a lowercase key object
@@ -391,43 +274,6 @@ function assertValidDPoPOptions(dpopOptions?: DPoPOptions): void {
   );
 }
 
-/**
- * Asserts that the provided mTLS options are valid.
- * Throws an error if any of the options are invalid.
- *
- * @param mtlsOptions - The mTLS options to validate
- * @throws {Error} If the options are invalid
- */
-function assertValidMtlsOptions(mtlsOptions?: MtlsOptions): void {
-  if (mtlsOptions === undefined) return;
-
-  assert(
-    isJsonObject(mtlsOptions),
-    'Invalid mTLS configuration: "mtls" must be an object'
-  );
-
-  const { enabled, required } = mtlsOptions;
-
-  if (enabled !== undefined) {
-    assert(
-      typeof enabled === 'boolean',
-      'Invalid mTLS option: "enabled" must be a boolean'
-    );
-  }
-
-  if (required !== undefined) {
-    assert(
-      typeof required === 'boolean',
-      'Invalid mTLS option: "required" must be a boolean'
-    );
-  }
-
-  assert(
-    !(required === true && enabled !== true),
-    'Invalid mTLS configuration: "required" can only be set to true when "enabled" is also true'
-  );
-}
-
 function tokenVerifier(
   verifyJwt: VerifyJwt,
   options: AuthOptions = {},
@@ -439,7 +285,6 @@ function tokenVerifier(
   const query = requestOptions?.query;
   const body = requestOptions?.body;
   const isUrlEncoded = requestOptions?.isUrlEncoded ?? false;
-  const clientCertificate = requestOptions?.clientCertificate;
   const authScheme = getAuthScheme(headers)?.toLowerCase();
   // Extract DPoP options from the provided options or use defaults
   const {
@@ -448,10 +293,6 @@ function tokenVerifier(
       required: dpopRequired = DEFAULT_DPOP_REQUIRED,
       iatOffset = DEFAULT_IAT_OFFSET,
       iatLeeway = DEFAULT_IAT_LEEWAY,
-    } = {},
-    mtls: {
-      enabled: mtlsEnabled = DEFAULT_MTLS_ENABLED,
-      required: mtlsRequired = DEFAULT_MTLS_REQUIRED,
     } = {},
   } = options;
   let hasNonHeaderToken = false;
@@ -480,31 +321,9 @@ function tokenVerifier(
 
     const hasDPoPHeader = 'dpop' in headers;
     const isDPoPScheme = authScheme === 'dpop';
-    const hasBoundToken = isDPoPBound(accessTokenClaims);
+    const hasBoundToken = 'cnf' in accessTokenClaims;
 
     return dpopRequired || isDPoPScheme || hasBoundToken || hasDPoPHeader;
-  }
-
-  /**
-   * Determines whether mTLS certificate-binding validation applies to a request.
-   *
-   * Validation is triggered when mTLS is enabled AND either:
-   * - it is required by configuration, OR
-   * - the access token carries a `cnf.x5t#S256` claim (certificate-bound).
-   *
-   * DPoP-bound tokens (`cnf.jkt`) are handled by the DPoP path; a token carries
-   * at most one confirmation method.
-   *
-   * @method shouldVerifyMtls
-   * @param accessTokenClaims - The verified access token claims
-   * @returns `true` if mTLS validation should be enforced
-   */
-  function shouldVerifyMtls(accessTokenClaims: DPoPJWTPayload): boolean {
-    if (!mtlsEnabled) {
-      return false;
-    }
-
-    return mtlsRequired || isMtlsBound(accessTokenClaims);
   }
 
   function getToken(): TokenInfo {
@@ -620,13 +439,12 @@ function tokenVerifier(
 
     if (
       authScheme === 'bearer' &&
-      isDPoPBound(accessTokenClaims) &&
+      'cnf' in accessTokenClaims &&
       dpopEnabled &&
       !dpopRequired
     ) {
       // In "allowed" DPoP mode, if the token is DPoP-bound but sent with Bearer scheme,
-      // we throw an InvalidTokenError to indicate that the token is not valid for Bearer.
-      // mTLS-bound tokens (cnf.x5t#S256) legitimately use Bearer and are excluded here.
+      // we throw an InvalidTokenError to indicate that the token is not valid for Bearer
       throw new InvalidTokenError(
         'DPoP-bound token requires the DPoP authentication scheme, not Bearer.'
       );
@@ -643,13 +461,6 @@ function tokenVerifier(
         iatLeeway,
         supportedAlgorithms: SUPPORTED_ALGORITHMS,
       });
-    } else if (shouldVerifyMtls(accessTokenClaims)) {
-      // Certificate-bound access token (RFC 8705). Validate that the certificate
-      // presented on the TLS connection matches the token's cnf.x5t#S256 claim.
-      // DPoP is intentionally checked first and shadows mTLS: a token carries at
-      // most one confirmation method, and a DPoP proof header (if present) routes
-      // the request to the DPoP path above regardless of any cnf.x5t#S256 claim.
-      verifyMtls({ accessTokenClaims, clientCertificate });
     }
 
     return verifiedJwt;
@@ -740,7 +551,6 @@ function tokenVerifier(
 
   return {
     shouldVerifyDPoP,
-    shouldVerifyMtls,
     getToken,
     verify,
     applyAuthChallenges,
@@ -748,17 +558,11 @@ function tokenVerifier(
 }
 
 export default tokenVerifier;
-export {
-  normalizeHeaders,
-  getAuthScheme,
-  assertValidDPoPOptions,
-  assertValidMtlsOptions,
-};
+export { normalizeHeaders, getAuthScheme, assertValidDPoPOptions };
 export type {
   DPoPJWTPayload,
   AuthOptions,
   DPoPOptions,
-  MtlsOptions,
   QueryLike,
   BodyLike,
   RequestLike,
