@@ -8,6 +8,8 @@
 
 📚 [Documentation](#documentation) - 🚀 [Getting Started](#getting-started) - 💻 [API Reference](#api-reference) - 💬 [Feedback](#feedback)
 
+> 💡 **Using Auth0?** If you want Auth0-specific features, we recommend trying out the [`@auth0/auth0-express-api`](https://github.com/auth0/auth0-express) SDK, currently in beta.
+
 ## Documentation
 
 - [Docs Site](https://auth0.com/docs) - explore our Docs site and learn more about Auth0.
