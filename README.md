@@ -10,8 +10,6 @@ Monorepo for `oauth2-jwt-bearer`. Contains the following packages:
 | [access-token-jwt](./packages/access-token-jwt)                   |     ✘     | Verfies and decodes Access Token JWTs loosley following [draft-ietf-oauth-access-token-jwt-12](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-12) |
 | [express-oauth2-jwt-bearer](./packages/express-oauth2-jwt-bearer) |     ✔     | Authentication middleware for Express.js that validates JWT Bearer Access Tokens                                                                                 |
 
-> 💡 **Using Auth0?** If you want Auth0-specific features, we recommend trying out the [`@auth0/auth0-express-api`](https://github.com/auth0/auth0-express) SDK, currently in beta.
-
 ## Feedback
 
 ### Contributing
