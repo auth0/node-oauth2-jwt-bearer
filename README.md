@@ -10,7 +10,9 @@ Monorepo for `oauth2-jwt-bearer`. Contains the following packages:
 | [access-token-jwt](./packages/access-token-jwt)                   |     ✘     | Verfies and decodes Access Token JWTs loosley following [draft-ietf-oauth-access-token-jwt-12](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-12) |
 | [express-oauth2-jwt-bearer](./packages/express-oauth2-jwt-bearer) |     ✔     | Authentication middleware for Express.js that validates JWT Bearer Access Tokens                                                                                 |
 
-> 💡 **Using Auth0?** If you want Auth0-specific features, we recommend trying out our framework-specific API SDKs: [`@auth0/auth0-fastify-api`](https://github.com/auth0/auth0-fastify) for Fastify and [`@auth0/auth0-express-api`](https://github.com/auth0/auth0-express) (currently in beta) for Express.
+> 💡 **Using Auth0?** Please use our framework-specific API SDKs for **new projects**: [`@auth0/auth0-fastify-api`](https://github.com/auth0/auth0-fastify) for Fastify and [`@auth0/auth0-express-api`](https://github.com/auth0/auth0-express) for Express. Both are stable.
+>
+> The packages in this repo are generic OAuth 2.0 libraries that work with any authorization server. They will keep getting generic features, but new `Auth0-specific` features will only be added to the Auth0 SDKs above. If you already use `express-oauth2-jwt-bearer` with Auth0, you do not have to move right now. When you are ready, see the [migration guide](https://github.com/auth0/auth0-express/blob/main/packages/auth0-express-api/MIGRATION.md) for Express.
 
 ## Feedback
 
