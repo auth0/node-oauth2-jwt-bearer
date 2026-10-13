@@ -14,5 +14,5 @@
 
 - No commitlint/Conventional-Commits enforcement is configured; write clear, imperative commit subjects. (The `CHANGELOG.md` in the published package is produced by the release process — don't hand-edit it in feature PRs.)
 - Fill out the PR template completely (see `CONTRIBUTING.md` and Auth0's [general contributing guidelines](https://github.com/auth0/open-source-template/blob/master/GENERAL-CONTRIBUTING.md)).
-- Open PRs against `main`. CI (`.github/workflows/test.yml`) must pass: build + unit tests on Node 20/22/24 and lint. Security workflows (CodeQL, Snyk, rl-secure) also run.
+- Open PRs against `main`. CI (`.github/workflows/test.yml`) must pass: build + unit tests on Node 20/22/24/26 and lint. Security workflows (CodeQL, Snyk, rl-secure) also run.
 - Security issues go through the [Responsible Disclosure Program](https://auth0.com/whitehat), not the public issue tracker.

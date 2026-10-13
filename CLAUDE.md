@@ -26,7 +26,7 @@ Apply these on every task in this repo — they keep changes correct, small, and
 - **Language:** TypeScript (compiled to CommonJS)
 - **Tech Stack:** npm workspaces (monorepo) · `jose` v4 (JWT/JWKS verification) · Express (peer, via the middleware package) · Jest + ts-jest · Rollup (published bundle) / `tsc` (internal packages)
 - **Package Manager:** npm (requires `npm >= 7.14` for workspaces)
-- **Minimum Platform Version:** Node.js — the published package supports `^12.19 || ^14.15 || ^16.13 || ^18.12 || ^20.2 || ^22.1 || ^24` (see each package's `engines`); CI builds/tests on Node 20/22/24
+- **Minimum Platform Version:** Node.js — the published package supports `^12.19 || ^14.15 || ^16.13 || ^18.12 || ^20.2 || ^22.1 || ^24 || ^26` (see each package's `engines`); CI builds/tests on Node 20/22/24/26
 - **Dependencies:** runtime `jose` 4 only · dev: Jest, ts-jest, nock, sinon, ESLint, Prettier, Rollup — see each `packages/*/package.json`
 
 ---

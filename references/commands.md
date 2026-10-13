@@ -29,8 +29,8 @@ Build notes: `oauth2-bearer` and `access-token-jwt` compile with `tsc`; the publ
 
 `.github/workflows/test.yml`, gated on a build job (composite action `.github/actions/build`):
 
-- **build** — `npm run build` on Node 20 / 22 / 24
-- **unit** — `npm run test` on Node 20 / 22 / 24, then uploads coverage to Codecov
+- **build** — `npm run build` on Node 20 / 22 / 24 / 26
+- **unit** — `npm run test` on Node 20 / 22 / 24 / 26, then uploads coverage to Codecov
 - **lint** — `npm run lint`
 
 Other workflows: `codeql.yml`, `snyk.yml`, `rl-secure.yml` (security scans), `npm-release.yml` / `publish.yml` (release/publish — cut by the release process, not by an agent).
