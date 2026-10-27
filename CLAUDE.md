@@ -38,7 +38,7 @@ This is an **npm-workspaces monorepo**. The three library packages layer bottom-
 ```
 .
 ├── package.json          # Root: workspaces + aggregate scripts (test/lint/build run --workspaces)
-├── typedoc.js            # Generates docs/ from the express package's src
+├── typedoc.js            # Generates docs/ and the Mintlify artifact from the express package's src
 ├── docs/                 # Generated TypeDoc API output (do not hand-edit)
 └── packages/
     ├── oauth2-bearer/            # (unpublished) extracts Bearer tokens from a request, RFC 6750 errors
@@ -90,7 +90,7 @@ This is an **npm-workspaces monorepo**. The three library packages layer bottom-
 
 - Commit secrets, API keys, tokens, or private keys.
 - Log tokens, decoded JWT payloads, DPoP proofs, or secrets.
-- Modify generated files by hand: `docs/` (TypeDoc output), `CHANGELOG.md`, `dist/`, coverage output, lock files.
+- Modify generated files by hand: `docs/` and `packages/express-oauth2-jwt-bearer/mintlify/` (TypeDoc output), `CHANGELOG.md`, `dist/`, coverage output, lock files.
 - Remove or skip failing tests, or lower coverage, without fixing the underlying cause.
 - Modify `node_modules/`.
 - Weaken token validation (accept `alg: none`, skip issuer/audience/expiry checks, disable DPoP verification) without explicit approval.
