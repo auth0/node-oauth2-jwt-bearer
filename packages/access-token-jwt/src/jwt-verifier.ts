@@ -16,10 +16,18 @@ import validate, { defaultValidators, Validators } from './validate';
  * - `string` – PEM-encoded SPKI public key (requires `tokenSigningAlg` or `alg`)
  * - `JWK` – a single JWK object (`{ kty, n, e, … }`)
  * - `JSONWebKeySet` – an inline JWK Set (`{ keys: [...] }`)
+ *
+ * @category Configuration
  */
 export type PublicKeyInput = string | JWK | JSONWebKeySet;
 
 // MCD Types
+/**
+ * An issuer whose tokens are signed with an asymmetric algorithm. Its public
+ * key is fetched from `jwksUri` or supplied directly as `publicKey`.
+ *
+ * @category Multiple Issuers
+ */
 export interface AsymmetricIssuerConfig {
   issuer: string;
   alg?: string;
@@ -31,29 +39,66 @@ export interface AsymmetricIssuerConfig {
   publicKey?: PublicKeyInput;
 }
 
+/**
+ * An issuer whose tokens are signed with a symmetric algorithm and verified
+ * with a shared `secret`.
+ *
+ * @category Multiple Issuers
+ */
 export interface SymmetricIssuerConfig {
   issuer: string;
   alg: string;
   secret: string;
 }
 
+/**
+ * Configuration for a single issuer, either asymmetric or symmetric.
+ *
+ * @category Multiple Issuers
+ */
 export type IssuerConfig = AsymmetricIssuerConfig | SymmetricIssuerConfig;
 
+/**
+ * The request details passed to an {@link IssuerResolverFunction}.
+ *
+ * @category Multiple Issuers
+ */
 export interface IssuerResolverContext {
   url: URL;
   headers: Record<string, string | string[] | undefined>;
 }
 
+/**
+ * The issuers accepted for a request: issuer URLs or full issuer configurations.
+ *
+ * @category Multiple Issuers
+ */
 export type IssuerResolverResult = string[] | IssuerConfig[];
 
+/**
+ * Resolves the issuers accepted for a request. May be asynchronous.
+ *
+ * @category Multiple Issuers
+ */
 export type IssuerResolverFunction = (
   context: IssuerResolverContext
 ) => Promise<IssuerResolverResult> | IssuerResolverResult;
 
+/**
+ * Options for validating tokens from multiple issuers. Cannot be used with
+ * `issuerBaseURL`.
+ *
+ * @category Multiple Issuers
+ */
 export interface MCDOptions {
   issuers: string | string[] | IssuerConfig[] | IssuerResolverFunction;
 }
 
+/**
+ * The request URL and headers made available to an {@link IssuerResolverFunction}.
+ *
+ * @category Multiple Issuers
+ */
 export interface RequestContext {
   url: string;
   headers: Record<string, string | string[] | undefined>;
@@ -65,8 +110,8 @@ export interface JwtVerifierOptions {
    * https://datatracker.ietf.org/doc/html/rfc8414
    * You can pass a full url including `.well-known` if your discovery lives at
    * a non standard path.
-   * REQUIRED (if you don't include {@Link AuthOptions.jwksUri} and
-   * {@Link AuthOptions.issuer})
+   * REQUIRED (if you don't include {@link AuthOptions.jwksUri} and
+   * {@link AuthOptions.issuer})
    * You can also provide the `ISSUER_BASE_URL` environment variable.
    */
   issuerBaseURL?: string;
@@ -79,7 +124,7 @@ export interface JwtVerifierOptions {
 
   /**
    * Expected JWT "iss" (Issuer) Claim value.
-   * REQUIRED (if you don't include {@Link AuthOptions.issuerBaseURL})
+   * REQUIRED (if you don't include {@link AuthOptions.issuerBaseURL})
    * You can also provide the `ISSUER` environment variable.
    */
   issuer?: string;
@@ -87,8 +132,8 @@ export interface JwtVerifierOptions {
   /**
    * Url for the authorization server's JWKS to find the public key to verify
    * an Access Token JWT signed with an asymmetric algorithm.
-   * REQUIRED (if you don't include {@Link AuthOptions.issuerBaseURL} or
-   * {@Link AuthOptions.publicKey})
+   * REQUIRED (if you don't include {@link AuthOptions.issuerBaseURL} or
+   * {@link AuthOptions.publicKey})
    * You can also provide the `JWKS_URI` environment variable.
    */
   jwksUri?: string;
@@ -265,6 +310,11 @@ export interface JwtVerifierOptions {
   mcd?: MCDOptions;
 }
 
+/**
+ * The properties added to `req.auth` upon successful authorization.
+ *
+ * @category Getting Started
+ */
 export interface VerifyJwtResult {
   /**
    * The Access Token JWT header.

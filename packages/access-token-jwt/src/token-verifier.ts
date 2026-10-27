@@ -86,6 +86,7 @@ function isMtlsBound(accessTokenClaims: DPoPJWTPayload): boolean {
  * ```
  *
  * @see https://www.rfc-editor.org/rfc/rfc9449
+ * @category DPoP & mTLS
  */
 interface DPoPOptions {
   /**
@@ -204,6 +205,7 @@ interface DPoPOptions {
  * then routed to the DPoP path.
  *
  * @see https://www.rfc-editor.org/rfc/rfc8705
+ * @category DPoP & mTLS
  */
 interface MtlsOptions {
   /**
