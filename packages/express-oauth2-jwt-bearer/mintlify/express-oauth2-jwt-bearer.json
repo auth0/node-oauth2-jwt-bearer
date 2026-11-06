@@ -1,0 +1,7576 @@
+{
+	"schemaVersion": "2.0",
+	"id": 0,
+	"name": "express-oauth2-jwt-bearer",
+	"variant": "project",
+	"kind": 1,
+	"flags": {},
+	"children": [
+		{
+			"id": 8,
+			"name": "auth",
+			"variant": "declaration",
+			"kind": 64,
+			"flags": {},
+			"sources": [
+				{
+					"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+					"line": 130,
+					"character": 13,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L130"
+				}
+			],
+			"signatures": [
+				{
+					"id": 9,
+					"name": "auth",
+					"variant": "signature",
+					"kind": 4096,
+					"flags": {},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Middleware that will return a 401 if a valid JWT bearer token is not provided\nin the request.\n\nCan be used in 2 ways:\n\n1. Pass in an "
+							},
+							{
+								"kind": "inline-tag",
+								"tag": "@link",
+								"text": "AuthOptions.issuerBaseURL",
+								"target": {
+									"packageName": "access-token-jwt",
+									"packagePath": "src/jwt-verifier.ts",
+									"qualifiedName": "JwtVerifierOptions.issuerBaseURL"
+								}
+							},
+							{
+								"kind": "text",
+								"text": " (or define the env\nvariable "
+							},
+							{
+								"kind": "code",
+								"text": "`ISSUER_BASE_URL`"
+							},
+							{
+								"kind": "text",
+								"text": ")\n\n"
+							},
+							{
+								"kind": "code",
+								"text": "```js\napp.use(auth({\n  issuerBaseURL: 'http://issuer.example.com',\n  audience: 'https://myapi.com'\n}));\n```"
+							},
+							{
+								"kind": "text",
+								"text": "\n\nThis uses the "
+							},
+							{
+								"kind": "inline-tag",
+								"tag": "@link",
+								"text": "AuthOptions.issuerBaseURL",
+								"target": {
+									"packageName": "access-token-jwt",
+									"packagePath": "src/jwt-verifier.ts",
+									"qualifiedName": "JwtVerifierOptions.issuerBaseURL"
+								}
+							},
+							{
+								"kind": "text",
+								"text": " to find the OAuth 2.0\nAuthorization Server Metadata to get the "
+							},
+							{
+								"kind": "inline-tag",
+								"tag": "@link",
+								"text": "AuthOptions.jwksUri",
+								"target": {
+									"packageName": "access-token-jwt",
+									"packagePath": "src/jwt-verifier.ts",
+									"qualifiedName": "JwtVerifierOptions.jwksUri"
+								}
+							},
+							{
+								"kind": "text",
+								"text": "\nand "
+							},
+							{
+								"kind": "inline-tag",
+								"tag": "@link",
+								"text": "AuthOptions.issuer",
+								"target": {
+									"packageName": "access-token-jwt",
+									"packagePath": "src/jwt-verifier.ts",
+									"qualifiedName": "JwtVerifierOptions.issuer"
+								}
+							},
+							{
+								"kind": "text",
+								"text": ".\n\n2. You can also skip discovery and provide the "
+							},
+							{
+								"kind": "inline-tag",
+								"tag": "@link",
+								"text": "AuthOptions.jwksUri",
+								"target": {
+									"packageName": "access-token-jwt",
+									"packagePath": "src/jwt-verifier.ts",
+									"qualifiedName": "JwtVerifierOptions.jwksUri"
+								}
+							},
+							{
+								"kind": "text",
+								"text": " (or\ndefine the env variable "
+							},
+							{
+								"kind": "code",
+								"text": "`JWKS_URI`"
+							},
+							{
+								"kind": "text",
+								"text": ") and "
+							},
+							{
+								"kind": "inline-tag",
+								"tag": "@link",
+								"text": "AuthOptions.issuer",
+								"target": {
+									"packageName": "access-token-jwt",
+									"packagePath": "src/jwt-verifier.ts",
+									"qualifiedName": "JwtVerifierOptions.issuer"
+								}
+							},
+							{
+								"kind": "text",
+								"text": " (or define\nthe env variable "
+							},
+							{
+								"kind": "code",
+								"text": "`ISSUER`"
+							},
+							{
+								"kind": "text",
+								"text": ") yourself.\n\n"
+							},
+							{
+								"kind": "code",
+								"text": "```js\napp.use(auth({\n  jwksUri: 'http://issuer.example.com/well-known/jwks.json',\n  issuer: 'http://issuer.example.com',\n  audience: 'https://myapi.com'\n}));\n```"
+							},
+							{
+								"kind": "text",
+								"text": "\n\nYou must provide the "
+							},
+							{
+								"kind": "code",
+								"text": "`audience`"
+							},
+							{
+								"kind": "text",
+								"text": " argument (or "
+							},
+							{
+								"kind": "code",
+								"text": "`AUDIENCE`"
+							},
+							{
+								"kind": "text",
+								"text": " environment variable)\nused to match against the Access Token's "
+							},
+							{
+								"kind": "code",
+								"text": "`aud`"
+							},
+							{
+								"kind": "text",
+								"text": " claim.\n\nSuccessful requests will have the following properties added to them:\n\n"
+							},
+							{
+								"kind": "code",
+								"text": "```js\napp.get('/foo', auth(), (req, res, next) => {\n  const auth = req.auth;\n  auth.header; // The decoded JWT header.\n  auth.payload; // The decoded JWT payload.\n  auth.token; // The raw JWT token.\n});\n```"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@category",
+								"content": [
+									{
+										"kind": "text",
+										"text": "Getting Started"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+							"line": 130,
+							"character": 20,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L130"
+						}
+					],
+					"parameters": [
+						{
+							"id": 10,
+							"name": "opts",
+							"variant": "param",
+							"kind": 32768,
+							"flags": {},
+							"type": {
+								"type": "reference",
+								"target": 5,
+								"name": "AuthOptions",
+								"package": "express-oauth2-jwt-bearer"
+							},
+							"defaultValue": "{}"
+						}
+					],
+					"type": {
+						"type": "reference",
+						"target": {
+							"packageName": "@types/express",
+							"packagePath": "index.d.ts",
+							"qualifiedName": "e.Handler"
+						},
+						"name": "Handler",
+						"package": "@types/express",
+						"qualifiedName": "e.Handler"
+					}
+				}
+			]
+		},
+		{
+			"id": 11,
+			"name": "claimCheck",
+			"variant": "declaration",
+			"kind": 64,
+			"flags": {},
+			"sources": [
+				{
+					"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+					"line": 228,
+					"character": 13,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L228"
+				}
+			],
+			"signatures": [
+				{
+					"id": 12,
+					"name": "claimCheck",
+					"variant": "signature",
+					"kind": 4096,
+					"flags": {},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Check the token's claims using a custom method that receives the\n"
+							},
+							{
+								"kind": "inline-tag",
+								"tag": "@link",
+								"text": "JWTPayload",
+								"target": 36
+							},
+							{
+								"kind": "text",
+								"text": " and should return "
+							},
+							{
+								"kind": "code",
+								"text": "`true`"
+							},
+							{
+								"kind": "text",
+								"text": " if the token is valid. Raises\na 401 "
+							},
+							{
+								"kind": "code",
+								"text": "`invalid_token`"
+							},
+							{
+								"kind": "text",
+								"text": " error if the function returns false. You can also\ncustomise the "
+							},
+							{
+								"kind": "code",
+								"text": "`error_description`"
+							},
+							{
+								"kind": "text",
+								"text": " which should be formatted per rfc6750.\n\n"
+							},
+							{
+								"kind": "code",
+								"text": "```js\napp.use(auth());\n\napp.get('/admin/edit', claimCheck((claims) => {\n  return claims.isAdmin && claims.roles.includes('editor');\n}, `Unexpected 'isAdmin' and 'roles' claims`), (req, res) => { ... });\n```"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@category",
+								"content": [
+									{
+										"kind": "text",
+										"text": "Claim & Scope Checks"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+							"line": 228,
+							"character": 13,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L228"
+						}
+					],
+					"parameters": [
+						{
+							"id": 13,
+							"name": "fn",
+							"variant": "param",
+							"kind": 32768,
+							"flags": {},
+							"type": {
+								"type": "reflection",
+								"declaration": {
+									"id": 14,
+									"name": "__type",
+									"variant": "declaration",
+									"kind": 65536,
+									"flags": {},
+									"signatures": [
+										{
+											"id": 15,
+											"name": "__type",
+											"variant": "signature",
+											"kind": 4096,
+											"flags": {},
+											"parameters": [
+												{
+													"id": 16,
+													"name": "payload",
+													"variant": "param",
+													"kind": 32768,
+													"flags": {},
+													"type": {
+														"type": "reference",
+														"target": 36,
+														"name": "JWTPayload",
+														"package": "jose"
+													}
+												}
+											],
+											"type": {
+												"type": "intrinsic",
+												"name": "boolean"
+											}
+										}
+									]
+								}
+							}
+						},
+						{
+							"id": 17,
+							"name": "errMsg",
+							"variant": "param",
+							"kind": 32768,
+							"flags": {
+								"isOptional": true
+							},
+							"type": {
+								"type": "intrinsic",
+								"name": "string"
+							}
+						}
+					],
+					"type": {
+						"type": "reference",
+						"target": {
+							"packageName": "@types/express",
+							"packagePath": "index.d.ts",
+							"qualifiedName": "e.Handler"
+						},
+						"name": "Handler",
+						"package": "@types/express",
+						"qualifiedName": "e.Handler"
+					}
+				}
+			]
+		},
+		{
+			"id": 18,
+			"name": "claimEquals",
+			"variant": "declaration",
+			"kind": 64,
+			"flags": {},
+			"sources": [
+				{
+					"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+					"line": 245,
+					"character": 13,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L245"
+				}
+			],
+			"signatures": [
+				{
+					"id": 19,
+					"name": "claimEquals",
+					"variant": "signature",
+					"kind": 4096,
+					"flags": {},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Check a token's claim to be equal a given "
+							},
+							{
+								"kind": "inline-tag",
+								"tag": "@link",
+								"text": "JSONPrimitive",
+								"target": 88
+							},
+							{
+								"kind": "text",
+								"text": "\n("
+							},
+							{
+								"kind": "code",
+								"text": "`string`"
+							},
+							{
+								"kind": "text",
+								"text": ", "
+							},
+							{
+								"kind": "code",
+								"text": "`number`"
+							},
+							{
+								"kind": "text",
+								"text": ", "
+							},
+							{
+								"kind": "code",
+								"text": "`boolean`"
+							},
+							{
+								"kind": "text",
+								"text": " or "
+							},
+							{
+								"kind": "code",
+								"text": "`null`"
+							},
+							{
+								"kind": "text",
+								"text": ") raises a 401 "
+							},
+							{
+								"kind": "code",
+								"text": "`invalid_token`"
+							},
+							{
+								"kind": "text",
+								"text": "\nerror if the value of the claim does not match.\n\n"
+							},
+							{
+								"kind": "code",
+								"text": "```js\napp.use(auth());\n\napp.get('/admin', claimEquals('isAdmin', true), (req, res) => { ... });\n```"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@category",
+								"content": [
+									{
+										"kind": "text",
+										"text": "Claim & Scope Checks"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+							"line": 245,
+							"character": 13,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L245"
+						}
+					],
+					"parameters": [
+						{
+							"id": 20,
+							"name": "claim",
+							"variant": "param",
+							"kind": 32768,
+							"flags": {},
+							"type": {
+								"type": "intrinsic",
+								"name": "string"
+							}
+						},
+						{
+							"id": 21,
+							"name": "expected",
+							"variant": "param",
+							"kind": 32768,
+							"flags": {},
+							"type": {
+								"type": "reference",
+								"target": 88,
+								"name": "JSONPrimitive",
+								"package": "access-token-jwt"
+							}
+						}
+					],
+					"type": {
+						"type": "reference",
+						"target": {
+							"packageName": "@types/express",
+							"packagePath": "index.d.ts",
+							"qualifiedName": "e.Handler"
+						},
+						"name": "Handler",
+						"package": "@types/express",
+						"qualifiedName": "e.Handler"
+					}
+				}
+			]
+		},
+		{
+			"id": 22,
+			"name": "claimIncludes",
+			"variant": "declaration",
+			"kind": 64,
+			"flags": {},
+			"sources": [
+				{
+					"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+					"line": 263,
+					"character": 13,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L263"
+				}
+			],
+			"signatures": [
+				{
+					"id": 23,
+					"name": "claimIncludes",
+					"variant": "signature",
+					"kind": 4096,
+					"flags": {},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Check a token's claim to include a number of given "
+							},
+							{
+								"kind": "inline-tag",
+								"tag": "@link",
+								"text": "JSONPrimitive",
+								"target": 88
+							},
+							{
+								"kind": "text",
+								"text": "s\n("
+							},
+							{
+								"kind": "code",
+								"text": "`string`"
+							},
+							{
+								"kind": "text",
+								"text": ", "
+							},
+							{
+								"kind": "code",
+								"text": "`number`"
+							},
+							{
+								"kind": "text",
+								"text": ", "
+							},
+							{
+								"kind": "code",
+								"text": "`boolean`"
+							},
+							{
+								"kind": "text",
+								"text": " or "
+							},
+							{
+								"kind": "code",
+								"text": "`null`"
+							},
+							{
+								"kind": "text",
+								"text": ") raises a 401 "
+							},
+							{
+								"kind": "code",
+								"text": "`invalid_token`"
+							},
+							{
+								"kind": "text",
+								"text": "\nerror if the value of the claim does not include all the given values.\n\n"
+							},
+							{
+								"kind": "code",
+								"text": "```js\napp.use(auth());\n\napp.get('/admin/edit', claimIncludes('role', 'admin', 'editor'),\n   (req, res) => { ... });\n```"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@category",
+								"content": [
+									{
+										"kind": "text",
+										"text": "Claim & Scope Checks"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+							"line": 263,
+							"character": 13,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L263"
+						}
+					],
+					"parameters": [
+						{
+							"id": 24,
+							"name": "claim",
+							"variant": "param",
+							"kind": 32768,
+							"flags": {},
+							"type": {
+								"type": "intrinsic",
+								"name": "string"
+							}
+						},
+						{
+							"id": 25,
+							"name": "expected",
+							"variant": "param",
+							"kind": 32768,
+							"flags": {
+								"isRest": true
+							},
+							"type": {
+								"type": "array",
+								"elementType": {
+									"type": "reference",
+									"target": 88,
+									"name": "JSONPrimitive",
+									"package": "access-token-jwt"
+								}
+							}
+						}
+					],
+					"type": {
+						"type": "reference",
+						"target": {
+							"packageName": "@types/express",
+							"packagePath": "index.d.ts",
+							"qualifiedName": "e.Handler"
+						},
+						"name": "Handler",
+						"package": "@types/express",
+						"qualifiedName": "e.Handler"
+					}
+				}
+			]
+		},
+		{
+			"id": 26,
+			"name": "requiredScopes",
+			"variant": "declaration",
+			"kind": 64,
+			"flags": {},
+			"sources": [
+				{
+					"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+					"line": 281,
+					"character": 13,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L281"
+				}
+			],
+			"signatures": [
+				{
+					"id": 27,
+					"name": "requiredScopes",
+					"variant": "signature",
+					"kind": 4096,
+					"flags": {},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Check a token's "
+							},
+							{
+								"kind": "code",
+								"text": "`scope`"
+							},
+							{
+								"kind": "text",
+								"text": " claim to include a number of given scopes, raises a\n403 "
+							},
+							{
+								"kind": "code",
+								"text": "`insufficient_scope`"
+							},
+							{
+								"kind": "text",
+								"text": " error if the value of the "
+							},
+							{
+								"kind": "code",
+								"text": "`scope`"
+							},
+							{
+								"kind": "text",
+								"text": " claim does not\ninclude all the given scopes.\n\n"
+							},
+							{
+								"kind": "code",
+								"text": "```js\napp.use(auth());\n\napp.get('/admin/edit', requiredScopes('read:admin write:admin'),\n   (req, res) => { ... });\n```"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@category",
+								"content": [
+									{
+										"kind": "text",
+										"text": "Claim & Scope Checks"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+							"line": 281,
+							"character": 13,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L281"
+						}
+					],
+					"parameters": [
+						{
+							"id": 28,
+							"name": "scopes",
+							"variant": "param",
+							"kind": 32768,
+							"flags": {},
+							"type": {
+								"type": "union",
+								"types": [
+									{
+										"type": "intrinsic",
+										"name": "string"
+									},
+									{
+										"type": "array",
+										"elementType": {
+											"type": "intrinsic",
+											"name": "string"
+										}
+									}
+								]
+							}
+						}
+					],
+					"type": {
+						"type": "reference",
+						"target": {
+							"packageName": "@types/express",
+							"packagePath": "index.d.ts",
+							"qualifiedName": "e.Handler"
+						},
+						"name": "Handler",
+						"package": "@types/express",
+						"qualifiedName": "e.Handler"
+					}
+				}
+			]
+		},
+		{
+			"id": 29,
+			"name": "scopeIncludesAny",
+			"variant": "declaration",
+			"kind": 64,
+			"flags": {},
+			"sources": [
+				{
+					"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+					"line": 299,
+					"character": 13,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L299"
+				}
+			],
+			"signatures": [
+				{
+					"id": 30,
+					"name": "scopeIncludesAny",
+					"variant": "signature",
+					"kind": 4096,
+					"flags": {},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Check a token's "
+							},
+							{
+								"kind": "code",
+								"text": "`scope`"
+							},
+							{
+								"kind": "text",
+								"text": " claim to include any of the given scopes, raises a\n403 "
+							},
+							{
+								"kind": "code",
+								"text": "`insufficient_scope`"
+							},
+							{
+								"kind": "text",
+								"text": " error if the value of the "
+							},
+							{
+								"kind": "code",
+								"text": "`scope`"
+							},
+							{
+								"kind": "text",
+								"text": " claim does not\ninclude any of the given scopes.\n\n"
+							},
+							{
+								"kind": "code",
+								"text": "```js\napp.use(auth());\n\napp.get('/admin/edit', scopeIncludesAny('read:msg read:admin'),\n   (req, res) => { ... });\n```"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@category",
+								"content": [
+									{
+										"kind": "text",
+										"text": "Claim & Scope Checks"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+							"line": 299,
+							"character": 13,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L299"
+						}
+					],
+					"parameters": [
+						{
+							"id": 31,
+							"name": "scopes",
+							"variant": "param",
+							"kind": 32768,
+							"flags": {},
+							"type": {
+								"type": "union",
+								"types": [
+									{
+										"type": "intrinsic",
+										"name": "string"
+									},
+									{
+										"type": "array",
+										"elementType": {
+											"type": "intrinsic",
+											"name": "string"
+										}
+									}
+								]
+							}
+						}
+					],
+					"type": {
+						"type": "reference",
+						"target": {
+							"packageName": "@types/express",
+							"packagePath": "index.d.ts",
+							"qualifiedName": "e.Handler"
+						},
+						"name": "Handler",
+						"package": "@types/express",
+						"qualifiedName": "e.Handler"
+					}
+				}
+			]
+		},
+		{
+			"id": 182,
+			"name": "InsufficientScopeError",
+			"variant": "declaration",
+			"kind": 128,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "The request requires higher privileges than provided by the\naccess token."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Errors"
+							}
+						]
+					}
+				]
+			},
+			"children": [
+				{
+					"id": 193,
+					"name": "constructor",
+					"variant": "declaration",
+					"kind": 512,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 75,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L75"
+						}
+					],
+					"signatures": [
+						{
+							"id": 194,
+							"name": "InsufficientScopeError",
+							"variant": "signature",
+							"kind": 16384,
+							"flags": {},
+							"sources": [
+								{
+									"fileName": "packages/oauth2-bearer/src/errors.ts",
+									"line": 75,
+									"character": 2,
+									"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L75"
+								}
+							],
+							"parameters": [
+								{
+									"id": 195,
+									"name": "scopes",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {
+										"isOptional": true
+									},
+									"type": {
+										"type": "array",
+										"elementType": {
+											"type": "intrinsic",
+											"name": "string"
+										}
+									}
+								},
+								{
+									"id": 196,
+									"name": "message",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {},
+									"type": {
+										"type": "intrinsic",
+										"name": "string"
+									},
+									"defaultValue": "'Insufficient Scope'"
+								}
+							],
+							"type": {
+								"type": "reference",
+								"target": 182,
+								"name": "InsufficientScopeError",
+								"package": "oauth2-bearer"
+							},
+							"overwrites": {
+								"type": "reference",
+								"target": 125,
+								"name": "UnauthorizedError.constructor"
+							}
+						}
+					],
+					"overwrites": {
+						"type": "reference",
+						"target": 124,
+						"name": "UnauthorizedError.constructor"
+					}
+				},
+				{
+					"id": 197,
+					"name": "code",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 71,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L71"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"defaultValue": "'insufficient_scope'"
+				},
+				{
+					"id": 200,
+					"name": "headers",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 15,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L15"
+						}
+					],
+					"type": {
+						"type": "reflection",
+						"declaration": {
+							"id": 201,
+							"name": "__type",
+							"variant": "declaration",
+							"kind": 65536,
+							"flags": {},
+							"children": [
+								{
+									"id": 202,
+									"name": "WWW-Authenticate",
+									"variant": "declaration",
+									"kind": 1024,
+									"flags": {},
+									"sources": [
+										{
+											"fileName": "packages/oauth2-bearer/src/errors.ts",
+											"line": 15,
+											"character": 14,
+											"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L15"
+										}
+									],
+									"type": {
+										"type": "intrinsic",
+										"name": "string"
+									},
+									"defaultValue": "'Bearer realm=\"api\"'"
+								}
+							],
+							"groups": [
+								{
+									"title": "Properties",
+									"children": [
+										202
+									]
+								}
+							]
+						}
+					},
+					"defaultValue": "...",
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 129,
+						"name": "UnauthorizedError.headers"
+					}
+				},
+				{
+					"id": 204,
+					"name": "message",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/typescript/lib/lib.es5.d.ts",
+							"line": 1068,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 133,
+						"name": "UnauthorizedError.message"
+					}
+				},
+				{
+					"id": 203,
+					"name": "name",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/typescript/lib/lib.es5.d.ts",
+							"line": 1067,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 132,
+						"name": "UnauthorizedError.name"
+					}
+				},
+				{
+					"id": 187,
+					"name": "prepareStackTrace",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isStatic": true,
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Optional override for formatting stack traces"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@see",
+								"content": [
+									{
+										"kind": "text",
+										"text": "https://v8.dev/docs/stack-trace-api#customizing-stack-traces"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/@types/node/globals.d.ts",
+							"line": 11,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "reflection",
+						"declaration": {
+							"id": 188,
+							"name": "__type",
+							"variant": "declaration",
+							"kind": 65536,
+							"flags": {
+								"isExternal": true
+							},
+							"signatures": [
+								{
+									"id": 189,
+									"name": "__type",
+									"variant": "signature",
+									"kind": 4096,
+									"flags": {
+										"isExternal": true
+									},
+									"parameters": [
+										{
+											"id": 190,
+											"name": "err",
+											"variant": "param",
+											"kind": 32768,
+											"flags": {
+												"isExternal": true
+											},
+											"type": {
+												"type": "reference",
+												"target": {
+													"packageName": "typescript",
+													"packagePath": "lib/lib.es5.d.ts",
+													"qualifiedName": "Error"
+												},
+												"name": "Error",
+												"package": "typescript"
+											}
+										},
+										{
+											"id": 191,
+											"name": "stackTraces",
+											"variant": "param",
+											"kind": 32768,
+											"flags": {
+												"isExternal": true
+											},
+											"type": {
+												"type": "array",
+												"elementType": {
+													"type": "reference",
+													"target": {
+														"packageName": "@types/node",
+														"packagePath": "globals.d.ts",
+														"qualifiedName": "NodeJS.CallSite"
+													},
+													"name": "CallSite",
+													"package": "@types/node",
+													"qualifiedName": "NodeJS.CallSite"
+												}
+											}
+										}
+									],
+									"type": {
+										"type": "intrinsic",
+										"name": "any"
+									}
+								}
+							]
+						}
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 118,
+						"name": "UnauthorizedError.prepareStackTrace"
+					}
+				},
+				{
+					"id": 205,
+					"name": "stack",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/typescript/lib/lib.es5.d.ts",
+							"line": 1069,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 134,
+						"name": "UnauthorizedError.stack"
+					}
+				},
+				{
+					"id": 192,
+					"name": "stackTraceLimit",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isStatic": true,
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/@types/node/globals.d.ts",
+							"line": 13,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 123,
+						"name": "UnauthorizedError.stackTraceLimit"
+					}
+				},
+				{
+					"id": 198,
+					"name": "status",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 72,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L72"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					},
+					"defaultValue": "403",
+					"overwrites": {
+						"type": "reference",
+						"target": 127,
+						"name": "UnauthorizedError.status"
+					}
+				},
+				{
+					"id": 199,
+					"name": "statusCode",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 73,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L73"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					},
+					"defaultValue": "403",
+					"overwrites": {
+						"type": "reference",
+						"target": 128,
+						"name": "UnauthorizedError.statusCode"
+					}
+				},
+				{
+					"id": 183,
+					"name": "captureStackTrace",
+					"variant": "declaration",
+					"kind": 2048,
+					"flags": {
+						"isStatic": true,
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/@types/node/globals.d.ts",
+							"line": 4,
+							"character": 4
+						}
+					],
+					"signatures": [
+						{
+							"id": 184,
+							"name": "captureStackTrace",
+							"variant": "signature",
+							"kind": 4096,
+							"flags": {
+								"isExternal": true,
+								"isInherited": true
+							},
+							"comment": {
+								"summary": [
+									{
+										"kind": "text",
+										"text": "Create .stack property on a target object"
+									}
+								]
+							},
+							"sources": [
+								{
+									"fileName": "node_modules/@types/node/globals.d.ts",
+									"line": 4,
+									"character": 4
+								}
+							],
+							"parameters": [
+								{
+									"id": 185,
+									"name": "targetObject",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {
+										"isExternal": true
+									},
+									"type": {
+										"type": "intrinsic",
+										"name": "object"
+									}
+								},
+								{
+									"id": 186,
+									"name": "constructorOpt",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {
+										"isExternal": true,
+										"isOptional": true
+									},
+									"type": {
+										"type": "reference",
+										"target": {
+											"packageName": "typescript",
+											"packagePath": "lib/lib.es5.d.ts",
+											"qualifiedName": "Function"
+										},
+										"name": "Function",
+										"package": "typescript"
+									}
+								}
+							],
+							"type": {
+								"type": "intrinsic",
+								"name": "void"
+							},
+							"inheritedFrom": {
+								"type": "reference",
+								"target": 115,
+								"name": "UnauthorizedError.captureStackTrace"
+							}
+						}
+					],
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 114,
+						"name": "UnauthorizedError.captureStackTrace"
+					}
+				}
+			],
+			"groups": [
+				{
+					"title": "Constructors",
+					"children": [
+						193
+					]
+				},
+				{
+					"title": "Properties",
+					"children": [
+						197,
+						200,
+						204,
+						203,
+						187,
+						205,
+						192,
+						198,
+						199
+					]
+				},
+				{
+					"title": "Methods",
+					"children": [
+						183
+					]
+				}
+			],
+			"sources": [
+				{
+					"fileName": "packages/oauth2-bearer/src/errors.ts",
+					"line": 70,
+					"character": 13,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L70"
+				}
+			],
+			"extendedTypes": [
+				{
+					"type": "reference",
+					"target": 113,
+					"name": "UnauthorizedError",
+					"package": "oauth2-bearer"
+				}
+			]
+		},
+		{
+			"id": 135,
+			"name": "InvalidRequestError",
+			"variant": "declaration",
+			"kind": 128,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "The request is missing a required parameter, includes an\nunsupported parameter or parameter value, repeats the same\nparameter, uses more than one method for including an access\ntoken, or is otherwise malformed."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Errors"
+							}
+						]
+					}
+				]
+			},
+			"children": [
+				{
+					"id": 146,
+					"name": "constructor",
+					"variant": "declaration",
+					"kind": 512,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 36,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L36"
+						}
+					],
+					"signatures": [
+						{
+							"id": 147,
+							"name": "InvalidRequestError",
+							"variant": "signature",
+							"kind": 16384,
+							"flags": {},
+							"sources": [
+								{
+									"fileName": "packages/oauth2-bearer/src/errors.ts",
+									"line": 36,
+									"character": 2,
+									"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L36"
+								}
+							],
+							"parameters": [
+								{
+									"id": 148,
+									"name": "message",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {},
+									"type": {
+										"type": "intrinsic",
+										"name": "string"
+									},
+									"defaultValue": "'Invalid Request'"
+								},
+								{
+									"id": 149,
+									"name": "useErrorCode",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {},
+									"type": {
+										"type": "intrinsic",
+										"name": "boolean"
+									},
+									"defaultValue": "true"
+								}
+							],
+							"type": {
+								"type": "reference",
+								"target": 135,
+								"name": "InvalidRequestError",
+								"package": "oauth2-bearer"
+							},
+							"overwrites": {
+								"type": "reference",
+								"target": 125,
+								"name": "UnauthorizedError.constructor"
+							}
+						}
+					],
+					"overwrites": {
+						"type": "reference",
+						"target": 124,
+						"name": "UnauthorizedError.constructor"
+					}
+				},
+				{
+					"id": 150,
+					"name": "code",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 32,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L32"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"defaultValue": "'invalid_request'"
+				},
+				{
+					"id": 153,
+					"name": "headers",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 15,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L15"
+						}
+					],
+					"type": {
+						"type": "reflection",
+						"declaration": {
+							"id": 154,
+							"name": "__type",
+							"variant": "declaration",
+							"kind": 65536,
+							"flags": {},
+							"children": [
+								{
+									"id": 155,
+									"name": "WWW-Authenticate",
+									"variant": "declaration",
+									"kind": 1024,
+									"flags": {},
+									"sources": [
+										{
+											"fileName": "packages/oauth2-bearer/src/errors.ts",
+											"line": 15,
+											"character": 14,
+											"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L15"
+										}
+									],
+									"type": {
+										"type": "intrinsic",
+										"name": "string"
+									},
+									"defaultValue": "'Bearer realm=\"api\"'"
+								}
+							],
+							"groups": [
+								{
+									"title": "Properties",
+									"children": [
+										155
+									]
+								}
+							]
+						}
+					},
+					"defaultValue": "...",
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 129,
+						"name": "UnauthorizedError.headers"
+					}
+				},
+				{
+					"id": 157,
+					"name": "message",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/typescript/lib/lib.es5.d.ts",
+							"line": 1068,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 133,
+						"name": "UnauthorizedError.message"
+					}
+				},
+				{
+					"id": 156,
+					"name": "name",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/typescript/lib/lib.es5.d.ts",
+							"line": 1067,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 132,
+						"name": "UnauthorizedError.name"
+					}
+				},
+				{
+					"id": 140,
+					"name": "prepareStackTrace",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isStatic": true,
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Optional override for formatting stack traces"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@see",
+								"content": [
+									{
+										"kind": "text",
+										"text": "https://v8.dev/docs/stack-trace-api#customizing-stack-traces"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/@types/node/globals.d.ts",
+							"line": 11,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "reflection",
+						"declaration": {
+							"id": 141,
+							"name": "__type",
+							"variant": "declaration",
+							"kind": 65536,
+							"flags": {
+								"isExternal": true
+							},
+							"signatures": [
+								{
+									"id": 142,
+									"name": "__type",
+									"variant": "signature",
+									"kind": 4096,
+									"flags": {
+										"isExternal": true
+									},
+									"parameters": [
+										{
+											"id": 143,
+											"name": "err",
+											"variant": "param",
+											"kind": 32768,
+											"flags": {
+												"isExternal": true
+											},
+											"type": {
+												"type": "reference",
+												"target": {
+													"packageName": "typescript",
+													"packagePath": "lib/lib.es5.d.ts",
+													"qualifiedName": "Error"
+												},
+												"name": "Error",
+												"package": "typescript"
+											}
+										},
+										{
+											"id": 144,
+											"name": "stackTraces",
+											"variant": "param",
+											"kind": 32768,
+											"flags": {
+												"isExternal": true
+											},
+											"type": {
+												"type": "array",
+												"elementType": {
+													"type": "reference",
+													"target": {
+														"packageName": "@types/node",
+														"packagePath": "globals.d.ts",
+														"qualifiedName": "NodeJS.CallSite"
+													},
+													"name": "CallSite",
+													"package": "@types/node",
+													"qualifiedName": "NodeJS.CallSite"
+												}
+											}
+										}
+									],
+									"type": {
+										"type": "intrinsic",
+										"name": "any"
+									}
+								}
+							]
+						}
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 118,
+						"name": "UnauthorizedError.prepareStackTrace"
+					}
+				},
+				{
+					"id": 158,
+					"name": "stack",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/typescript/lib/lib.es5.d.ts",
+							"line": 1069,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 134,
+						"name": "UnauthorizedError.stack"
+					}
+				},
+				{
+					"id": 145,
+					"name": "stackTraceLimit",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isStatic": true,
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/@types/node/globals.d.ts",
+							"line": 13,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 123,
+						"name": "UnauthorizedError.stackTraceLimit"
+					}
+				},
+				{
+					"id": 151,
+					"name": "status",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 33,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L33"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					},
+					"defaultValue": "400",
+					"overwrites": {
+						"type": "reference",
+						"target": 127,
+						"name": "UnauthorizedError.status"
+					}
+				},
+				{
+					"id": 152,
+					"name": "statusCode",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 34,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L34"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					},
+					"defaultValue": "400",
+					"overwrites": {
+						"type": "reference",
+						"target": 128,
+						"name": "UnauthorizedError.statusCode"
+					}
+				},
+				{
+					"id": 136,
+					"name": "captureStackTrace",
+					"variant": "declaration",
+					"kind": 2048,
+					"flags": {
+						"isStatic": true,
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/@types/node/globals.d.ts",
+							"line": 4,
+							"character": 4
+						}
+					],
+					"signatures": [
+						{
+							"id": 137,
+							"name": "captureStackTrace",
+							"variant": "signature",
+							"kind": 4096,
+							"flags": {
+								"isExternal": true,
+								"isInherited": true
+							},
+							"comment": {
+								"summary": [
+									{
+										"kind": "text",
+										"text": "Create .stack property on a target object"
+									}
+								]
+							},
+							"sources": [
+								{
+									"fileName": "node_modules/@types/node/globals.d.ts",
+									"line": 4,
+									"character": 4
+								}
+							],
+							"parameters": [
+								{
+									"id": 138,
+									"name": "targetObject",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {
+										"isExternal": true
+									},
+									"type": {
+										"type": "intrinsic",
+										"name": "object"
+									}
+								},
+								{
+									"id": 139,
+									"name": "constructorOpt",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {
+										"isExternal": true,
+										"isOptional": true
+									},
+									"type": {
+										"type": "reference",
+										"target": {
+											"packageName": "typescript",
+											"packagePath": "lib/lib.es5.d.ts",
+											"qualifiedName": "Function"
+										},
+										"name": "Function",
+										"package": "typescript"
+									}
+								}
+							],
+							"type": {
+								"type": "intrinsic",
+								"name": "void"
+							},
+							"inheritedFrom": {
+								"type": "reference",
+								"target": 115,
+								"name": "UnauthorizedError.captureStackTrace"
+							}
+						}
+					],
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 114,
+						"name": "UnauthorizedError.captureStackTrace"
+					}
+				}
+			],
+			"groups": [
+				{
+					"title": "Constructors",
+					"children": [
+						146
+					]
+				},
+				{
+					"title": "Properties",
+					"children": [
+						150,
+						153,
+						157,
+						156,
+						140,
+						158,
+						145,
+						151,
+						152
+					]
+				},
+				{
+					"title": "Methods",
+					"children": [
+						136
+					]
+				}
+			],
+			"sources": [
+				{
+					"fileName": "packages/oauth2-bearer/src/errors.ts",
+					"line": 31,
+					"character": 13,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L31"
+				}
+			],
+			"extendedTypes": [
+				{
+					"type": "reference",
+					"target": 113,
+					"name": "UnauthorizedError",
+					"package": "oauth2-bearer"
+				}
+			]
+		},
+		{
+			"id": 159,
+			"name": "InvalidTokenError",
+			"variant": "declaration",
+			"kind": 128,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "The access token provided is expired, revoked, malformed, or\ninvalid for other reasons."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Errors"
+							}
+						]
+					}
+				]
+			},
+			"children": [
+				{
+					"id": 170,
+					"name": "constructor",
+					"variant": "declaration",
+					"kind": 512,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 58,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L58"
+						}
+					],
+					"signatures": [
+						{
+							"id": 171,
+							"name": "InvalidTokenError",
+							"variant": "signature",
+							"kind": 16384,
+							"flags": {},
+							"sources": [
+								{
+									"fileName": "packages/oauth2-bearer/src/errors.ts",
+									"line": 58,
+									"character": 2,
+									"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L58"
+								}
+							],
+							"parameters": [
+								{
+									"id": 172,
+									"name": "message",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {},
+									"type": {
+										"type": "intrinsic",
+										"name": "string"
+									},
+									"defaultValue": "'Invalid Token'"
+								}
+							],
+							"type": {
+								"type": "reference",
+								"target": 159,
+								"name": "InvalidTokenError",
+								"package": "oauth2-bearer"
+							},
+							"overwrites": {
+								"type": "reference",
+								"target": 125,
+								"name": "UnauthorizedError.constructor"
+							}
+						}
+					],
+					"overwrites": {
+						"type": "reference",
+						"target": 124,
+						"name": "UnauthorizedError.constructor"
+					}
+				},
+				{
+					"id": 173,
+					"name": "code",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 54,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L54"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"defaultValue": "'invalid_token'"
+				},
+				{
+					"id": 176,
+					"name": "headers",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 15,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L15"
+						}
+					],
+					"type": {
+						"type": "reflection",
+						"declaration": {
+							"id": 177,
+							"name": "__type",
+							"variant": "declaration",
+							"kind": 65536,
+							"flags": {},
+							"children": [
+								{
+									"id": 178,
+									"name": "WWW-Authenticate",
+									"variant": "declaration",
+									"kind": 1024,
+									"flags": {},
+									"sources": [
+										{
+											"fileName": "packages/oauth2-bearer/src/errors.ts",
+											"line": 15,
+											"character": 14,
+											"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L15"
+										}
+									],
+									"type": {
+										"type": "intrinsic",
+										"name": "string"
+									},
+									"defaultValue": "'Bearer realm=\"api\"'"
+								}
+							],
+							"groups": [
+								{
+									"title": "Properties",
+									"children": [
+										178
+									]
+								}
+							]
+						}
+					},
+					"defaultValue": "...",
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 129,
+						"name": "UnauthorizedError.headers"
+					}
+				},
+				{
+					"id": 180,
+					"name": "message",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/typescript/lib/lib.es5.d.ts",
+							"line": 1068,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 133,
+						"name": "UnauthorizedError.message"
+					}
+				},
+				{
+					"id": 179,
+					"name": "name",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/typescript/lib/lib.es5.d.ts",
+							"line": 1067,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 132,
+						"name": "UnauthorizedError.name"
+					}
+				},
+				{
+					"id": 164,
+					"name": "prepareStackTrace",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isStatic": true,
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Optional override for formatting stack traces"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@see",
+								"content": [
+									{
+										"kind": "text",
+										"text": "https://v8.dev/docs/stack-trace-api#customizing-stack-traces"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/@types/node/globals.d.ts",
+							"line": 11,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "reflection",
+						"declaration": {
+							"id": 165,
+							"name": "__type",
+							"variant": "declaration",
+							"kind": 65536,
+							"flags": {
+								"isExternal": true
+							},
+							"signatures": [
+								{
+									"id": 166,
+									"name": "__type",
+									"variant": "signature",
+									"kind": 4096,
+									"flags": {
+										"isExternal": true
+									},
+									"parameters": [
+										{
+											"id": 167,
+											"name": "err",
+											"variant": "param",
+											"kind": 32768,
+											"flags": {
+												"isExternal": true
+											},
+											"type": {
+												"type": "reference",
+												"target": {
+													"packageName": "typescript",
+													"packagePath": "lib/lib.es5.d.ts",
+													"qualifiedName": "Error"
+												},
+												"name": "Error",
+												"package": "typescript"
+											}
+										},
+										{
+											"id": 168,
+											"name": "stackTraces",
+											"variant": "param",
+											"kind": 32768,
+											"flags": {
+												"isExternal": true
+											},
+											"type": {
+												"type": "array",
+												"elementType": {
+													"type": "reference",
+													"target": {
+														"packageName": "@types/node",
+														"packagePath": "globals.d.ts",
+														"qualifiedName": "NodeJS.CallSite"
+													},
+													"name": "CallSite",
+													"package": "@types/node",
+													"qualifiedName": "NodeJS.CallSite"
+												}
+											}
+										}
+									],
+									"type": {
+										"type": "intrinsic",
+										"name": "any"
+									}
+								}
+							]
+						}
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 118,
+						"name": "UnauthorizedError.prepareStackTrace"
+					}
+				},
+				{
+					"id": 181,
+					"name": "stack",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/typescript/lib/lib.es5.d.ts",
+							"line": 1069,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 134,
+						"name": "UnauthorizedError.stack"
+					}
+				},
+				{
+					"id": 169,
+					"name": "stackTraceLimit",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isStatic": true,
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/@types/node/globals.d.ts",
+							"line": 13,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 123,
+						"name": "UnauthorizedError.stackTraceLimit"
+					}
+				},
+				{
+					"id": 174,
+					"name": "status",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 55,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L55"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					},
+					"defaultValue": "401",
+					"overwrites": {
+						"type": "reference",
+						"target": 127,
+						"name": "UnauthorizedError.status"
+					}
+				},
+				{
+					"id": 175,
+					"name": "statusCode",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 56,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L56"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					},
+					"defaultValue": "401",
+					"overwrites": {
+						"type": "reference",
+						"target": 128,
+						"name": "UnauthorizedError.statusCode"
+					}
+				},
+				{
+					"id": 160,
+					"name": "captureStackTrace",
+					"variant": "declaration",
+					"kind": 2048,
+					"flags": {
+						"isStatic": true,
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/@types/node/globals.d.ts",
+							"line": 4,
+							"character": 4
+						}
+					],
+					"signatures": [
+						{
+							"id": 161,
+							"name": "captureStackTrace",
+							"variant": "signature",
+							"kind": 4096,
+							"flags": {
+								"isExternal": true,
+								"isInherited": true
+							},
+							"comment": {
+								"summary": [
+									{
+										"kind": "text",
+										"text": "Create .stack property on a target object"
+									}
+								]
+							},
+							"sources": [
+								{
+									"fileName": "node_modules/@types/node/globals.d.ts",
+									"line": 4,
+									"character": 4
+								}
+							],
+							"parameters": [
+								{
+									"id": 162,
+									"name": "targetObject",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {
+										"isExternal": true
+									},
+									"type": {
+										"type": "intrinsic",
+										"name": "object"
+									}
+								},
+								{
+									"id": 163,
+									"name": "constructorOpt",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {
+										"isExternal": true,
+										"isOptional": true
+									},
+									"type": {
+										"type": "reference",
+										"target": {
+											"packageName": "typescript",
+											"packagePath": "lib/lib.es5.d.ts",
+											"qualifiedName": "Function"
+										},
+										"name": "Function",
+										"package": "typescript"
+									}
+								}
+							],
+							"type": {
+								"type": "intrinsic",
+								"name": "void"
+							},
+							"inheritedFrom": {
+								"type": "reference",
+								"target": 115,
+								"name": "UnauthorizedError.captureStackTrace"
+							}
+						}
+					],
+					"inheritedFrom": {
+						"type": "reference",
+						"target": 114,
+						"name": "UnauthorizedError.captureStackTrace"
+					}
+				}
+			],
+			"groups": [
+				{
+					"title": "Constructors",
+					"children": [
+						170
+					]
+				},
+				{
+					"title": "Properties",
+					"children": [
+						173,
+						176,
+						180,
+						179,
+						164,
+						181,
+						169,
+						174,
+						175
+					]
+				},
+				{
+					"title": "Methods",
+					"children": [
+						160
+					]
+				}
+			],
+			"sources": [
+				{
+					"fileName": "packages/oauth2-bearer/src/errors.ts",
+					"line": 53,
+					"character": 13,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L53"
+				}
+			],
+			"extendedTypes": [
+				{
+					"type": "reference",
+					"target": 113,
+					"name": "UnauthorizedError",
+					"package": "oauth2-bearer"
+				}
+			]
+		},
+		{
+			"id": 113,
+			"name": "UnauthorizedError",
+			"variant": "declaration",
+			"kind": 128,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "If the request lacks any authentication information,\nthe resource server SHOULD NOT include an error code or\nother error information."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Errors"
+							}
+						]
+					}
+				]
+			},
+			"children": [
+				{
+					"id": 124,
+					"name": "constructor",
+					"variant": "declaration",
+					"kind": 512,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 17,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L17"
+						}
+					],
+					"signatures": [
+						{
+							"id": 125,
+							"name": "UnauthorizedError",
+							"variant": "signature",
+							"kind": 16384,
+							"flags": {},
+							"sources": [
+								{
+									"fileName": "packages/oauth2-bearer/src/errors.ts",
+									"line": 17,
+									"character": 2,
+									"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L17"
+								}
+							],
+							"parameters": [
+								{
+									"id": 126,
+									"name": "message",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {},
+									"type": {
+										"type": "intrinsic",
+										"name": "string"
+									},
+									"defaultValue": "'Unauthorized'"
+								}
+							],
+							"type": {
+								"type": "reference",
+								"target": 113,
+								"name": "UnauthorizedError",
+								"package": "oauth2-bearer"
+							},
+							"overwrites": {
+								"type": "reference",
+								"target": -1,
+								"name": "Error.constructor",
+								"package": "typescript"
+							}
+						}
+					],
+					"overwrites": {
+						"type": "reference",
+						"target": -1,
+						"name": "Error.constructor",
+						"package": "typescript"
+					}
+				},
+				{
+					"id": 129,
+					"name": "headers",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 15,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L15"
+						}
+					],
+					"type": {
+						"type": "reflection",
+						"declaration": {
+							"id": 130,
+							"name": "__type",
+							"variant": "declaration",
+							"kind": 65536,
+							"flags": {},
+							"children": [
+								{
+									"id": 131,
+									"name": "WWW-Authenticate",
+									"variant": "declaration",
+									"kind": 1024,
+									"flags": {},
+									"sources": [
+										{
+											"fileName": "packages/oauth2-bearer/src/errors.ts",
+											"line": 15,
+											"character": 14,
+											"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L15"
+										}
+									],
+									"type": {
+										"type": "intrinsic",
+										"name": "string"
+									},
+									"defaultValue": "'Bearer realm=\"api\"'"
+								}
+							],
+							"groups": [
+								{
+									"title": "Properties",
+									"children": [
+										131
+									]
+								}
+							]
+						}
+					},
+					"defaultValue": "..."
+				},
+				{
+					"id": 133,
+					"name": "message",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/typescript/lib/lib.es5.d.ts",
+							"line": 1068,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": -1,
+						"name": "Error.message"
+					}
+				},
+				{
+					"id": 132,
+					"name": "name",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/typescript/lib/lib.es5.d.ts",
+							"line": 1067,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": -1,
+						"name": "Error.name"
+					}
+				},
+				{
+					"id": 118,
+					"name": "prepareStackTrace",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isStatic": true,
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Optional override for formatting stack traces"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@see",
+								"content": [
+									{
+										"kind": "text",
+										"text": "https://v8.dev/docs/stack-trace-api#customizing-stack-traces"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/@types/node/globals.d.ts",
+							"line": 11,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "reflection",
+						"declaration": {
+							"id": 119,
+							"name": "__type",
+							"variant": "declaration",
+							"kind": 65536,
+							"flags": {
+								"isExternal": true
+							},
+							"signatures": [
+								{
+									"id": 120,
+									"name": "__type",
+									"variant": "signature",
+									"kind": 4096,
+									"flags": {
+										"isExternal": true
+									},
+									"parameters": [
+										{
+											"id": 121,
+											"name": "err",
+											"variant": "param",
+											"kind": 32768,
+											"flags": {
+												"isExternal": true
+											},
+											"type": {
+												"type": "reference",
+												"target": {
+													"packageName": "typescript",
+													"packagePath": "lib/lib.es5.d.ts",
+													"qualifiedName": "Error"
+												},
+												"name": "Error",
+												"package": "typescript"
+											}
+										},
+										{
+											"id": 122,
+											"name": "stackTraces",
+											"variant": "param",
+											"kind": 32768,
+											"flags": {
+												"isExternal": true
+											},
+											"type": {
+												"type": "array",
+												"elementType": {
+													"type": "reference",
+													"target": {
+														"packageName": "@types/node",
+														"packagePath": "globals.d.ts",
+														"qualifiedName": "NodeJS.CallSite"
+													},
+													"name": "CallSite",
+													"package": "@types/node",
+													"qualifiedName": "NodeJS.CallSite"
+												}
+											}
+										}
+									],
+									"type": {
+										"type": "intrinsic",
+										"name": "any"
+									}
+								}
+							]
+						}
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": -1,
+						"name": "Error.prepareStackTrace"
+					}
+				},
+				{
+					"id": 134,
+					"name": "stack",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/typescript/lib/lib.es5.d.ts",
+							"line": 1069,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": -1,
+						"name": "Error.stack"
+					}
+				},
+				{
+					"id": 123,
+					"name": "stackTraceLimit",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isStatic": true,
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/@types/node/globals.d.ts",
+							"line": 13,
+							"character": 4
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": -1,
+						"name": "Error.stackTraceLimit"
+					}
+				},
+				{
+					"id": 127,
+					"name": "status",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 13,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L13"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					},
+					"defaultValue": "401"
+				},
+				{
+					"id": 128,
+					"name": "statusCode",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/oauth2-bearer/src/errors.ts",
+							"line": 14,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L14"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					},
+					"defaultValue": "401"
+				},
+				{
+					"id": 114,
+					"name": "captureStackTrace",
+					"variant": "declaration",
+					"kind": 2048,
+					"flags": {
+						"isStatic": true,
+						"isExternal": true,
+						"isInherited": true
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/@types/node/globals.d.ts",
+							"line": 4,
+							"character": 4
+						}
+					],
+					"signatures": [
+						{
+							"id": 115,
+							"name": "captureStackTrace",
+							"variant": "signature",
+							"kind": 4096,
+							"flags": {
+								"isExternal": true,
+								"isInherited": true
+							},
+							"comment": {
+								"summary": [
+									{
+										"kind": "text",
+										"text": "Create .stack property on a target object"
+									}
+								]
+							},
+							"sources": [
+								{
+									"fileName": "node_modules/@types/node/globals.d.ts",
+									"line": 4,
+									"character": 4
+								}
+							],
+							"parameters": [
+								{
+									"id": 116,
+									"name": "targetObject",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {
+										"isExternal": true
+									},
+									"type": {
+										"type": "intrinsic",
+										"name": "object"
+									}
+								},
+								{
+									"id": 117,
+									"name": "constructorOpt",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {
+										"isExternal": true,
+										"isOptional": true
+									},
+									"type": {
+										"type": "reference",
+										"target": {
+											"packageName": "typescript",
+											"packagePath": "lib/lib.es5.d.ts",
+											"qualifiedName": "Function"
+										},
+										"name": "Function",
+										"package": "typescript"
+									}
+								}
+							],
+							"type": {
+								"type": "intrinsic",
+								"name": "void"
+							},
+							"inheritedFrom": {
+								"type": "reference",
+								"target": -1,
+								"name": "Error.captureStackTrace"
+							}
+						}
+					],
+					"inheritedFrom": {
+						"type": "reference",
+						"target": -1,
+						"name": "Error.captureStackTrace"
+					}
+				}
+			],
+			"groups": [
+				{
+					"title": "Constructors",
+					"children": [
+						124
+					]
+				},
+				{
+					"title": "Properties",
+					"children": [
+						129,
+						133,
+						132,
+						118,
+						134,
+						123,
+						127,
+						128
+					]
+				},
+				{
+					"title": "Methods",
+					"children": [
+						114
+					]
+				}
+			],
+			"sources": [
+				{
+					"fileName": "packages/oauth2-bearer/src/errors.ts",
+					"line": 12,
+					"character": 13,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/oauth2-bearer/src/errors.ts#L12"
+				}
+			],
+			"extendedTypes": [
+				{
+					"type": "reference",
+					"target": {
+						"packageName": "typescript",
+						"packagePath": "lib/lib.es5.d.ts",
+						"qualifiedName": "Error"
+					},
+					"name": "Error",
+					"package": "typescript"
+				}
+			],
+			"extendedBy": [
+				{
+					"type": "reference",
+					"target": 135,
+					"name": "InvalidRequestError"
+				},
+				{
+					"type": "reference",
+					"target": 159,
+					"name": "InvalidTokenError"
+				},
+				{
+					"type": "reference",
+					"target": 182,
+					"name": "InsufficientScopeError"
+				}
+			]
+		},
+		{
+			"id": 92,
+			"name": "AsymmetricIssuerConfig",
+			"variant": "declaration",
+			"kind": 256,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "An issuer whose tokens are signed with an asymmetric algorithm. Its public\nkey is fetched from "
+					},
+					{
+						"kind": "code",
+						"text": "`jwksUri`"
+					},
+					{
+						"kind": "text",
+						"text": " or supplied directly as "
+					},
+					{
+						"kind": "code",
+						"text": "`publicKey`"
+					},
+					{
+						"kind": "text",
+						"text": "."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Multiple Issuers"
+							}
+						]
+					}
+				]
+			},
+			"children": [
+				{
+					"id": 94,
+					"name": "alg",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isOptional": true
+					},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 33,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L33"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					}
+				},
+				{
+					"id": 93,
+					"name": "issuer",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 32,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L32"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					}
+				},
+				{
+					"id": 95,
+					"name": "jwksUri",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isOptional": true
+					},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 34,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L34"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					}
+				},
+				{
+					"id": 96,
+					"name": "publicKey",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "A static public key used to verify tokens from this issuer without\nhitting a remote JWKS endpoint.  Mutually exclusive with "
+							},
+							{
+								"kind": "code",
+								"text": "`jwksUri`"
+							},
+							{
+								"kind": "text",
+								"text": "."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 39,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L39"
+						}
+					],
+					"type": {
+						"type": "reference",
+						"target": 89,
+						"name": "PublicKeyInput",
+						"package": "access-token-jwt"
+					}
+				}
+			],
+			"groups": [
+				{
+					"title": "Properties",
+					"children": [
+						94,
+						93,
+						95,
+						96
+					]
+				}
+			],
+			"sources": [
+				{
+					"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+					"line": 31,
+					"character": 17,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L31"
+				}
+			]
+		},
+		{
+			"id": 32,
+			"name": "AuthResult",
+			"variant": "declaration",
+			"kind": 256,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "The properties added to "
+					},
+					{
+						"kind": "code",
+						"text": "`req.auth`"
+					},
+					{
+						"kind": "text",
+						"text": " upon successful authorization."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Getting Started"
+							}
+						]
+					}
+				]
+			},
+			"children": [
+				{
+					"id": 33,
+					"name": "header",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "The Access Token JWT header."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 322,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L322"
+						}
+					],
+					"type": {
+						"type": "reference",
+						"target": 74,
+						"name": "JWSHeaderParameters",
+						"package": "jose"
+					}
+				},
+				{
+					"id": 34,
+					"name": "payload",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "The Access Token JWT payload."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 326,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L326"
+						}
+					],
+					"type": {
+						"type": "reference",
+						"target": 36,
+						"name": "JWTPayload",
+						"package": "jose"
+					}
+				},
+				{
+					"id": 35,
+					"name": "token",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "The raw Access Token JWT"
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 330,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L330"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					}
+				}
+			],
+			"groups": [
+				{
+					"title": "Properties",
+					"children": [
+						33,
+						34,
+						35
+					]
+				}
+			],
+			"sources": [
+				{
+					"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+					"line": 318,
+					"character": 17,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L318"
+				}
+			]
+		},
+		{
+			"id": 46,
+			"name": "DPoPOptions",
+			"variant": "declaration",
+			"kind": 256,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "Options that control Demonstration of Proof-of-Possession (DPoP) handling."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@remarks",
+						"content": [
+							{
+								"kind": "text",
+								"text": "DPoP (RFC 9449) is an application-level mechanism to sender-constrain OAuth 2.0\naccess/refresh tokens by proving possession of a private key. This SDK supports\nvalidating DPoP proofs on incoming requests when enabled.\n\nBehavior matrix:\n\n- <u>Default</u> (*"
+							},
+							{
+								"kind": "code",
+								"text": "`{ enabled: true, required: false }`"
+							},
+							{
+								"kind": "text",
+								"text": "*):  \n Accepts both Bearer and DPoP, validating the DPoP proof when present.\n\n- <u>Bearer-only</u> (*"
+							},
+							{
+								"kind": "code",
+								"text": "`{ enabled: false, required: false }`"
+							},
+							{
+								"kind": "text",
+								"text": "*):  \n Rejects any non-Bearer scheme tokens (including those using the DPoP scheme), accepts DPoP-bound tokens over Bearer (ignoring "
+							},
+							{
+								"kind": "code",
+								"text": "`cnf`"
+							},
+							{
+								"kind": "text",
+								"text": "), and ignores any DPoP proof headers if present.\n\n- <u>Misconfiguration</u> (*"
+							},
+							{
+								"kind": "code",
+								"text": "`{ enabled: false, required: true }`"
+							},
+							{
+								"kind": "text",
+								"text": "*):  \n This configuration is invalid. DPoP is disabled, and the SDK cannot be used with this setting.\n\n- <u>DPoP-only</u> (*"
+							},
+							{
+								"kind": "code",
+								"text": "`{ enabled: true, required: true }`"
+							},
+							{
+								"kind": "text",
+								"text": "*):  \n Accepts only tokens using the DPoP scheme, validates the associated DPoP proof, and rejects any token using a different (non-DPoP) scheme.\n\n\nProof timing:\n- "
+							},
+							{
+								"kind": "code",
+								"text": "`iatOffset`"
+							},
+							{
+								"kind": "text",
+								"text": " bounds how far in the past a proof’s "
+							},
+							{
+								"kind": "code",
+								"text": "`iat`"
+							},
+							{
+								"kind": "text",
+								"text": " may be (replay window).\n- "
+							},
+							{
+								"kind": "code",
+								"text": "`iatLeeway`"
+							},
+							{
+								"kind": "text",
+								"text": " allows limited clock skew for proofs that appear slightly in the future.\n\nNote:\nThis SDK uses "
+							},
+							{
+								"kind": "code",
+								"text": "`req.protocol`"
+							},
+							{
+								"kind": "text",
+								"text": " and "
+							},
+							{
+								"kind": "code",
+								"text": "`req.host`"
+							},
+							{
+								"kind": "text",
+								"text": " to construct/validate the DPoP "
+							},
+							{
+								"kind": "code",
+								"text": "`htu`"
+							},
+							{
+								"kind": "text",
+								"text": ".\nIf your app runs behind a reverse proxy (Nginx, Cloudflare, etc.), enable Express\nproxy trust to ensure correct values:\n\n"
+							},
+							{
+								"kind": "code",
+								"text": "```js\napp.enable('trust proxy');\n```"
+							}
+						]
+					},
+					{
+						"tag": "@see",
+						"content": [
+							{
+								"kind": "text",
+								"text": "https://www.rfc-editor.org/rfc/rfc9449"
+							}
+						]
+					},
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "DPoP & mTLS"
+							}
+						]
+					}
+				]
+			},
+			"children": [
+				{
+					"id": 47,
+					"name": "enabled",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Enables DPoP support.\n\nWhen "
+							},
+							{
+								"kind": "code",
+								"text": "`enabled: true`"
+							},
+							{
+								"kind": "text",
+								"text": ":\n- Requests can use the DPoP authorization scheme ("
+							},
+							{
+								"kind": "code",
+								"text": "`Authorization: DPoP …`"
+							},
+							{
+								"kind": "text",
+								"text": " plus a "
+							},
+							{
+								"kind": "code",
+								"text": "`DPoP`"
+							},
+							{
+								"kind": "text",
+								"text": " proof header), and the middleware will validate proofs.\n\nWhen "
+							},
+							{
+								"kind": "code",
+								"text": "`enabled: false`"
+							},
+							{
+								"kind": "text",
+								"text": ":\n- Only the Bearer scheme is supported.\n- Any token sent with the DPoP scheme is rejected.\n- DPoP-bound tokens sent with Bearer are accepted (the "
+							},
+							{
+								"kind": "code",
+								"text": "`cnf`"
+							},
+							{
+								"kind": "text",
+								"text": " claim is ignored).\n- Any "
+							},
+							{
+								"kind": "code",
+								"text": "`DPoP`"
+							},
+							{
+								"kind": "text",
+								"text": " proof header is ignored."
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@default",
+								"content": [
+									{
+										"kind": "code",
+										"text": "```ts\ntrue\n```"
+									}
+								]
+							},
+							{
+								"tag": "@example",
+								"content": [
+									{
+										"kind": "code",
+										"text": "```ts\n// Accept both Bearer and DPoP (default):\nauth({ dpop: { enabled: true, required: false } })\n```"
+									}
+								]
+							},
+							{
+								"tag": "@example",
+								"content": [
+									{
+										"kind": "code",
+										"text": "```ts\n// Bearer-only (DPoP disabled):\nauth({ dpop: { enabled: false } })\n```"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/token-verifier.ts",
+							"line": 113,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/token-verifier.ts#L113"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "boolean"
+					}
+				},
+				{
+					"id": 50,
+					"name": "iatLeeway",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Allowed clock skew (in seconds) for future-dated "
+							},
+							{
+								"kind": "code",
+								"text": "`iat`"
+							},
+							{
+								"kind": "text",
+								"text": " values.\n\nSome clients have slightly skewed clocks; a small positive leeway prevents valid proofs\nfrom being rejected when "
+							},
+							{
+								"kind": "code",
+								"text": "`iat`"
+							},
+							{
+								"kind": "text",
+								"text": " appears a bit in the future.\nThis is applied only when "
+							},
+							{
+								"kind": "code",
+								"text": "`enabled: true`"
+							},
+							{
+								"kind": "text",
+								"text": " and a DPoP proof is present."
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@default",
+								"content": [
+									{
+										"kind": "code",
+										"text": "```ts\n30  // 30 seconds\n```"
+									}
+								]
+							},
+							{
+								"tag": "@example",
+								"content": [
+									{
+										"kind": "code",
+										"text": "```ts\n// Allow up to 60 seconds of client/server clock skew\nauth({ dpop: { enabled: true, iatLeeway: 60 } })\n```"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/token-verifier.ts",
+							"line": 156,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/token-verifier.ts#L156"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					}
+				},
+				{
+					"id": 49,
+					"name": "iatOffset",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Maximum accepted age (in seconds) for a DPoP proof’s "
+							},
+							{
+								"kind": "code",
+								"text": "`iat`"
+							},
+							{
+								"kind": "text",
+								"text": " claim.\n\nProofs older than "
+							},
+							{
+								"kind": "code",
+								"text": "`iatOffset`"
+							},
+							{
+								"kind": "text",
+								"text": " (relative to current server time) are rejected.\nThis is applied only when "
+							},
+							{
+								"kind": "code",
+								"text": "`enabled: true`"
+							},
+							{
+								"kind": "text",
+								"text": " and a DPoP proof is present."
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@default",
+								"content": [
+									{
+										"kind": "code",
+										"text": "```ts\n300  // 5 minutes\n```"
+									}
+								]
+							},
+							{
+								"tag": "@example",
+								"content": [
+									{
+										"kind": "code",
+										"text": "```ts\n// Reject proofs older than 2 minutes\nauth({ dpop: { enabled: true, iatOffset: 120 } })\n```"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/token-verifier.ts",
+							"line": 142,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/token-verifier.ts#L142"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					}
+				},
+				{
+					"id": 48,
+					"name": "required",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Requires DPoP tokens exclusively when DPoP is enabled.\n\nWhen "
+							},
+							{
+								"kind": "code",
+								"text": "`enabled: true`"
+							},
+							{
+								"kind": "text",
+								"text": " and "
+							},
+							{
+								"kind": "code",
+								"text": "`required: true`"
+							},
+							{
+								"kind": "text",
+								"text": ":\n- Only DPoP tokens are accepted, and non-DPoP tokens are rejected.\n\nWhen "
+							},
+							{
+								"kind": "code",
+								"text": "`enabled: false`"
+							},
+							{
+								"kind": "text",
+								"text": ":\n- Setting this flag results in a misconfiguration (Bearer-only mode)."
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@default",
+								"content": [
+									{
+										"kind": "code",
+										"text": "```ts\nfalse\n```"
+									}
+								]
+							},
+							{
+								"tag": "@example",
+								"content": [
+									{
+										"kind": "code",
+										"text": "```ts\n// DPoP-only:\nauth({ dpop: { enabled: true, required: true } })\n```"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/token-verifier.ts",
+							"line": 129,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/token-verifier.ts#L129"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "boolean"
+					}
+				}
+			],
+			"groups": [
+				{
+					"title": "Properties",
+					"children": [
+						47,
+						50,
+						49,
+						48
+					]
+				}
+			],
+			"sources": [
+				{
+					"fileName": "packages/access-token-jwt/src/token-verifier.ts",
+					"line": 91,
+					"character": 10,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/token-verifier.ts#L91"
+				}
+			]
+		},
+		{
+			"id": 102,
+			"name": "IssuerResolverContext",
+			"variant": "declaration",
+			"kind": 256,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "The request details passed to an "
+					},
+					{
+						"kind": "inline-tag",
+						"tag": "@link",
+						"text": "IssuerResolverFunction",
+						"target": 106
+					},
+					{
+						"kind": "text",
+						"text": "."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Multiple Issuers"
+							}
+						]
+					}
+				]
+			},
+			"children": [
+				{
+					"id": 104,
+					"name": "headers",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 68,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L68"
+						}
+					],
+					"type": {
+						"type": "reference",
+						"target": {
+							"packageName": "typescript",
+							"packagePath": "lib/lib.es5.d.ts",
+							"qualifiedName": "Record"
+						},
+						"typeArguments": [
+							{
+								"type": "intrinsic",
+								"name": "string"
+							},
+							{
+								"type": "union",
+								"types": [
+									{
+										"type": "intrinsic",
+										"name": "string"
+									},
+									{
+										"type": "array",
+										"elementType": {
+											"type": "intrinsic",
+											"name": "string"
+										}
+									},
+									{
+										"type": "intrinsic",
+										"name": "undefined"
+									}
+								]
+							}
+						],
+						"name": "Record",
+						"package": "typescript"
+					}
+				},
+				{
+					"id": 103,
+					"name": "url",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 67,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L67"
+						}
+					],
+					"type": {
+						"type": "reference",
+						"target": {
+							"packageName": "@types/node",
+							"packagePath": "url.d.ts",
+							"qualifiedName": "__global.URL"
+						},
+						"name": "URL",
+						"package": "@types/node",
+						"qualifiedName": "__global.URL"
+					}
+				}
+			],
+			"groups": [
+				{
+					"title": "Properties",
+					"children": [
+						104,
+						103
+					]
+				}
+			],
+			"sources": [
+				{
+					"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+					"line": 66,
+					"character": 17,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L66"
+				}
+			]
+		},
+		{
+			"id": 74,
+			"name": "JWTHeader",
+			"variant": "declaration",
+			"kind": 256,
+			"flags": {
+				"isExternal": true
+			},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "Recognized JWS Header Parameters, any other Header Members may also be present."
+					}
+				]
+			},
+			"children": [
+				{
+					"id": 75,
+					"name": "alg",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "JWS \"alg\" (Algorithm) Header Parameter."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 196,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					}
+				},
+				{
+					"id": 76,
+					"name": "b64",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "This JWS Extension Header Parameter modifies the JWS Payload representation and the JWS Signing\nInput computation as per "
+							},
+							{
+								"kind": "inline-tag",
+								"tag": "@link",
+								"text": "RFC7797",
+								"target": "https://www.rfc-editor.org/rfc/rfc7797"
+							},
+							{
+								"kind": "text",
+								"text": "."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 202,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "boolean"
+					}
+				},
+				{
+					"id": 77,
+					"name": "crit",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "JWS \"crit\" (Critical) Header Parameter."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 205,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "array",
+						"elementType": {
+							"type": "intrinsic",
+							"name": "string"
+						}
+					}
+				},
+				{
+					"id": 85,
+					"name": "cty",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "\"cty\" (Content Type) Header Parameter."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 190,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": -1,
+						"name": "JoseHeaderParameters.cty"
+					}
+				},
+				{
+					"id": 82,
+					"name": "jku",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "\"jku\" (JWK Set URL) Header Parameter."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 181,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": -1,
+						"name": "JoseHeaderParameters.jku"
+					}
+				},
+				{
+					"id": 83,
+					"name": "jwk",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "\"jwk\" (JSON Web Key) Header Parameter."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 184,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "reference",
+						"target": {
+							"packageName": "typescript",
+							"packagePath": "lib/lib.es5.d.ts",
+							"qualifiedName": "Pick"
+						},
+						"typeArguments": [
+							{
+								"type": "reference",
+								"target": {
+									"packageName": "jose",
+									"packagePath": "dist/types/types.d.ts",
+									"qualifiedName": "JWK"
+								},
+								"name": "JWK",
+								"package": "jose"
+							},
+							{
+								"type": "union",
+								"types": [
+									{
+										"type": "literal",
+										"value": "kty"
+									},
+									{
+										"type": "literal",
+										"value": "crv"
+									},
+									{
+										"type": "literal",
+										"value": "x"
+									},
+									{
+										"type": "literal",
+										"value": "y"
+									},
+									{
+										"type": "literal",
+										"value": "e"
+									},
+									{
+										"type": "literal",
+										"value": "n"
+									}
+								]
+							}
+						],
+						"name": "Pick",
+						"package": "typescript"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": -1,
+						"name": "JoseHeaderParameters.jwk"
+					}
+				},
+				{
+					"id": 78,
+					"name": "kid",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "\"kid\" (Key ID) Header Parameter."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 169,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": -1,
+						"name": "JoseHeaderParameters.kid"
+					}
+				},
+				{
+					"id": 84,
+					"name": "typ",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "\"typ\" (Type) Header Parameter."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 187,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": -1,
+						"name": "JoseHeaderParameters.typ"
+					}
+				},
+				{
+					"id": 80,
+					"name": "x5c",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "\"x5c\" (X.509 Certificate Chain) Header Parameter."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 175,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "array",
+						"elementType": {
+							"type": "intrinsic",
+							"name": "string"
+						}
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": -1,
+						"name": "JoseHeaderParameters.x5c"
+					}
+				},
+				{
+					"id": 79,
+					"name": "x5t",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "\"x5t\" (X.509 Certificate SHA-1 Thumbprint) Header Parameter."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 172,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": -1,
+						"name": "JoseHeaderParameters.x5t"
+					}
+				},
+				{
+					"id": 81,
+					"name": "x5u",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true,
+						"isInherited": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "\"x5u\" (X.509 URL) Header Parameter."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 178,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					},
+					"inheritedFrom": {
+						"type": "reference",
+						"target": -1,
+						"name": "JoseHeaderParameters.x5u"
+					}
+				}
+			],
+			"groups": [
+				{
+					"title": "Properties",
+					"children": [
+						75,
+						76,
+						77,
+						85,
+						82,
+						83,
+						78,
+						84,
+						80,
+						79,
+						81
+					]
+				}
+			],
+			"sources": [
+				{
+					"fileName": "node_modules/jose/dist/types/types.d.ts",
+					"line": 194,
+					"character": 17
+				}
+			],
+			"indexSignatures": [
+				{
+					"id": 86,
+					"name": "__index",
+					"variant": "signature",
+					"kind": 8192,
+					"flags": {
+						"isExternal": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Any other JWS Header member."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 208,
+							"character": 2
+						}
+					],
+					"parameters": [
+						{
+							"id": 87,
+							"name": "propName",
+							"variant": "param",
+							"kind": 32768,
+							"flags": {
+								"isExternal": true
+							},
+							"type": {
+								"type": "intrinsic",
+								"name": "string"
+							}
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "unknown"
+					}
+				}
+			],
+			"extendedTypes": [
+				{
+					"type": "reference",
+					"target": {
+						"packageName": "jose",
+						"packagePath": "dist/types/types.d.ts",
+						"qualifiedName": "JoseHeaderParameters"
+					},
+					"name": "JoseHeaderParameters",
+					"package": "jose"
+				}
+			]
+		},
+		{
+			"id": 36,
+			"name": "JWTPayload",
+			"variant": "declaration",
+			"kind": 256,
+			"flags": {
+				"isExternal": true
+			},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "Recognized JWT Claims Set members, any other members may also be present."
+					}
+				]
+			},
+			"children": [
+				{
+					"id": 39,
+					"name": "aud",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "JWT Audience"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@see",
+								"content": [
+									{
+										"kind": "inline-tag",
+										"tag": "@link",
+										"text": "RFC7519#section-4.1.3",
+										"target": "https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 460,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "union",
+						"types": [
+							{
+								"type": "intrinsic",
+								"name": "string"
+							},
+							{
+								"type": "array",
+								"elementType": {
+									"type": "intrinsic",
+									"name": "string"
+								}
+							}
+						]
+					}
+				},
+				{
+					"id": 42,
+					"name": "exp",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "JWT Expiration Time"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@see",
+								"content": [
+									{
+										"kind": "inline-tag",
+										"tag": "@link",
+										"text": "RFC7519#section-4.1.4",
+										"target": "https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 481,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					}
+				},
+				{
+					"id": 43,
+					"name": "iat",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "JWT Issued At"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@see",
+								"content": [
+									{
+										"kind": "inline-tag",
+										"tag": "@link",
+										"text": "RFC7519#section-4.1.6",
+										"target": "https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 488,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					}
+				},
+				{
+					"id": 37,
+					"name": "iss",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "JWT Issuer"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@see",
+								"content": [
+									{
+										"kind": "inline-tag",
+										"tag": "@link",
+										"text": "RFC7519#section-4.1.1",
+										"target": "https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 446,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					}
+				},
+				{
+					"id": 40,
+					"name": "jti",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "JWT ID"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@see",
+								"content": [
+									{
+										"kind": "inline-tag",
+										"tag": "@link",
+										"text": "RFC7519#section-4.1.7",
+										"target": "https://www.rfc-editor.org/rfc/rfc7519#section-4.1.7"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 467,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					}
+				},
+				{
+					"id": 41,
+					"name": "nbf",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "JWT Not Before"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@see",
+								"content": [
+									{
+										"kind": "inline-tag",
+										"tag": "@link",
+										"text": "RFC7519#section-4.1.5",
+										"target": "https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 474,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "number"
+					}
+				},
+				{
+					"id": 38,
+					"name": "sub",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isExternal": true,
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "JWT Subject"
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@see",
+								"content": [
+									{
+										"kind": "inline-tag",
+										"tag": "@link",
+										"text": "RFC7519#section-4.1.2",
+										"target": "https://www.rfc-editor.org/rfc/rfc7519#section-4.1.2"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 453,
+							"character": 2
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					}
+				}
+			],
+			"groups": [
+				{
+					"title": "Properties",
+					"children": [
+						39,
+						42,
+						43,
+						37,
+						40,
+						41,
+						38
+					]
+				}
+			],
+			"sources": [
+				{
+					"fileName": "node_modules/jose/dist/types/types.d.ts",
+					"line": 440,
+					"character": 17
+				}
+			],
+			"indexSignatures": [
+				{
+					"id": 44,
+					"name": "__index",
+					"variant": "signature",
+					"kind": 8192,
+					"flags": {
+						"isExternal": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Any other JWT Claim Set member."
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "node_modules/jose/dist/types/types.d.ts",
+							"line": 491,
+							"character": 2
+						}
+					],
+					"parameters": [
+						{
+							"id": 45,
+							"name": "propName",
+							"variant": "param",
+							"kind": 32768,
+							"flags": {
+								"isExternal": true
+							},
+							"type": {
+								"type": "intrinsic",
+								"name": "string"
+							}
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "unknown"
+					}
+				}
+			]
+		},
+		{
+			"id": 90,
+			"name": "MCDOptions",
+			"variant": "declaration",
+			"kind": 256,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "Options for validating tokens from multiple issuers. Cannot be used with\n"
+					},
+					{
+						"kind": "code",
+						"text": "`issuerBaseURL`"
+					},
+					{
+						"kind": "text",
+						"text": "."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Multiple Issuers"
+							}
+						]
+					}
+				]
+			},
+			"children": [
+				{
+					"id": 91,
+					"name": "issuers",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 94,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L94"
+						}
+					],
+					"type": {
+						"type": "union",
+						"types": [
+							{
+								"type": "intrinsic",
+								"name": "string"
+							},
+							{
+								"type": "array",
+								"elementType": {
+									"type": "intrinsic",
+									"name": "string"
+								}
+							},
+							{
+								"type": "reference",
+								"target": 106,
+								"name": "IssuerResolverFunction",
+								"package": "access-token-jwt"
+							},
+							{
+								"type": "array",
+								"elementType": {
+									"type": "reference",
+									"target": 101,
+									"name": "IssuerConfig",
+									"package": "access-token-jwt"
+								}
+							}
+						]
+					}
+				}
+			],
+			"groups": [
+				{
+					"title": "Properties",
+					"children": [
+						91
+					]
+				}
+			],
+			"sources": [
+				{
+					"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+					"line": 93,
+					"character": 17,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L93"
+				}
+			]
+		},
+		{
+			"id": 51,
+			"name": "MtlsOptions",
+			"variant": "declaration",
+			"kind": 256,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "Options that control mutual-TLS certificate-bound access token validation\n(RFC 8705 §3)."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@remarks",
+						"content": [
+							{
+								"kind": "text",
+								"text": "When a client authenticates to the authorization server with a TLS client\ncertificate, the issued access token carries a "
+							},
+							{
+								"kind": "code",
+								"text": "`cnf.x5t#S256`"
+							},
+							{
+								"kind": "text",
+								"text": " claim: the\nbase64url-encoded SHA-256 thumbprint of that certificate. This SDK validates,\non each request, that the certificate presented on the TLS connection matches\nthe thumbprint in the token.\n\nBecause APIs commonly run behind a TLS-terminating proxy (nginx, ALB,\nCloudflare, etc.), the SDK cannot read the TLS socket directly. The client\ncertificate must be supplied by the caller — see "
+							},
+							{
+								"kind": "code",
+								"text": "`getCertificate`"
+							},
+							{
+								"kind": "text",
+								"text": " on the\nExpress "
+							},
+							{
+								"kind": "code",
+								"text": "`auth()`"
+							},
+							{
+								"kind": "text",
+								"text": " middleware — and is then passed to this verifier as raw\nPEM or DER.\n\nmTLS is opt-in: unlike DPoP, it depends on a certificate resolver the\ncaller must supply (see "
+							},
+							{
+								"kind": "code",
+								"text": "`getCertificate`"
+							},
+							{
+								"kind": "text",
+								"text": " on the Express "
+							},
+							{
+								"kind": "code",
+								"text": "`auth()`"
+							},
+							{
+								"kind": "text",
+								"text": "\nmiddleware), so it cannot safely default to on. The Express middleware\nenables it automatically when "
+							},
+							{
+								"kind": "code",
+								"text": "`getCertificate`"
+							},
+							{
+								"kind": "text",
+								"text": " is supplied, unless\n"
+							},
+							{
+								"kind": "code",
+								"text": "`enabled`"
+							},
+							{
+								"kind": "text",
+								"text": " is set explicitly.\n\nBehavior matrix:\n\n- <u>Default</u> (*"
+							},
+							{
+								"kind": "code",
+								"text": "`{ enabled: false }`"
+							},
+							{
+								"kind": "text",
+								"text": "*):\n  The "
+							},
+							{
+								"kind": "code",
+								"text": "`cnf.x5t#S256`"
+							},
+							{
+								"kind": "text",
+								"text": " claim is ignored and no certificate binding is checked.\n\n- <u>Enabled</u> (*"
+							},
+							{
+								"kind": "code",
+								"text": "`{ enabled: true, required: false }`"
+							},
+							{
+								"kind": "text",
+								"text": "*):\n  Validates the certificate binding when the token carries "
+							},
+							{
+								"kind": "code",
+								"text": "`cnf.x5t#S256`"
+							},
+							{
+								"kind": "text",
+								"text": ";\n  plain bearer tokens are accepted as-is.\n\n- <u>Required</u> (*"
+							},
+							{
+								"kind": "code",
+								"text": "`{ enabled: true, required: true }`"
+							},
+							{
+								"kind": "text",
+								"text": "*):\n  Every access token must be certificate-bound; a token without a valid\n  "
+							},
+							{
+								"kind": "code",
+								"text": "`cnf.x5t#S256`"
+							},
+							{
+								"kind": "text",
+								"text": " binding is rejected.\n\n- <u>Misconfiguration</u> (*"
+							},
+							{
+								"kind": "code",
+								"text": "`{ required: true }`"
+							},
+							{
+								"kind": "text",
+								"text": "* without *"
+							},
+							{
+								"kind": "code",
+								"text": "`enabled: true`"
+							},
+							{
+								"kind": "text",
+								"text": "*):\n  Invalid — a binding cannot be required unless mTLS is explicitly enabled.\n\nInteraction with DPoP:\nA token carries at most one confirmation method, so mTLS and DPoP are mutually\nexclusive per token. When both are enabled, DPoP is evaluated first and takes\nprecedence: the mTLS verifier runs only for requests the DPoP path does not\nhandle. As a result "
+							},
+							{
+								"kind": "code",
+								"text": "`required: true`"
+							},
+							{
+								"kind": "text",
+								"text": " is scoped to the mTLS path (it does not\nforce a certificate binding on a request satisfied by a DPoP-bound token), and\nenabling "
+							},
+							{
+								"kind": "code",
+								"text": "`dpop.required`"
+							},
+							{
+								"kind": "text",
+								"text": " makes these options inert because every request is\nthen routed to the DPoP path."
+							}
+						]
+					},
+					{
+						"tag": "@see",
+						"content": [
+							{
+								"kind": "text",
+								"text": "https://www.rfc-editor.org/rfc/rfc8705"
+							}
+						]
+					},
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "DPoP & mTLS"
+							}
+						]
+					}
+				]
+			},
+			"children": [
+				{
+					"id": 52,
+					"name": "enabled",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Enables validation of certificate-bound ("
+							},
+							{
+								"kind": "code",
+								"text": "`cnf.x5t#S256`"
+							},
+							{
+								"kind": "text",
+								"text": ") access tokens.\n\nmTLS is opt-in. The Express "
+							},
+							{
+								"kind": "code",
+								"text": "`auth()`"
+							},
+							{
+								"kind": "text",
+								"text": " middleware sets this to "
+							},
+							{
+								"kind": "code",
+								"text": "`true`"
+							},
+							{
+								"kind": "text",
+								"text": "\nautomatically when a "
+							},
+							{
+								"kind": "code",
+								"text": "`getCertificate`"
+							},
+							{
+								"kind": "text",
+								"text": " resolver is supplied, unless you\nset it explicitly."
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@default",
+								"content": [
+									{
+										"kind": "code",
+										"text": "```ts\nfalse\n```"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/token-verifier.ts",
+							"line": 220,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/token-verifier.ts#L220"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "boolean"
+					}
+				},
+				{
+					"id": 53,
+					"name": "required",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {
+						"isOptional": true
+					},
+					"comment": {
+						"summary": [
+							{
+								"kind": "text",
+								"text": "Requires every access token to be certificate-bound. When "
+							},
+							{
+								"kind": "code",
+								"text": "`true`"
+							},
+							{
+								"kind": "text",
+								"text": ", a token\nwithout a valid "
+							},
+							{
+								"kind": "code",
+								"text": "`cnf.x5t#S256`"
+							},
+							{
+								"kind": "text",
+								"text": " binding is rejected.\n\nScoped to the mTLS path: when DPoP is also enabled, DPoP is evaluated first,\nso a DPoP-bound token is handled by the DPoP path and this requirement is\nnot applied to it.\n\nRequires "
+							},
+							{
+								"kind": "code",
+								"text": "`enabled: true`"
+							},
+							{
+								"kind": "text",
+								"text": " to also be set explicitly; mTLS being opt-in\nmeans it cannot be turned on implicitly just by requiring it."
+							}
+						],
+						"blockTags": [
+							{
+								"tag": "@default",
+								"content": [
+									{
+										"kind": "code",
+										"text": "```ts\nfalse\n```"
+									}
+								]
+							}
+						]
+					},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/token-verifier.ts",
+							"line": 235,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/token-verifier.ts#L235"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "boolean"
+					}
+				}
+			],
+			"groups": [
+				{
+					"title": "Properties",
+					"children": [
+						52,
+						53
+					]
+				}
+			],
+			"sources": [
+				{
+					"fileName": "packages/access-token-jwt/src/token-verifier.ts",
+					"line": 210,
+					"character": 10,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/token-verifier.ts#L210"
+				}
+			]
+		},
+		{
+			"id": 110,
+			"name": "RequestContext",
+			"variant": "declaration",
+			"kind": 256,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "The request URL and headers made available to an "
+					},
+					{
+						"kind": "inline-tag",
+						"tag": "@link",
+						"text": "IssuerResolverFunction",
+						"target": 106
+					},
+					{
+						"kind": "text",
+						"text": "."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Multiple Issuers"
+							}
+						]
+					}
+				]
+			},
+			"children": [
+				{
+					"id": 112,
+					"name": "headers",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 104,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L104"
+						}
+					],
+					"type": {
+						"type": "reference",
+						"target": {
+							"packageName": "typescript",
+							"packagePath": "lib/lib.es5.d.ts",
+							"qualifiedName": "Record"
+						},
+						"typeArguments": [
+							{
+								"type": "intrinsic",
+								"name": "string"
+							},
+							{
+								"type": "union",
+								"types": [
+									{
+										"type": "intrinsic",
+										"name": "string"
+									},
+									{
+										"type": "array",
+										"elementType": {
+											"type": "intrinsic",
+											"name": "string"
+										}
+									},
+									{
+										"type": "intrinsic",
+										"name": "undefined"
+									}
+								]
+							}
+						],
+						"name": "Record",
+						"package": "typescript"
+					}
+				},
+				{
+					"id": 111,
+					"name": "url",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 103,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L103"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					}
+				}
+			],
+			"groups": [
+				{
+					"title": "Properties",
+					"children": [
+						112,
+						111
+					]
+				}
+			],
+			"sources": [
+				{
+					"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+					"line": 102,
+					"character": 17,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L102"
+				}
+			]
+		},
+		{
+			"id": 97,
+			"name": "SymmetricIssuerConfig",
+			"variant": "declaration",
+			"kind": 256,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "An issuer whose tokens are signed with a symmetric algorithm and verified\nwith a shared "
+					},
+					{
+						"kind": "code",
+						"text": "`secret`"
+					},
+					{
+						"kind": "text",
+						"text": "."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Multiple Issuers"
+							}
+						]
+					}
+				]
+			},
+			"children": [
+				{
+					"id": 99,
+					"name": "alg",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 50,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L50"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					}
+				},
+				{
+					"id": 98,
+					"name": "issuer",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 49,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L49"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					}
+				},
+				{
+					"id": 100,
+					"name": "secret",
+					"variant": "declaration",
+					"kind": 1024,
+					"flags": {},
+					"sources": [
+						{
+							"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+							"line": 51,
+							"character": 2,
+							"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L51"
+						}
+					],
+					"type": {
+						"type": "intrinsic",
+						"name": "string"
+					}
+				}
+			],
+			"groups": [
+				{
+					"title": "Properties",
+					"children": [
+						99,
+						98,
+						100
+					]
+				}
+			],
+			"sources": [
+				{
+					"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+					"line": 48,
+					"character": 17,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L48"
+				}
+			]
+		},
+		{
+			"id": 5,
+			"name": "AuthOptions",
+			"variant": "declaration",
+			"kind": 2097152,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "Options for the "
+					},
+					{
+						"kind": "inline-tag",
+						"tag": "@link",
+						"text": "auth",
+						"target": 8
+					},
+					{
+						"kind": "text",
+						"text": " middleware."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Configuration"
+							}
+						]
+					}
+				]
+			},
+			"sources": [
+				{
+					"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+					"line": 63,
+					"character": 12,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L63"
+				}
+			],
+			"type": {
+				"type": "intersection",
+				"types": [
+					{
+						"type": "reference",
+						"target": {
+							"packageName": "access-token-jwt",
+							"packagePath": "src/token-verifier.ts",
+							"qualifiedName": "AuthOptions"
+						},
+						"name": "CoreAuthOptions",
+						"package": "access-token-jwt",
+						"qualifiedName": "AuthOptions"
+					},
+					{
+						"type": "reflection",
+						"declaration": {
+							"id": 6,
+							"name": "__type",
+							"variant": "declaration",
+							"kind": 65536,
+							"flags": {},
+							"children": [
+								{
+									"id": 7,
+									"name": "getCertificate",
+									"variant": "declaration",
+									"kind": 1024,
+									"flags": {
+										"isOptional": true
+									},
+									"comment": {
+										"summary": [
+											{
+												"kind": "text",
+												"text": "Resolves the client certificate for mTLS certificate-bound access token\nvalidation (RFC 8705), for use behind a TLS-terminating proxy.\n\nmTLS is opt-in: supplying this resolver enables it (sets "
+											},
+											{
+												"kind": "code",
+												"text": "`mtls.enabled`"
+											},
+											{
+												"kind": "text",
+												"text": "\nto "
+											},
+											{
+												"kind": "code",
+												"text": "`true`"
+											},
+											{
+												"kind": "text",
+												"text": ") unless "
+											},
+											{
+												"kind": "code",
+												"text": "`mtls.enabled`"
+											},
+											{
+												"kind": "text",
+												"text": " is set explicitly."
+											}
+										]
+									},
+									"sources": [
+										{
+											"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+											"line": 71,
+											"character": 2,
+											"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L71"
+										}
+									],
+									"type": {
+										"type": "reference",
+										"target": 1,
+										"name": "GetCertificate",
+										"package": "express-oauth2-jwt-bearer"
+									}
+								}
+							],
+							"groups": [
+								{
+									"title": "Properties",
+									"children": [
+										7
+									]
+								}
+							]
+						}
+					}
+				]
+			}
+		},
+		{
+			"id": 54,
+			"name": "ClientCertificate",
+			"variant": "declaration",
+			"kind": 2097152,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "A client certificate presented on the TLS connection, obtained by the\ncaller-supplied resolver. Either the PEM text (as produced by most\nTLS-terminating proxies, typically URL-decoded first) or the raw DER bytes\n(e.g. "
+					},
+					{
+						"kind": "code",
+						"text": "`req.socket.getPeerCertificate().raw`"
+					},
+					{
+						"kind": "text",
+						"text": ")."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "DPoP & mTLS"
+							}
+						]
+					}
+				]
+			},
+			"sources": [
+				{
+					"fileName": "packages/access-token-jwt/src/mtls-verifier.ts",
+					"line": 27,
+					"character": 12,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/mtls-verifier.ts#L27"
+				}
+			],
+			"type": {
+				"type": "union",
+				"types": [
+					{
+						"type": "intrinsic",
+						"name": "string"
+					},
+					{
+						"type": "reference",
+						"target": {
+							"packageName": "@types/node",
+							"packagePath": "globals.d.ts",
+							"qualifiedName": "Buffer"
+						},
+						"name": "Buffer",
+						"package": "@types/node"
+					},
+					{
+						"type": "reference",
+						"target": {
+							"packageName": "typescript",
+							"packagePath": "lib/lib.es5.d.ts",
+							"qualifiedName": "Uint8Array"
+						},
+						"name": "Uint8Array",
+						"package": "typescript"
+					}
+				]
+			}
+		},
+		{
+			"id": 1,
+			"name": "GetCertificate",
+			"variant": "declaration",
+			"kind": 2097152,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "Resolves the client certificate presented on the TLS connection for the\ncurrent request, used to validate certificate-bound (mTLS, RFC 8705) access\ntokens.\n\nAPIs typically run behind a TLS-terminating proxy (nginx, ALB, Cloudflare,\netc.) that forwards the client certificate in a request header (commonly as\nURL-encoded PEM). Because the header name and encoding vary by deployment,\nyou supply this function to extract the certificate from wherever your proxy\nplaces it, returning the PEM text or DER bytes. For a process terminating TLS\ndirectly, return "
+					},
+					{
+						"kind": "code",
+						"text": "`req.socket.getPeerCertificate().raw`"
+					},
+					{
+						"kind": "text",
+						"text": ".\n\nReturn "
+					},
+					{
+						"kind": "code",
+						"text": "`undefined`"
+					},
+					{
+						"kind": "text",
+						"text": " when no certificate is present; a certificate-bound token\nreceived without one is rejected.\n\nSupplying this resolver also opts the request into mTLS validation: it sets\n"
+					},
+					{
+						"kind": "code",
+						"text": "`mtls.enabled`"
+					},
+					{
+						"kind": "text",
+						"text": " to "
+					},
+					{
+						"kind": "code",
+						"text": "`true`"
+					},
+					{
+						"kind": "text",
+						"text": " by default (see "
+					},
+					{
+						"kind": "inline-tag",
+						"tag": "@link",
+						"text": "AuthOptions.getCertificate",
+						"target": 7
+					},
+					{
+						"kind": "text",
+						"text": ").\nSet "
+					},
+					{
+						"kind": "code",
+						"text": "`mtls: { enabled: false }`"
+					},
+					{
+						"kind": "text",
+						"text": " explicitly to keep mTLS off while still\nresolving certificates for your own use."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@example",
+						"content": [
+							{
+								"kind": "code",
+								"text": "```ts\n// nginx forwarding URL-encoded PEM in a header:\ngetCertificate: (req) => {\n  const pem = req.headers['client-certificate'];\n  return typeof pem === 'string' ? decodeURIComponent(pem) : undefined;\n}\n```"
+							}
+						]
+					},
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "DPoP & mTLS"
+							}
+						]
+					}
+				]
+			},
+			"sources": [
+				{
+					"fileName": "packages/express-oauth2-jwt-bearer/src/index.ts",
+					"line": 54,
+					"character": 12,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/express-oauth2-jwt-bearer/src/index.ts#L54"
+				}
+			],
+			"type": {
+				"type": "reflection",
+				"declaration": {
+					"id": 2,
+					"name": "__type",
+					"variant": "declaration",
+					"kind": 65536,
+					"flags": {},
+					"signatures": [
+						{
+							"id": 3,
+							"name": "__type",
+							"variant": "signature",
+							"kind": 4096,
+							"flags": {},
+							"parameters": [
+								{
+									"id": 4,
+									"name": "req",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {},
+									"type": {
+										"type": "reference",
+										"target": {
+											"packageName": "@types/express",
+											"packagePath": "index.d.ts",
+											"qualifiedName": "e.Request"
+										},
+										"name": "Request",
+										"package": "@types/express",
+										"qualifiedName": "e.Request"
+									}
+								}
+							],
+							"type": {
+								"type": "union",
+								"types": [
+									{
+										"type": "reference",
+										"target": 54,
+										"name": "ClientCertificate",
+										"package": "access-token-jwt"
+									},
+									{
+										"type": "intrinsic",
+										"name": "undefined"
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": 101,
+			"name": "IssuerConfig",
+			"variant": "declaration",
+			"kind": 2097152,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "Configuration for a single issuer, either asymmetric or symmetric."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Multiple Issuers"
+							}
+						]
+					}
+				]
+			},
+			"sources": [
+				{
+					"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+					"line": 59,
+					"character": 12,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L59"
+				}
+			],
+			"type": {
+				"type": "union",
+				"types": [
+					{
+						"type": "reference",
+						"target": 92,
+						"name": "AsymmetricIssuerConfig",
+						"package": "access-token-jwt"
+					},
+					{
+						"type": "reference",
+						"target": 97,
+						"name": "SymmetricIssuerConfig",
+						"package": "access-token-jwt"
+					}
+				]
+			}
+		},
+		{
+			"id": 106,
+			"name": "IssuerResolverFunction",
+			"variant": "declaration",
+			"kind": 2097152,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "Resolves the issuers accepted for a request. May be asynchronous."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Multiple Issuers"
+							}
+						]
+					}
+				]
+			},
+			"sources": [
+				{
+					"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+					"line": 83,
+					"character": 12,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L83"
+				}
+			],
+			"type": {
+				"type": "reflection",
+				"declaration": {
+					"id": 107,
+					"name": "__type",
+					"variant": "declaration",
+					"kind": 65536,
+					"flags": {},
+					"signatures": [
+						{
+							"id": 108,
+							"name": "__type",
+							"variant": "signature",
+							"kind": 4096,
+							"flags": {},
+							"parameters": [
+								{
+									"id": 109,
+									"name": "context",
+									"variant": "param",
+									"kind": 32768,
+									"flags": {},
+									"type": {
+										"type": "reference",
+										"target": 102,
+										"name": "IssuerResolverContext",
+										"package": "access-token-jwt"
+									}
+								}
+							],
+							"type": {
+								"type": "union",
+								"types": [
+									{
+										"type": "reference",
+										"target": {
+											"packageName": "typescript",
+											"packagePath": "lib/lib.es5.d.ts",
+											"qualifiedName": "Promise"
+										},
+										"typeArguments": [
+											{
+												"type": "reference",
+												"target": 105,
+												"name": "IssuerResolverResult",
+												"package": "access-token-jwt"
+											}
+										],
+										"name": "Promise",
+										"package": "typescript"
+									},
+									{
+										"type": "reference",
+										"target": 105,
+										"name": "IssuerResolverResult",
+										"package": "access-token-jwt"
+									}
+								]
+							}
+						}
+					]
+				}
+			}
+		},
+		{
+			"id": 105,
+			"name": "IssuerResolverResult",
+			"variant": "declaration",
+			"kind": 2097152,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "The issuers accepted for a request: issuer URLs or full issuer configurations."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Multiple Issuers"
+							}
+						]
+					}
+				]
+			},
+			"sources": [
+				{
+					"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+					"line": 76,
+					"character": 12,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L76"
+				}
+			],
+			"type": {
+				"type": "union",
+				"types": [
+					{
+						"type": "array",
+						"elementType": {
+							"type": "intrinsic",
+							"name": "string"
+						}
+					},
+					{
+						"type": "array",
+						"elementType": {
+							"type": "reference",
+							"target": 101,
+							"name": "IssuerConfig",
+							"package": "access-token-jwt"
+						}
+					}
+				]
+			}
+		},
+		{
+			"id": 88,
+			"name": "JSONPrimitive",
+			"variant": "declaration",
+			"kind": 2097152,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "A JSON primitive: "
+					},
+					{
+						"kind": "code",
+						"text": "`string`"
+					},
+					{
+						"kind": "text",
+						"text": ", "
+					},
+					{
+						"kind": "code",
+						"text": "`number`"
+					},
+					{
+						"kind": "text",
+						"text": ", "
+					},
+					{
+						"kind": "code",
+						"text": "`boolean`"
+					},
+					{
+						"kind": "text",
+						"text": " or "
+					},
+					{
+						"kind": "code",
+						"text": "`null`"
+					},
+					{
+						"kind": "text",
+						"text": "."
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Claim & Scope Checks"
+							}
+						]
+					}
+				]
+			},
+			"sources": [
+				{
+					"fileName": "packages/access-token-jwt/src/claim-check.ts",
+					"line": 13,
+					"character": 12,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/claim-check.ts#L13"
+				}
+			],
+			"type": {
+				"type": "union",
+				"types": [
+					{
+						"type": "intrinsic",
+						"name": "string"
+					},
+					{
+						"type": "intrinsic",
+						"name": "number"
+					},
+					{
+						"type": "intrinsic",
+						"name": "boolean"
+					},
+					{
+						"type": "literal",
+						"value": null
+					}
+				]
+			}
+		},
+		{
+			"id": 89,
+			"name": "PublicKeyInput",
+			"variant": "declaration",
+			"kind": 2097152,
+			"flags": {},
+			"comment": {
+				"summary": [
+					{
+						"kind": "text",
+						"text": "A static public key for asymmetric JWT verification without discovery or a\nremote JWKS endpoint.  Accepted forms:\n\n- "
+					},
+					{
+						"kind": "code",
+						"text": "`string`"
+					},
+					{
+						"kind": "text",
+						"text": " – PEM-encoded SPKI public key (requires "
+					},
+					{
+						"kind": "code",
+						"text": "`tokenSigningAlg`"
+					},
+					{
+						"kind": "text",
+						"text": " or "
+					},
+					{
+						"kind": "code",
+						"text": "`alg`"
+					},
+					{
+						"kind": "text",
+						"text": ")\n- "
+					},
+					{
+						"kind": "code",
+						"text": "`JWK`"
+					},
+					{
+						"kind": "text",
+						"text": " – a single JWK object ("
+					},
+					{
+						"kind": "code",
+						"text": "`{ kty, n, e, … }`"
+					},
+					{
+						"kind": "text",
+						"text": ")\n- "
+					},
+					{
+						"kind": "code",
+						"text": "`JSONWebKeySet`"
+					},
+					{
+						"kind": "text",
+						"text": " – an inline JWK Set ("
+					},
+					{
+						"kind": "code",
+						"text": "`{ keys: [...] }`"
+					},
+					{
+						"kind": "text",
+						"text": ")"
+					}
+				],
+				"blockTags": [
+					{
+						"tag": "@category",
+						"content": [
+							{
+								"kind": "text",
+								"text": "Configuration"
+							}
+						]
+					}
+				]
+			},
+			"sources": [
+				{
+					"fileName": "packages/access-token-jwt/src/jwt-verifier.ts",
+					"line": 22,
+					"character": 12,
+					"url": "https://github.com/auth0/node-oauth2-jwt-bearer/blob/v1.11.0/packages/access-token-jwt/src/jwt-verifier.ts#L22"
+				}
+			],
+			"type": {
+				"type": "union",
+				"types": [
+					{
+						"type": "intrinsic",
+						"name": "string"
+					},
+					{
+						"type": "reference",
+						"target": {
+							"packageName": "jose",
+							"packagePath": "dist/types/types.d.ts",
+							"qualifiedName": "JWK"
+						},
+						"name": "JWK",
+						"package": "jose"
+					},
+					{
+						"type": "reference",
+						"target": {
+							"packageName": "jose",
+							"packagePath": "dist/types/types.d.ts",
+							"qualifiedName": "JSONWebKeySet"
+						},
+						"name": "JSONWebKeySet",
+						"package": "jose"
+					}
+				]
+			}
+		}
+	],
+	"groups": [
+		{
+			"title": "Classes",
+			"children": [
+				182,
+				135,
+				159,
+				113
+			]
+		},
+		{
+			"title": "Interfaces",
+			"children": [
+				92,
+				32,
+				46,
+				102,
+				74,
+				36,
+				90,
+				51,
+				110,
+				97
+			]
+		},
+		{
+			"title": "Type Aliases",
+			"children": [
+				5,
+				54,
+				1,
+				101,
+				106,
+				105,
+				88,
+				89
+			]
+		},
+		{
+			"title": "Functions",
+			"children": [
+				8,
+				11,
+				18,
+				22,
+				26,
+				29
+			]
+		}
+	],
+	"categories": [
+		{
+			"title": "Getting Started",
+			"children": [
+				8,
+				32
+			]
+		},
+		{
+			"title": "Configuration",
+			"children": [
+				5,
+				89
+			]
+		},
+		{
+			"title": "Claim & Scope Checks",
+			"children": [
+				11,
+				18,
+				22,
+				26,
+				29,
+				88
+			]
+		},
+		{
+			"title": "DPoP & mTLS",
+			"children": [
+				46,
+				51,
+				54,
+				1
+			]
+		},
+		{
+			"title": "Multiple Issuers",
+			"children": [
+				92,
+				102,
+				90,
+				110,
+				97,
+				101,
+				106,
+				105
+			]
+		},
+		{
+			"title": "Errors",
+			"children": [
+				182,
+				135,
+				159,
+				113
+			]
+		},
+		{
+			"title": "Other",
+			"children": [
+				74,
+				36
+			]
+		}
+	],
+	"packageName": "express-oauth2-jwt-bearer",
+	"symbolIdMap": {
+		"0": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": ""
+		},
+		"1": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "GetCertificate"
+		},
+		"2": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "__type"
+		},
+		"3": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "__type"
+		},
+		"4": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "req"
+		},
+		"5": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "AuthOptions"
+		},
+		"6": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "__type"
+		},
+		"7": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "__type.getCertificate"
+		},
+		"8": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "auth"
+		},
+		"9": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "auth"
+		},
+		"10": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "opts"
+		},
+		"11": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "claimCheck"
+		},
+		"12": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "claimCheck"
+		},
+		"13": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "fn"
+		},
+		"14": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "__type"
+		},
+		"15": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "__type"
+		},
+		"16": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "payload"
+		},
+		"17": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "errMsg"
+		},
+		"18": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "claimEquals"
+		},
+		"19": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "claimEquals"
+		},
+		"20": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "claim"
+		},
+		"21": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "expected"
+		},
+		"22": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "claimIncludes"
+		},
+		"23": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "claimIncludes"
+		},
+		"24": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "claim"
+		},
+		"25": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "expected"
+		},
+		"26": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "requiredScopes"
+		},
+		"27": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "requiredScopes"
+		},
+		"28": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "scopes"
+		},
+		"29": {
+			"packageName": "express-oauth2-jwt-bearer",
+			"packagePath": "src/index.ts",
+			"qualifiedName": "scopeIncludesAny"
+		},
+		"30": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "scopeIncludesAny"
+		},
+		"31": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "scopes"
+		},
+		"32": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "VerifyJwtResult"
+		},
+		"33": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "VerifyJwtResult.header"
+		},
+		"34": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "VerifyJwtResult.payload"
+		},
+		"35": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "VerifyJwtResult.token"
+		},
+		"36": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JWTPayload"
+		},
+		"37": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JWTPayload.iss"
+		},
+		"38": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JWTPayload.sub"
+		},
+		"39": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JWTPayload.aud"
+		},
+		"40": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JWTPayload.jti"
+		},
+		"41": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JWTPayload.nbf"
+		},
+		"42": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JWTPayload.exp"
+		},
+		"43": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JWTPayload.iat"
+		},
+		"44": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JWTPayload.__index"
+		},
+		"46": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/token-verifier.ts",
+			"qualifiedName": "DPoPOptions"
+		},
+		"47": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/token-verifier.ts",
+			"qualifiedName": "DPoPOptions.enabled"
+		},
+		"48": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/token-verifier.ts",
+			"qualifiedName": "DPoPOptions.required"
+		},
+		"49": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/token-verifier.ts",
+			"qualifiedName": "DPoPOptions.iatOffset"
+		},
+		"50": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/token-verifier.ts",
+			"qualifiedName": "DPoPOptions.iatLeeway"
+		},
+		"51": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/token-verifier.ts",
+			"qualifiedName": "MtlsOptions"
+		},
+		"52": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/token-verifier.ts",
+			"qualifiedName": "MtlsOptions.enabled"
+		},
+		"53": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/token-verifier.ts",
+			"qualifiedName": "MtlsOptions.required"
+		},
+		"54": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/mtls-verifier.ts",
+			"qualifiedName": "ClientCertificate"
+		},
+		"74": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JWSHeaderParameters"
+		},
+		"75": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JWSHeaderParameters.alg"
+		},
+		"76": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JWSHeaderParameters.b64"
+		},
+		"77": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JWSHeaderParameters.crit"
+		},
+		"78": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JoseHeaderParameters.kid"
+		},
+		"79": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JoseHeaderParameters.x5t"
+		},
+		"80": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JoseHeaderParameters.x5c"
+		},
+		"81": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JoseHeaderParameters.x5u"
+		},
+		"82": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JoseHeaderParameters.jku"
+		},
+		"83": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JoseHeaderParameters.jwk"
+		},
+		"84": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JoseHeaderParameters.typ"
+		},
+		"85": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JoseHeaderParameters.cty"
+		},
+		"86": {
+			"packageName": "jose",
+			"packagePath": "dist/types/types.d.ts",
+			"qualifiedName": "JWSHeaderParameters.__index"
+		},
+		"88": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/claim-check.ts",
+			"qualifiedName": "JSONPrimitive"
+		},
+		"89": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "PublicKeyInput"
+		},
+		"90": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "MCDOptions"
+		},
+		"91": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "MCDOptions.issuers"
+		},
+		"92": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "AsymmetricIssuerConfig"
+		},
+		"93": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "AsymmetricIssuerConfig.issuer"
+		},
+		"94": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "AsymmetricIssuerConfig.alg"
+		},
+		"95": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "AsymmetricIssuerConfig.jwksUri"
+		},
+		"96": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "AsymmetricIssuerConfig.publicKey"
+		},
+		"97": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "SymmetricIssuerConfig"
+		},
+		"98": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "SymmetricIssuerConfig.issuer"
+		},
+		"99": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "SymmetricIssuerConfig.alg"
+		},
+		"100": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "SymmetricIssuerConfig.secret"
+		},
+		"101": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "IssuerConfig"
+		},
+		"102": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "IssuerResolverContext"
+		},
+		"103": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "IssuerResolverContext.url"
+		},
+		"104": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "IssuerResolverContext.headers"
+		},
+		"105": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "IssuerResolverResult"
+		},
+		"106": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "IssuerResolverFunction"
+		},
+		"107": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "__type"
+		},
+		"108": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "__type"
+		},
+		"109": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "context"
+		},
+		"110": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "RequestContext"
+		},
+		"111": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "RequestContext.url"
+		},
+		"112": {
+			"packageName": "access-token-jwt",
+			"packagePath": "src/jwt-verifier.ts",
+			"qualifiedName": "RequestContext.headers"
+		},
+		"113": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "UnauthorizedError"
+		},
+		"114": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.captureStackTrace"
+		},
+		"115": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.captureStackTrace"
+		},
+		"116": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "targetObject"
+		},
+		"117": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "constructorOpt"
+		},
+		"118": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.prepareStackTrace"
+		},
+		"119": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "__type"
+		},
+		"120": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "__type"
+		},
+		"121": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "err"
+		},
+		"122": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "stackTraces"
+		},
+		"123": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.stackTraceLimit"
+		},
+		"124": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "UnauthorizedError.__constructor"
+		},
+		"125": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "UnauthorizedError"
+		},
+		"126": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "message"
+		},
+		"127": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "UnauthorizedError.status"
+		},
+		"128": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "UnauthorizedError.statusCode"
+		},
+		"129": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "UnauthorizedError.headers"
+		},
+		"130": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "__object"
+		},
+		"131": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "__object.WWW-Authenticate"
+		},
+		"132": {
+			"packageName": "typescript",
+			"packagePath": "lib/lib.es5.d.ts",
+			"qualifiedName": "Error.name"
+		},
+		"133": {
+			"packageName": "typescript",
+			"packagePath": "lib/lib.es5.d.ts",
+			"qualifiedName": "Error.message"
+		},
+		"134": {
+			"packageName": "typescript",
+			"packagePath": "lib/lib.es5.d.ts",
+			"qualifiedName": "Error.stack"
+		},
+		"135": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InvalidRequestError"
+		},
+		"136": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.captureStackTrace"
+		},
+		"137": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.captureStackTrace"
+		},
+		"138": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "targetObject"
+		},
+		"139": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "constructorOpt"
+		},
+		"140": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.prepareStackTrace"
+		},
+		"141": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "__type"
+		},
+		"142": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "__type"
+		},
+		"143": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "err"
+		},
+		"144": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "stackTraces"
+		},
+		"145": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.stackTraceLimit"
+		},
+		"146": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InvalidRequestError.__constructor"
+		},
+		"147": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InvalidRequestError"
+		},
+		"148": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "message"
+		},
+		"149": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "useErrorCode"
+		},
+		"150": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InvalidRequestError.code"
+		},
+		"151": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InvalidRequestError.status"
+		},
+		"152": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InvalidRequestError.statusCode"
+		},
+		"153": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "UnauthorizedError.headers"
+		},
+		"154": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "__object"
+		},
+		"155": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "__object.WWW-Authenticate"
+		},
+		"156": {
+			"packageName": "typescript",
+			"packagePath": "lib/lib.es5.d.ts",
+			"qualifiedName": "Error.name"
+		},
+		"157": {
+			"packageName": "typescript",
+			"packagePath": "lib/lib.es5.d.ts",
+			"qualifiedName": "Error.message"
+		},
+		"158": {
+			"packageName": "typescript",
+			"packagePath": "lib/lib.es5.d.ts",
+			"qualifiedName": "Error.stack"
+		},
+		"159": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InvalidTokenError"
+		},
+		"160": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.captureStackTrace"
+		},
+		"161": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.captureStackTrace"
+		},
+		"162": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "targetObject"
+		},
+		"163": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "constructorOpt"
+		},
+		"164": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.prepareStackTrace"
+		},
+		"165": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "__type"
+		},
+		"166": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "__type"
+		},
+		"167": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "err"
+		},
+		"168": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "stackTraces"
+		},
+		"169": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.stackTraceLimit"
+		},
+		"170": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InvalidTokenError.__constructor"
+		},
+		"171": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InvalidTokenError"
+		},
+		"172": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "message"
+		},
+		"173": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InvalidTokenError.code"
+		},
+		"174": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InvalidTokenError.status"
+		},
+		"175": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InvalidTokenError.statusCode"
+		},
+		"176": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "UnauthorizedError.headers"
+		},
+		"177": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "__object"
+		},
+		"178": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "__object.WWW-Authenticate"
+		},
+		"179": {
+			"packageName": "typescript",
+			"packagePath": "lib/lib.es5.d.ts",
+			"qualifiedName": "Error.name"
+		},
+		"180": {
+			"packageName": "typescript",
+			"packagePath": "lib/lib.es5.d.ts",
+			"qualifiedName": "Error.message"
+		},
+		"181": {
+			"packageName": "typescript",
+			"packagePath": "lib/lib.es5.d.ts",
+			"qualifiedName": "Error.stack"
+		},
+		"182": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InsufficientScopeError"
+		},
+		"183": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.captureStackTrace"
+		},
+		"184": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.captureStackTrace"
+		},
+		"185": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "targetObject"
+		},
+		"186": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "constructorOpt"
+		},
+		"187": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.prepareStackTrace"
+		},
+		"188": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "__type"
+		},
+		"189": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "__type"
+		},
+		"190": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "err"
+		},
+		"191": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "stackTraces"
+		},
+		"192": {
+			"packageName": "@types/node",
+			"packagePath": "globals.d.ts",
+			"qualifiedName": "ErrorConstructor.stackTraceLimit"
+		},
+		"193": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InsufficientScopeError.__constructor"
+		},
+		"194": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InsufficientScopeError"
+		},
+		"195": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "scopes"
+		},
+		"196": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "message"
+		},
+		"197": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InsufficientScopeError.code"
+		},
+		"198": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InsufficientScopeError.status"
+		},
+		"199": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "InsufficientScopeError.statusCode"
+		},
+		"200": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "UnauthorizedError.headers"
+		},
+		"201": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "__object"
+		},
+		"202": {
+			"packageName": "oauth2-bearer",
+			"packagePath": "src/errors.ts",
+			"qualifiedName": "__object.WWW-Authenticate"
+		},
+		"203": {
+			"packageName": "typescript",
+			"packagePath": "lib/lib.es5.d.ts",
+			"qualifiedName": "Error.name"
+		},
+		"204": {
+			"packageName": "typescript",
+			"packagePath": "lib/lib.es5.d.ts",
+			"qualifiedName": "Error.message"
+		},
+		"205": {
+			"packageName": "typescript",
+			"packagePath": "lib/lib.es5.d.ts",
+			"qualifiedName": "Error.stack"
+		}
+	},
+	"files": {
+		"entries": {
+			"1": "packages/express-oauth2-jwt-bearer/src/index.ts"
+		},
+		"reflections": {
+			"1": 0
+		}
+	}
+}

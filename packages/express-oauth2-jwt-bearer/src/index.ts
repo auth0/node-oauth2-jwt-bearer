@@ -39,7 +39,7 @@ import { resolveHost } from './resolve-host';
  * received without one is rejected.
  *
  * Supplying this resolver also opts the request into mTLS validation: it sets
- * `mtls.enabled` to `true` by default (see {@Link AuthOptions.getCertificate}).
+ * `mtls.enabled` to `true` by default (see {@link AuthOptions.getCertificate}).
  * Set `mtls: { enabled: false }` explicitly to keep mTLS off while still
  * resolving certificates for your own use.
  *
@@ -49,11 +49,17 @@ import { resolveHost } from './resolve-host';
  *   const pem = req.headers['client-certificate'];
  *   return typeof pem === 'string' ? decodeURIComponent(pem) : undefined;
  * }
+ * @category DPoP & mTLS
  */
 export type GetCertificate = (
   req: Request
 ) => ClientCertificate | undefined;
 
+/**
+ * Options for the {@link auth} middleware.
+ *
+ * @category Configuration
+ */
 export type AuthOptions = CoreAuthOptions & {
   /**
    * Resolves the client certificate for mTLS certificate-bound access token
@@ -79,7 +85,7 @@ declare global {
  *
  * Can be used in 2 ways:
  *
- * 1. Pass in an {@Link AuthOptions.issuerBaseURL} (or define the env
+ * 1. Pass in an {@link AuthOptions.issuerBaseURL} (or define the env
  * variable `ISSUER_BASE_URL`)
  *
  * ```js
@@ -89,12 +95,12 @@ declare global {
  * }));
  * ```
  *
- * This uses the {@Link AuthOptions.issuerBaseURL} to find the OAuth 2.0
- * Authorization Server Metadata to get the {@Link AuthOptions.jwksUri}
- * and {@Link AuthOptions.issuer}.
+ * This uses the {@link AuthOptions.issuerBaseURL} to find the OAuth 2.0
+ * Authorization Server Metadata to get the {@link AuthOptions.jwksUri}
+ * and {@link AuthOptions.issuer}.
  *
- * 2. You can also skip discovery and provide the {@Link AuthOptions.jwksUri} (or
- * define the env variable `JWKS_URI`) and {@Link AuthOptions.issuer} (or define
+ * 2. You can also skip discovery and provide the {@link AuthOptions.jwksUri} (or
+ * define the env variable `JWKS_URI`) and {@link AuthOptions.issuer} (or define
  * the env variable `ISSUER`) yourself.
  *
  * ```js
@@ -119,6 +125,7 @@ declare global {
  * });
  * ```
  *
+ * @category Getting Started
  */
 export const auth = (opts: AuthOptions = {}): Handler => {
   // mTLS is opt-in. Supplying `getCertificate` signals intent to use it, so
@@ -203,7 +210,7 @@ const toHandler =
 
 /**
  * Check the token's claims using a custom method that receives the
- * {@Link JWTPayload} and should return `true` if the token is valid. Raises
+ * {@link JWTPayload} and should return `true` if the token is valid. Raises
  * a 401 `invalid_token` error if the function returns false. You can also
  * customise the `error_description` which should be formatted per rfc6750.
  *
@@ -214,12 +221,15 @@ const toHandler =
  *   return claims.isAdmin && claims.roles.includes('editor');
  * }, `Unexpected 'isAdmin' and 'roles' claims`), (req, res) => { ... });
  * ```
+ *
+ * @function
+ * @category Claim & Scope Checks
  */
 export const claimCheck: ClaimCheck<Handler> = (...args) =>
   toHandler(_claimCheck(...args));
 
 /**
- * Check a token's claim to be equal a given {@Link JSONPrimitive}
+ * Check a token's claim to be equal a given {@link JSONPrimitive}
  * (`string`, `number`, `boolean` or `null`) raises a 401 `invalid_token`
  * error if the value of the claim does not match.
  *
@@ -228,12 +238,15 @@ export const claimCheck: ClaimCheck<Handler> = (...args) =>
  *
  * app.get('/admin', claimEquals('isAdmin', true), (req, res) => { ... });
  * ```
+ *
+ * @function
+ * @category Claim & Scope Checks
  */
 export const claimEquals: ClaimEquals<Handler> = (...args) =>
   toHandler(_claimEquals(...args));
 
 /**
- * Check a token's claim to include a number of given {@Link JSONPrimitive}s
+ * Check a token's claim to include a number of given {@link JSONPrimitive}s
  * (`string`, `number`, `boolean` or `null`) raises a 401 `invalid_token`
  * error if the value of the claim does not include all the given values.
  *
@@ -243,6 +256,9 @@ export const claimEquals: ClaimEquals<Handler> = (...args) =>
  * app.get('/admin/edit', claimIncludes('role', 'admin', 'editor'),
  *    (req, res) => { ... });
  * ```
+ *
+ * @function
+ * @category Claim & Scope Checks
  */
 export const claimIncludes: ClaimIncludes<Handler> = (...args) =>
   toHandler(_claimIncludes(...args));
@@ -258,6 +274,9 @@ export const claimIncludes: ClaimIncludes<Handler> = (...args) =>
  * app.get('/admin/edit', requiredScopes('read:admin write:admin'),
  *    (req, res) => { ... });
  * ```
+ *
+ * @function
+ * @category Claim & Scope Checks
  */
 export const requiredScopes: RequiredScopes<Handler> = (...args) =>
   toHandler(_requiredScopes(...args));
@@ -273,6 +292,9 @@ export const requiredScopes: RequiredScopes<Handler> = (...args) =>
  * app.get('/admin/edit', scopeIncludesAny('read:msg read:admin'),
  *    (req, res) => { ... });
  * ```
+ *
+ * @function
+ * @category Claim & Scope Checks
  */
 export const scopeIncludesAny: RequiredScopes<Handler> = (...args) =>
   toHandler(_scopeIncludesAny(...args));

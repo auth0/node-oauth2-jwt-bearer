@@ -9,7 +9,7 @@ npm install              # install all workspace deps (npm >= 7.14 required)
 npm test                 # run every package's test suite (npm test --workspaces)
 npm run lint             # lint every package (npm run lint --workspaces)
 npm run build            # build every package (npm run build --workspaces)
-npm run docs             # generate TypeDoc API docs into docs/ (typedoc --options typedoc.js)
+npm run docs             # generate TypeDoc API docs into docs/ and the Mintlify artifact (typedoc --options typedoc.js)
 ```
 
 ## Per-package
