@@ -11,7 +11,7 @@ Treat documentation as a first-class deliverable. A PR that adds or changes publ
 | `packages/examples/` | Playground / example API app exercising the middleware | present |
 | Root `README.md` | Monorepo overview + package table (published vs. internal) | present |
 
-> Not tracked here: `CHANGELOG.md` (cut by the release process, not agent-edited) and `docs/` plus `packages/express-oauth2-jwt-bearer/mintlify/` (generated TypeDoc output; the release regenerates both through `.shiprc`'s `postbump`, with source links pointing at the release tag from `.version`, so don't commit a regenerate between releases). The internal packages' `README.md` files (`oauth2-bearer`, `access-token-jwt`) describe unpublished internals and are lower priority than the published package's docs.
+> Not tracked here: `CHANGELOG.md` (cut by the release process, not agent-edited) and `docs/` plus `packages/express-oauth2-jwt-bearer/mintlify/` (generated TypeDoc output; the release regenerates both through `.shiprc`'s `postbump`, with source links pointing at `main`, so don't commit a regenerate between releases). The internal packages' `README.md` files (`oauth2-bearer`, `access-token-jwt`) describe unpublished internals and are lower priority than the published package's docs.
 
 ## When you change code, update these docs
 
