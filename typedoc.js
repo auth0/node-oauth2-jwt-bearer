@@ -2,7 +2,7 @@
 // Mintlify artifact, which is committed for the docs content pipeline.
 module.exports = {
   out: "./docs/",
-  json: "./packages/express-oauth2-jwt-bearer/mintlify/express-oauth2-jwt-bearer.json",
+  json: "./mintlify/express-oauth2-jwt-bearer.json",
   excludePrivate: false,
   excludeExternals: false,
   hideGenerator: true,

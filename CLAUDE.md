@@ -90,7 +90,7 @@ This is an **npm-workspaces monorepo**. The three library packages layer bottom-
 
 - Commit secrets, API keys, tokens, or private keys.
 - Log tokens, decoded JWT payloads, DPoP proofs, or secrets.
-- Modify generated files by hand: `docs/` and `packages/express-oauth2-jwt-bearer/mintlify/` (TypeDoc output), `CHANGELOG.md`, `dist/`, coverage output, lock files.
+- Modify generated files by hand: `docs/` and `mintlify/` (TypeDoc output), `CHANGELOG.md`, `dist/`, coverage output, lock files.
 - Remove or skip failing tests, or lower coverage, without fixing the underlying cause.
 - Modify `node_modules/`.
 - Weaken token validation (accept `alg: none`, skip issuer/audience/expiry checks, disable DPoP verification) without explicit approval.
