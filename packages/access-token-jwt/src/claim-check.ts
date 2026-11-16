@@ -5,6 +5,11 @@ import {
 } from 'oauth2-bearer';
 import type { JWTPayload } from 'jose';
 
+/**
+ * A JSON primitive: `string`, `number`, `boolean` or `null`.
+ *
+ * @category Claim & Scope Checks
+ */
 export type JSONPrimitive = string | number | boolean | null;
 
 type ClaimChecker = (payload?: JWTPayload) => void;
