@@ -38,7 +38,7 @@
     "rollup-plugin-dts": "^5.3.1",
     "ts-jest": "^29.0.5",
     "tslib": "^2.5.0",
-    "typescript": "^5.0.2"
+    "typescript": "^7.0.2"
   },
   "dependencies": {
     "jose": "^4.15.5"
