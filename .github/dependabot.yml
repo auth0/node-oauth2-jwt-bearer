@@ -3,14 +3,11 @@ updates:
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
-      interval: 'daily'
+      interval: 'weekly'
     groups:
       github-actions:
         patterns:
-          - 'actions/*'
-      codeql:
-        patterns:
-          - 'github/codeql-action/*'
+          - '*'
 
   - package-ecosystem: 'npm'
     directories:
@@ -21,3 +18,8 @@ updates:
       - '/packages/examples'
     schedule:
       interval: 'weekly'
+    groups:
+      npm-dependencies:
+        patterns:
+          - '*'
+        group-by: dependency-name
