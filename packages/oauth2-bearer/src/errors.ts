@@ -6,6 +6,8 @@
  * If the request lacks any authentication information,
  * the resource server SHOULD NOT include an error code or
  * other error information.
+ *
+ * @category Errors
  */
 export class UnauthorizedError extends Error {
   status = 401;
@@ -23,6 +25,8 @@ export class UnauthorizedError extends Error {
  * unsupported parameter or parameter value, repeats the same
  * parameter, uses more than one method for including an access
  * token, or is otherwise malformed.
+ *
+ * @category Errors
  */
 export class InvalidRequestError extends UnauthorizedError {
   code = 'invalid_request';
@@ -43,6 +47,8 @@ export class InvalidRequestError extends UnauthorizedError {
 /**
  * The access token provided is expired, revoked, malformed, or
  * invalid for other reasons.
+ *
+ * @category Errors
  */
 export class InvalidTokenError extends UnauthorizedError {
   code = 'invalid_token';
@@ -58,6 +64,8 @@ export class InvalidTokenError extends UnauthorizedError {
 /**
  * The request requires higher privileges than provided by the
  * access token.
+ *
+ * @category Errors
  */
 export class InsufficientScopeError extends UnauthorizedError {
   code = 'insufficient_scope';

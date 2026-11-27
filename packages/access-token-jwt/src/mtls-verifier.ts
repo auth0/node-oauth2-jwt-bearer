@@ -21,6 +21,8 @@ export interface MtlsJWTPayload extends JWTPayload {
  * caller-supplied resolver. Either the PEM text (as produced by most
  * TLS-terminating proxies, typically URL-decoded first) or the raw DER bytes
  * (e.g. `req.socket.getPeerCertificate().raw`).
+ *
+ * @category DPoP & mTLS
  */
 export type ClientCertificate = string | Buffer | Uint8Array;
 
